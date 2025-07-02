@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>{{ page_title }}</h1>
+
+    <p>{% blocktrans %}Are you sure you want to delete the group "<strong>{{ group_obj.name }}</strong>"?{% endblocktrans %}</p>
+    <p class="text-danger">{% trans "This action cannot be undone." %}</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">{% trans "Confirm Delete" %}</button>
+        <a href="{% url 'booking_app:group_list' %}" class="btn btn-secondary">{% trans "Cancel" %}</a>
+    </form>
+
+    <a href="{% url 'booking_app:group_list' %}" class="back-link">{% trans "Back to Group List" %}</a>
+</div>
+{% endblock %}

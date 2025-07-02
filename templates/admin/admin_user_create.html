@@ -1,0 +1,79 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_user_create.html #}
+
+{% extends 'base.html' %} {# Assumes you have a base.html that includes Bootstrap CSS/JS #}
+{% load i18n %} {# Load internationalization tags #}
+
+{% block title %}{% translate "Create New User" %}{% endblock %}
+
+{% block content %}
+<div class="container"> {# Bootstrap container for consistent page width #}
+    <h1 class="my-4">{% translate "Create New User" %}</h1> {# Added margin-top/bottom #}
+
+    {# This block displays Django messages (e.g., success messages, form errors, warnings) #}
+    {% if messages %}
+        <div class="messages mb-3"> {# Margin-bottom for spacing #}
+            {% for message in messages %}
+                {# Using Bootstrap alert classes for a nice visual presentation of messages #}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                    {{ message|safe }} {# Use |safe filter if message content contains HTML (though not common for success) #}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post" class="mt-4"> {# Margin-top for spacing #}
+        {% csrf_token %} {# Django security tag for form submissions #}
+
+        {# Display non-field errors (errors not tied to a specific field, like global form errors) #}
+        {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in form.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {# Loop through each field in the form to render it with Bootstrap styling #}
+        {% for field in form %}
+            {# Special handling for checkbox inputs (like 'is_active', 'is_admin_member_checkbox') #}
+            {% if field.widget.input_type == 'checkbox' %}
+                <div class="mb-3 form-check">
+                    {{ field }} {# Renders the checkbox input (e.g., <input type="checkbox" class="form-check-input">) #}
+                    <label class="form-check-label" for="{{ field.id_for_label }}">
+                        {% translate field.label %}
+                    </label>
+                    {% if field.help_text %}<div class="form-text text-muted small">{% translate field.help_text %}</div>{% endif %}
+                    {% if field.errors %}<div class="text-danger small">{% for error in field.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                </div>
+            {# Special handling for CheckboxSelectMultiple (for the 'groups' field) #}
+            {% elif field.field.widget.template_name == 'django/forms/widgets/checkbox_select_multiple.html' or field.name == 'groups' %}
+                <div class="mb-3">
+                    <label class="form-label">{% translate field.label %}:</label>
+                    <div class="checkbox-list"> {# Custom div for better styling of group checkboxes #}
+                        {{ field }} {# Renders the list of checkboxes for groups #}
+                    </div>
+                    {% if field.help_text %}<div class="form-text text-muted small">{% translate field.help_text %}</div>{% endif %}
+                    {% if field.errors %}<div class="text-danger small">{% for error in field.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                </div>
+            {% else %}
+                {# Standard rendering for text, email, password, number inputs, etc. #}
+                <div class="mb-3">
+                    <label for="{{ field.id_for_label }}" class="form-label">
+                        {% translate field.label %}{% if field.field.required %}<span class="text-danger">*</span>{% endif %}:
+                    </label>
+                    {{ field }} {# Renders the input (e.g., <input type="text" class="form-control">) #}
+                    {% if field.help_text %}<div class="form-text text-muted small">{% translate field.help_text %}</div>{% endif %}
+                    {% if field.errors %}<div class="text-danger small">{% for error in field.errors %}{{ error }}{% endfor %}</div>{% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <button type="submit" class="btn btn-primary mt-3">{% translate "Create User" %}</button>
+    </form>
+
+    <p class="mt-4">
+        <a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-secondary">{% translate "Back to User List" %}</a>
+    </p>
+</div>
+{% endblock content %}

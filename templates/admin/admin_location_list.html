@@ -1,0 +1,57 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_location_list.html #}
+
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Manage Locations" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Manage Locations" %}</h1>
+
+    <p><a href="{% url 'booking_app:location_create' %}" class="btn btn-primary">{% translate "Create New Location" %}</a></p>
+
+    {% if locations %}
+        <table>
+            <thead>
+                <tr>
+                    <th>{% translate "Location Name" %}</th>
+                    <th>{% translate "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for location in locations %}
+                <tr>
+                    <td>{{ location.name }}</td>
+                    <td class="action-buttons">
+                        {# Add links for view/edit/delete location here later if needed #}
+                        <a href="#" class="btn btn-small btn-secondary">{% translate "Edit" %}</a>
+                        <a href="#" class="btn btn-small btn-danger">{% translate "Delete" %}</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <span class="step-links">
+                {% if locations.has_previous %}
+                    <a href="?page=1">&laquo; {% translate "first" %}</a>
+                    <a href="?page={{ locations.previous_page_number }}">{% translate "previous" %}</a>
+                {% endif %}
+
+                <span class="current">
+                    {% translate "Page" %} {{ locations.number }} of {{ locations.paginator.num_pages }}.
+                </span>
+
+                {% if locations.has_next %}
+                    <a href="?page={{ locations.next_page_number }}">{% translate "next" %}</a>
+                    <a href="?page={{ locations.paginator.num_pages }}">{% translate "last" %} &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    {% else %}
+        <p>{% translate "No locations found." %}</p>
+    {% endif %}
+
+    <p><a href="{% url 'booking_app:admin_dashboard' %}" class="back-link">{% translate "Back to Admin Dashboard" %}</a></p>
+{% endblock content %}

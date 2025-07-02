@@ -1,0 +1,74 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_vehicle_list.html #}
+
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% translate "Manage Vehicles" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Manage Vehicles" %}</h1>
+
+    <p><a href="{% url 'booking_app:vehicle_create' %}" class="btn btn-primary">{% translate "Add New Vehicle" %}</a></p>
+
+    {% if vehicles %}
+        <table>
+            <thead>
+                <tr>
+                    <th>{% translate "Picture" %}</th>
+                    <th>{% translate "License Plate" %}</th>
+                    <th>{% translate "Type" %}</th>
+                    <th>{% translate "Model" %}</th>
+                    <th>{% translate "Available" %}</th>
+                    <th>{% translate "Current Location" %}</th>
+                    <th>{% translate "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vehicle in vehicles %}
+                <tr>
+                    <td>
+                        {% if vehicle.picture %}
+                            <img src="{{ vehicle.picture.url }}" alt="{{ vehicle.license_plate }}" style="width: 80px; height: auto; border-radius: 4px;">
+                        {% else %}
+                            <img src="{% static 'images/no_image.png' %}" alt="No Image" style="width: 80px; height: auto; border-radius: 4px;">
+                        {% endif %}
+                    </td>
+                    <td>{{ vehicle.license_plate }}</td>
+                    <td>{{ vehicle.vehicle_type }}</td>
+                    <td>{{ vehicle.model }}</td>
+                    <td>{% if vehicle.is_available %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}</td>
+                    <td>{{ vehicle.current_location.name|default:_("N/A") }}</td>
+                    <td>
+                    <a href="{% url 'booking_app:admin_vehicle_detail' pk=vehicle.pk %}" class="btn btn-small btn-info">{% translate "Details" %}</a>
+                    <a href="{% url 'booking_app:vehicle_edit' pk=vehicle.pk %}" class="btn btn-small btn-secondary">{% translate "Edit" %}</a>
+                    <a href="{% url 'booking_app:vehicle_delete' pk=vehicle.pk %}" class="btn btn-small btn-danger">{% translate "Delete" %}</a>
+                </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <span class="step-links">
+                {% if vehicles.has_previous %}
+                    <a href="?page=1">&laquo; {% translate "first" %}</a>
+                    <a href="?page={{ vehicles.previous_page_number }}">{% translate "previous" %}</a>
+                {% endif %}
+
+                <span class="current">
+                    {% translate "Page" %} {{ vehicles.number }} of {{ vehicles.paginator.num_pages }}.
+                </span>
+
+                {% if vehicles.has_next %}
+                    <a href="?page={{ vehicles.next_page_number }}">{% translate "next" %}</a>
+                    <a href="?page={{ vehicles.paginator.num_pages }}">{% translate "last" %} &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    {% else %}
+        <p>{% translate "No vehicles found." %}</p>
+    {% endif %}
+
+    <p><a href="{% url 'booking_app:admin_dashboard' %}" class="back-link">{% translate "Back to Admin Dashboard" %}</a></p>
+{% endblock content %}

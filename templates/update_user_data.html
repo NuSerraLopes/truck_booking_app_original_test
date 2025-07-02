@@ -1,0 +1,22 @@
+{# templates/update_user_data.html #}
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Update Your Personal Data" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Update Your Personal Data" %}</h1>
+
+    <div class="form-group"> {# Optional: Wrap in a div for styling #}
+        <label>{% translate "Username" %}:</label>
+        <p>{{ user.username }}</p> {# Display username as plain text #}
+        <small class="form-text text-muted">{% translate "Username cannot be changed." %}</small>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }} {# Renders editable fields: email, first_name, last_name #}
+        <button type="submit" class="btn">{% translate "Update Data" %}</button>
+        <a href="{% url 'booking_app:my_account' %}" class="btn-secondary">{% translate "Cancel" %}</a>
+    </form>
+{% endblock %}

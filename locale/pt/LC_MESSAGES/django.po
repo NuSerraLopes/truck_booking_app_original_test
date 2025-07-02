@@ -1,0 +1,779 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-06-30 16:04+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+#: booking_app/forms.py:8 templates/my_account.html:12
+msgid "Email"
+msgstr ""
+
+#: booking_app/forms.py:14 templates/my_account.html:11
+msgid "Username"
+msgstr ""
+
+#: booking_app/forms.py:15
+msgid "Password"
+msgstr ""
+
+#: booking_app/forms.py:16
+msgid "Confirm Password"
+msgstr ""
+
+#: booking_app/forms.py:19
+msgid "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+msgstr ""
+
+#: booking_app/forms.py:27 booking_app/models.py:44
+#: templates/emails/booking_cancellation_notification.html:28
+#: templates/emails/booking_confirmation.html:28
+#: templates/emails/booking_update_notification.html:28
+msgid "Customer Name"
+msgstr ""
+
+#: booking_app/forms.py:28 booking_app/models.py:45
+#: templates/cancel_booking_confirm.html:14
+#: templates/emails/booking_cancellation_notification.html:29
+#: templates/emails/booking_confirmation.html:29
+#: templates/emails/booking_update_notification.html:29
+#: templates/my_bookings.html:17
+msgid "Origin"
+msgstr ""
+
+#: booking_app/forms.py:29 booking_app/models.py:46
+#: templates/cancel_booking_confirm.html:15
+#: templates/emails/booking_cancellation_notification.html:30
+#: templates/emails/booking_confirmation.html:30
+#: templates/emails/booking_update_notification.html:30
+#: templates/my_bookings.html:18
+msgid "Destination"
+msgstr ""
+
+#: booking_app/forms.py:30 booking_app/models.py:47
+#: templates/cancel_booking_confirm.html:16
+#: templates/emails/booking_cancellation_notification.html:31
+#: templates/emails/booking_confirmation.html:31
+#: templates/emails/booking_update_notification.html:31
+#: templates/my_bookings.html:19
+msgid "Start Time"
+msgstr ""
+
+#: booking_app/forms.py:31 booking_app/models.py:48
+#: templates/cancel_booking_confirm.html:17
+#: templates/emails/booking_cancellation_notification.html:32
+#: templates/emails/booking_confirmation.html:32
+#: templates/emails/booking_update_notification.html:32
+#: templates/my_bookings.html:20
+msgid "End Time"
+msgstr ""
+
+#: booking_app/forms.py:32 booking_app/models.py:49
+#: templates/emails/booking_cancellation_notification.html:33
+#: templates/emails/booking_confirmation.html:33
+#: templates/emails/booking_update_notification.html:33
+#: templates/my_bookings.html:21
+msgid "Estimated Cost"
+msgstr ""
+
+#: booking_app/forms.py:44 booking_app/models.py:64
+#: templates/my_account.html:16
+msgid "Phone Number"
+msgstr ""
+
+#: booking_app/forms.py:45 booking_app/models.py:65
+#: templates/my_account.html:17
+msgid "Address"
+msgstr ""
+
+#: booking_app/models.py:9
+msgid "Available"
+msgstr ""
+
+#: booking_app/models.py:10
+msgid "On Trip"
+msgstr ""
+
+#: booking_app/models.py:11
+msgid "Maintenance"
+msgstr ""
+
+#: booking_app/models.py:12 templates/vehicle_list.html:54
+msgid "Unavailable"
+msgstr ""
+
+#: booking_app/models.py:15
+msgid "Flatbed"
+msgstr ""
+
+#: booking_app/models.py:16
+msgid "Box Truck"
+msgstr ""
+
+#: booking_app/models.py:17
+msgid "Refrigerated"
+msgstr ""
+
+#: booking_app/models.py:18
+msgid "Dump Truck"
+msgstr ""
+
+#: booking_app/models.py:20 templates/cancel_booking_confirm.html:13
+#: templates/emails/booking_cancellation_notification.html:27
+#: templates/emails/booking_confirmation.html:27
+#: templates/emails/booking_update_notification.html:27
+#: templates/my_bookings.html:16 templates/vehicle_list.html:34
+#: templates/update_booking.html:11
+msgid "Truck ID"
+msgstr ""
+
+#: booking_app/models.py:21
+msgid "Truck Type"
+msgstr ""
+
+#: booking_app/models.py:22 templates/vehicle_list.html:36
+msgid "Capacity (Tons)"
+msgstr ""
+
+#: booking_app/models.py:23
+msgid "Current Location"
+msgstr ""
+
+#: booking_app/models.py:24 templates/book_truck.html:14
+#: templates/emails/booking_confirmation.html:40
+#: templates/emails/booking_update_notification.html:40
+#: templates/my_bookings.html:22 templates/vehicle_list.html:38
+msgid "Status"
+msgstr ""
+
+#: booking_app/models.py:25 booking_app/models.py:51
+msgid "Created At"
+msgstr ""
+
+#: booking_app/models.py:26 booking_app/models.py:52
+msgid "Updated At"
+msgstr ""
+
+#: booking_app/models.py:29 booking_app/models.py:43
+msgid "Truck"
+msgstr ""
+
+#: booking_app/models.py:30 templates/base.html:33
+msgid "Trucks"
+msgstr ""
+
+#: booking_app/models.py:37
+msgid "Pending"
+msgstr ""
+
+#: booking_app/models.py:38
+msgid "Confirmed"
+msgstr ""
+
+#: booking_app/models.py:39
+msgid "Completed"
+msgstr ""
+
+#: booking_app/models.py:40
+msgid "Cancelled"
+msgstr ""
+
+#: booking_app/models.py:42 booking_app/models.py:63
+msgid "User"
+msgstr ""
+
+#: booking_app/models.py:50
+msgid "Booking Status"
+msgstr ""
+
+#: booking_app/models.py:55
+msgid "Booking"
+msgstr ""
+
+#: booking_app/models.py:56
+msgid "Bookings"
+msgstr ""
+
+#: booking_app/views.py:30
+msgid "Registration successful and you are now logged in!"
+msgstr ""
+
+#: booking_app/views.py:33
+msgid "Registration failed. Please correct the errors below."
+msgstr ""
+
+#: booking_app/views.py:89
+msgid ""
+"This truck is already booked for the selected time slot. Please choose a "
+"different time or truck."
+msgstr ""
+
+#: booking_app/views.py:92 booking_app/views.py:162
+msgid "Booking start time cannot be in the past."
+msgstr ""
+
+#: booking_app/views.py:96
+msgid "Your booking has been successfully placed!"
+msgstr ""
+
+#: booking_app/views.py:98
+#, python-format
+msgid "Booking Confirmation: Truck %(truck_id)s"
+msgstr ""
+
+#: booking_app/views.py:111
+msgid "A confirmation email has been sent."
+msgstr ""
+
+#: booking_app/views.py:113
+#, python-format
+msgid "Failed to send booking confirmation email: %(error)s"
+msgstr ""
+
+#: booking_app/views.py:116 booking_app/views.py:181 booking_app/views.py:246
+msgid "Please correct the errors below."
+msgstr ""
+
+#: booking_app/views.py:142
+msgid ""
+"This booking cannot be updated as its status is not pending or confirmed."
+msgstr ""
+
+#: booking_app/views.py:159
+msgid ""
+"The updated time slot for this truck overlaps with an existing booking. "
+"Please choose a different time."
+msgstr ""
+
+#: booking_app/views.py:165
+msgid "Your booking has been successfully updated!"
+msgstr ""
+
+#: booking_app/views.py:167
+#, python-format
+msgid "Booking Update: Truck %(truck_id)s"
+msgstr ""
+
+#: booking_app/views.py:176
+msgid "A booking update notification email has been sent."
+msgstr ""
+
+#: booking_app/views.py:178
+#, python-format
+msgid "Failed to send booking update email: %(error)s"
+msgstr ""
+
+#: booking_app/views.py:198
+msgid ""
+"This booking cannot be canceled as its status is not pending or confirmed."
+msgstr ""
+
+#: booking_app/views.py:204
+msgid "Your booking has been successfully canceled."
+msgstr ""
+
+#: booking_app/views.py:206
+#, python-format
+msgid "Booking Cancellation: Truck %(truck_id)s"
+msgstr ""
+
+#: booking_app/views.py:215
+msgid "A cancellation confirmation email has been sent."
+msgstr ""
+
+#: booking_app/views.py:217
+#, python-format
+msgid "Failed to send cancellation email: %(error)s"
+msgstr ""
+
+#: booking_app/views.py:243
+msgid "Your profile has been successfully updated!"
+msgstr ""
+
+#: booking_app/views.py:262
+msgid "You have been successfully logged out."
+msgstr ""
+
+#: templates/base.html:8
+msgid "Truck Booking App"
+msgstr ""
+
+#: templates/base.html:31
+msgid "TruckApp Logo"
+msgstr ""
+
+#: templates/base.html:35 templates/my_bookings.html:5
+#: templates/my_bookings.html:8
+msgid "My Bookings"
+msgstr ""
+
+#: templates/base.html:36 templates/my_account.html:4
+#: templates/my_account.html:7
+msgid "My Account"
+msgstr ""
+
+#: templates/base.html:41
+msgid "Welcome"
+msgstr ""
+
+#: templates/base.html:55
+msgid "Logout"
+msgstr ""
+
+#: templates/base.html:58 templates/registration/register.html:4
+msgid "Register"
+msgstr ""
+
+#: templates/base.html:59 templates/registration/login.html:4
+#: templates/registration/login.html:7 templates/registration/login.html:11
+msgid "Login"
+msgstr ""
+
+#: templates/book_truck.html:4 templates/book_truck.html:7
+msgid "Book Truck"
+msgstr ""
+
+#: templates/book_truck.html:10
+msgid "Truck Details"
+msgstr ""
+
+#: templates/book_truck.html:11 templates/vehicle_list.html:35
+msgid "Type"
+msgstr ""
+
+#: templates/book_truck.html:12
+msgid "Capacity"
+msgstr ""
+
+#: templates/book_truck.html:12
+msgid "Tons"
+msgstr ""
+
+#: templates/book_truck.html:13 templates/vehicle_list.html:37
+msgid "Location"
+msgstr ""
+
+#: templates/book_truck.html:18
+msgid "New Booking Details"
+msgstr ""
+
+#: templates/book_truck.html:22
+msgid "Confirm Booking"
+msgstr ""
+
+#: templates/book_truck.html:23 templates/my_bookings.html:48
+#: templates/registration/password_change_form.html:12
+#: templates/update_booking.html:21 templates/update_profile.html:13
+msgid "Cancel"
+msgstr ""
+
+#: templates/cancel_booking_confirm.html:4
+#: templates/cancel_booking_confirm.html:7
+msgid "Cancel Booking"
+msgstr ""
+
+#: templates/cancel_booking_confirm.html:10
+msgid "Are you sure you want to cancel the following booking?"
+msgstr ""
+
+#: templates/cancel_booking_confirm.html:12
+#: templates/emails/booking_cancellation_notification.html:23
+#: templates/emails/booking_cancellation_notification.html:26
+#: templates/emails/booking_confirmation.html:26
+#: templates/emails/booking_update_notification.html:23
+#: templates/emails/booking_update_notification.html:26
+#: templates/my_bookings.html:15
+msgid "Booking ID"
+msgstr ""
+
+#: templates/cancel_booking_confirm.html:18 templates/update_booking.html:12
+msgid "Current Status"
+msgstr ""
+
+#: templates/cancel_booking_confirm.html:24
+msgid "Yes, Cancel This Booking"
+msgstr ""
+
+#: templates/cancel_booking_confirm.html:25
+msgid "No, Go Back"
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:6
+msgid "Booking Cancellation Confirmation"
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:19
+msgid "TruckApp Booking Cancellation"
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:22
+#: templates/emails/booking_confirmation.html:22
+#: templates/emails/booking_update_notification.html:22
+msgid "Dear"
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:23
+msgid "This email confirms that your booking for Truck ID"
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:23
+msgid "has been successfully cancelled."
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:24
+msgid "Cancelled Booking Details:"
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:37
+#: templates/emails/booking_confirmation.html:37
+#: templates/emails/booking_update_notification.html:37
+#: templates/my_bookings.html:41
+msgid "N/A"
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:40
+msgid "Final Status"
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:42
+msgid ""
+"If you believe this cancellation is an error or have any questions, please "
+"contact us immediately."
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:43
+#: templates/emails/booking_confirmation.html:47
+#: templates/emails/booking_update_notification.html:47
+msgid "Best regards,"
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:43
+#: templates/emails/booking_confirmation.html:47
+#: templates/emails/booking_update_notification.html:47
+msgid "The TruckApp Team"
+msgstr ""
+
+#: templates/emails/booking_cancellation_notification.html:46
+#: templates/emails/booking_confirmation.html:50
+#: templates/emails/booking_update_notification.html:50
+msgid "This is an automated email, please do not reply."
+msgstr ""
+
+#: templates/emails/booking_confirmation.html:6
+msgid "Booking Confirmation"
+msgstr ""
+
+#: templates/emails/booking_confirmation.html:19
+msgid "TruckApp Booking Confirmation"
+msgstr ""
+
+#: templates/emails/booking_confirmation.html:23
+msgid "Your booking has been successfully confirmed!"
+msgstr ""
+
+#: templates/emails/booking_confirmation.html:24
+msgid "Here are your booking details:"
+msgstr ""
+
+#: templates/emails/booking_confirmation.html:42
+msgid "You can view and manage your bookings by logging into your account:"
+msgstr ""
+
+#: templates/emails/booking_confirmation.html:44
+#: templates/emails/booking_update_notification.html:44
+msgid "View My Bookings"
+msgstr ""
+
+#: templates/emails/booking_confirmation.html:46
+msgid "Thank you for choosing TruckApp!"
+msgstr ""
+
+#: templates/emails/booking_update_notification.html:6
+msgid "Booking Update Notification"
+msgstr ""
+
+#: templates/emails/booking_update_notification.html:19
+msgid "TruckApp Booking Update"
+msgstr ""
+
+#: templates/emails/booking_update_notification.html:23
+msgid "Your booking for Truck ID"
+msgstr ""
+
+#: templates/emails/booking_update_notification.html:23
+msgid "has been updated."
+msgstr ""
+
+#: templates/emails/booking_update_notification.html:24
+msgid "Here are the revised booking details:"
+msgstr ""
+
+#: templates/emails/booking_update_notification.html:42
+msgid ""
+"You can review your updated booking details by logging into your account:"
+msgstr ""
+
+#: templates/emails/booking_update_notification.html:46
+msgid "If you have any questions, please do not hesitate to contact us."
+msgstr ""
+
+#: templates/home.html:5
+msgid "Home"
+msgstr ""
+
+#: templates/home.html:8
+msgid "Welcome to TruckApp!"
+msgstr ""
+
+#: templates/home.html:9
+msgid "Your reliable partner for efficient and timely truck bookings."
+msgstr ""
+
+#: templates/home.html:10
+msgid ""
+"Find the right truck for your needs, manage your bookings, and get your "
+"goods moving."
+msgstr ""
+
+#: templates/home.html:12
+msgid "Browse Available Trucks"
+msgstr ""
+
+#: templates/home.html:14
+msgid "Register Now"
+msgstr ""
+
+#: templates/my_account.html:10
+msgid "Account Information"
+msgstr ""
+
+#: templates/my_account.html:13
+msgid "Joined"
+msgstr ""
+
+#: templates/my_account.html:15
+msgid "Profile Details"
+msgstr ""
+
+#: templates/my_account.html:21
+msgid "Account Actions"
+msgstr ""
+
+#: templates/my_account.html:22
+#: templates/registration/password_change_form.html:4
+#: templates/registration/password_change_form.html:11
+msgid "Change Password"
+msgstr ""
+
+#: templates/my_account.html:23
+msgid "Edit Profile"
+msgstr ""
+
+#: templates/my_bookings.html:23 templates/vehicle_list.html:39
+msgid "Actions"
+msgstr ""
+
+#: templates/my_bookings.html:47
+msgid "Update"
+msgstr ""
+
+#: templates/my_bookings.html:50
+msgid "No Actions"
+msgstr ""
+
+#: templates/my_bookings.html:59
+msgid "You have no bookings yet."
+msgstr ""
+
+#: templates/my_bookings.html:60
+msgid "Browse Trucks to Book"
+msgstr ""
+
+#: templates/registration/login.html:14
+msgid "Forgot password?"
+msgstr ""
+
+#: templates/registration/login.html:17
+msgid "Don't have an account?"
+msgstr ""
+
+#: templates/registration/login.html:17
+msgid "Register Here"
+msgstr ""
+
+#: templates/registration/password_change_done.html:4
+msgid "Password Changed"
+msgstr ""
+
+#: templates/registration/password_change_done.html:7
+msgid "Password Changed Successfully!"
+msgstr ""
+
+#: templates/registration/password_change_done.html:8
+msgid ""
+"Your password has been changed. You can now log in with your new password."
+msgstr ""
+
+#: templates/registration/password_change_done.html:9
+#: templates/registration/password_reset_complete.html:9
+msgid "Log in"
+msgstr ""
+
+#: templates/registration/password_change_form.html:7
+msgid "Change Your Password"
+msgstr ""
+
+#: templates/registration/password_reset_complete.html:4
+#: templates/registration/password_reset_complete.html:7
+msgid "Password Reset Complete"
+msgstr ""
+
+#: templates/registration/password_reset_complete.html:8
+msgid "Your password has been set. You may now log in with it."
+msgstr ""
+
+#: templates/registration/password_reset_confirm.html:4
+msgid "Enter New Password"
+msgstr ""
+
+#: templates/registration/password_reset_confirm.html:7
+msgid "Set a New Password"
+msgstr ""
+
+#: templates/registration/password_reset_confirm.html:9
+msgid ""
+"Please enter your new password twice so we can verify you typed it correctly."
+msgstr ""
+
+#: templates/registration/password_reset_confirm.html:13
+msgid "Change My Password"
+msgstr ""
+
+#: templates/registration/password_reset_confirm.html:16
+msgid ""
+"The password reset link was invalid, possibly because it has already been "
+"used. Please request a new password reset."
+msgstr ""
+
+#: templates/registration/password_reset_confirm.html:17
+msgid "Request New Password Reset"
+msgstr ""
+
+#: templates/registration/password_reset_done.html:7
+msgid "Password Reset Email Sent"
+msgstr ""
+
+#: templates/registration/password_reset_done.html:8
+msgid ""
+"We've emailed you instructions for setting your password, if an account "
+"exists with the email you entered. You should receive them shortly."
+msgstr ""
+
+#: templates/registration/password_reset_done.html:9
+msgid ""
+"If you don't receive an email, please make sure you've entered the address "
+"you registered with, and check your spam folder."
+msgstr ""
+
+#: templates/registration/password_reset_done.html:10
+msgid "Return to Login"
+msgstr ""
+
+#: templates/registration/password_reset_form.html:4
+msgid "Reset Password"
+msgstr ""
+
+#: templates/registration/password_reset_form.html:7
+msgid "Reset Your Password"
+msgstr ""
+
+#: templates/registration/password_reset_form.html:8
+msgid ""
+"Forgotten your password? Enter your email address below, and we'll email you "
+"instructions for setting a new one."
+msgstr ""
+
+#: templates/registration/password_reset_form.html:12
+msgid "Reset My Password"
+msgstr ""
+
+#: templates/registration/register.html:7
+msgid "Register for TruckApp"
+msgstr ""
+
+#: templates/registration/register.html:11
+msgid "Create Account"
+msgstr ""
+
+#: templates/registration/register.html:14
+msgid "Already have an account?"
+msgstr ""
+
+#: templates/registration/register.html:14
+msgid "Login Here"
+msgstr ""
+
+#: templates/vehicle_list.html:4 templates/vehicle_list.html:7
+msgid "Available Trucks"
+msgstr ""
+
+#: templates/vehicle_list.html:11
+msgid "Search by ID or Location..."
+msgstr ""
+
+#: templates/vehicle_list.html:13
+msgid "All Truck Types"
+msgstr ""
+
+#: templates/vehicle_list.html:19
+msgid "All Statuses"
+msgstr ""
+
+#: templates/vehicle_list.html:24
+msgid "Apply Filters"
+msgstr ""
+
+#: templates/vehicle_list.html:25
+msgid "Clear Filters"
+msgstr ""
+
+#: templates/vehicle_list.html:52
+msgid "Book Now"
+msgstr ""
+
+#: templates/vehicle_list.html:63
+msgid "No trucks found matching your criteria."
+msgstr ""
+
+#: templates/update_booking.html:4 templates/update_booking.html:7
+#: templates/update_booking.html:20
+msgid "Update Booking"
+msgstr ""
+
+#: templates/update_booking.html:10
+msgid "Current Booking Details"
+msgstr ""
+
+#: templates/update_booking.html:16
+msgid "Modify Booking Information"
+msgstr ""
+
+#: templates/update_profile.html:4 templates/update_profile.html:12
+msgid "Update Profile"
+msgstr ""
+
+#: templates/update_profile.html:7
+msgid "Update Your Profile"
+msgstr ""

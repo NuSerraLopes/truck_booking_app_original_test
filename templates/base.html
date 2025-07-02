@@ -1,0 +1,75 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% translate "Truck Booking App" %}{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/ico">
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-left">
+            <a href="{% url 'booking_app:home' %}">
+                <img src="{% static 'images/Logo.svg' %}" alt="{% translate 'TruckApp Logo' %}" class="navbar-logo"> {# Added class for logo sizing if needed #}
+            </a>
+            <a href="{% url 'booking_app:vehicle_list' %}">{% translate "Trucks" %}</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'booking_app:my_bookings' %}">{% translate "My Bookings" %}</a>
+                <a href="{% url 'booking_app:my_account' %}">{% translate "My Account" %}</a>
+                {% if user.is_admin_member %}
+                    <a href="{% url 'booking_app:admin_dashboard' %}">{% translate "Admin Dashboard" %}</a>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="nav-right">
+            {% if user.is_authenticated %}
+                <span>{% translate "Welcome" %}, {{ user.username }}!</span>
+                <form action="{% url 'booking_app:logout_user' %}" method="post" class="inline-form"> {# Added class #}
+                    {% csrf_token %}
+                    <button type="submit" class="logout-button">{% translate "Logout" %}</button> {# Replaced inline style with class #}
+                </form>
+            {% else %}
+                <a href="{% url 'booking_app:login_user' %}">{% translate "Login" %}</a>
+            {% endif %}
+            <div class="language-selector"> {# Removed inline style #}
+                {# English Flag #}
+                <form action="{% url 'set_language' %}" method="post" class="inline-form"> {# Added class #}
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <input type="hidden" name="language" value="en">
+                    <button type="submit" class="flag-button"> {# Added class #}
+                        <img src="{% static 'flags/uk.png' %}" alt="English" class="flag-icon"> {# Added class #}
+                    </button>
+                </form>
+
+                {# Portuguese Flag #}
+                <form action="{% url 'set_language' %}" method="post" class="inline-form"> {# Added class #}
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    <input type="hidden" name="language" value="pt">
+                    <button type="submit" class="flag-button"> {# Added class #}
+                        <img src="{% static 'flags/pt.png' %}" alt="Português" class="flag-icon"> {# Added class #}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# --- Django Messages Display --- #}
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

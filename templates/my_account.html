@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load i18n %} {# Load Django's internationalization tags #}
+
+{% block title %}{% translate "My Account" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "My Account" %}</h1>
+
+    <div class="user-details">
+        <h2>{% translate "Personal Information" %}</h2>
+        <p><strong>{% translate "Username" %}:</strong> {{ user.username }}</p>
+        <p><strong>{% translate "Email" %}:</strong> {{ user.email }}</p>
+        {% if user.first_name %}
+            <p><strong>{% translate "First Name" %}:</strong> {{ user.first_name }}</p>
+        {% endif %}
+        {% if user.last_name %}
+            <p><strong>{% translate "Last Name" %}:</strong> {{ user.last_name }}</p>
+        {% endif %}
+        {% if user.phone_number %}
+            <p><strong>{% translate "Phone Number" %}:</strong> {{ user.phone_number }}</p>
+        {% endif %}
+        {# Add other basic user fields from your User model here if needed, e.g.: #}
+        {% comment %}
+        {% if user.address %}
+            <p><strong>{% translate "Address" %}:</strong> {{ user.address }}</p>
+        {% endif %}
+        {% if user.city %}
+            <p><strong>{% translate "City" %}:</strong> {{ user.city }}</p>
+        {% endif %}
+        {% if user.country %}
+            <p><strong>{% translate "Country" %}:</strong> {{ user.country }}</p>
+        {% endif %}
+        {% endcomment %}
+    </div>
+
+    <div class="account-actions">
+        <h2>{% translate "Account Actions" %}</h2>
+        <p>
+            <a href="{% url 'booking_app:update_user_data' %}" class="btn">{% translate "Update Personal Data" %}</a>
+            <a href="{% url 'booking_app:change_password' %}" class="btn">{% translate "Change Password" %}</a>
+        </p>
+    </div>
+
+    <div class="my-bookings">
+        <h2>{% translate "My Bookings" %}</h2>
+
+        {% if bookings %}
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>{% translate "Booking ID" %}</th>
+                            <th>{% translate "Vehicle" %}</th>
+                            <th>{% translate "Start Date" %}</th>
+                            <th>{% translate "End Date" %}</th>
+                            <th>{% translate "Start Location" %}</th>
+                            <th>{% translate "End Location" %}</th>
+                            <th>{% translate "Status" %}</th>
+                            <th>{% translate "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                            <tr>
+                                <td>{{ booking.id }}</td>
+                                <td>{{ booking.vehicle.model }} ({{ booking.vehicle.license_plate }})</td>
+                                <td>{{ booking.start_date|date:"SHORT_DATE_FORMAT" }}</td> {# Uses locale-specific date format #}
+                                <td>{{ booking.end_date|date:"SHORT_DATE_FORMAT" }}</td>
+                                <td>{{ booking.start_location.name }}</td>
+                                <td>{{ booking.end_location.name }}</td>
+                                <td>{{ booking.status }}</td>
+                                <td>
+                                    {# Add links for updating/cancelling bookings here #}
+                                    <a href="{% url 'booking_app:update_booking' booking.id %}" class="btn-small">{% translate "Update" %}</a>
+                                    <a href="{% url 'booking_app:cancel_booking_confirm' booking.id %}" class="btn-small btn-danger">{% translate "Cancel" %}</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p>{% translate "You have no bookings yet." %}</p>
+            <p><a href="{% url 'booking_app:vehicle_list' %}" class="btn">{% translate "Browse Available Trucks" %}</a></p>
+        {% endif %}
+    </div>
+{% endblock %}

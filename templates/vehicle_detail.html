@@ -1,0 +1,63 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\vehicle_detail.html #}
+
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ vehicle.model }} ({{ vehicle.license_plate }}){% endblock %}
+
+{% block content %}
+<div class="container my-4">
+    <h1 class="mb-4">{% translate "Vehicle Details" %} - {{ vehicle.model }} ({{ vehicle.license_plate }})</h1>
+
+    <div class="row">
+
+        {# Column for the Vehicle Picture (Left Side) #}
+        {% if vehicle.picture %}
+            <div class="col-md-6 col-lg-5 mb-3">
+                <img src="{{ vehicle.picture.url }}" class="img-fluid rounded shadow-sm" alt="{{ vehicle.model }} ({{ vehicle.license_plate }})">
+            </div>
+        {% else %}
+            <div class="col-md-6 col-lg-5 mb-3">
+                <div class="card p-3 text-center bg-light text-muted d-flex align-items-center justify-content-center" style="height: 250px;">
+                    <i class="bi bi-image" style="font-size: 4rem;"></i>
+                    <p class="mt-2 mb-0">{% translate "No Image Available" %}</p>
+                </div>
+            </div>
+        {% endif %}
+
+        {# Column for Vehicle Details Text (Right Side) #}
+        <div class="col-md-6 col-lg-7 mb-3">
+            <div class="card p-4 h-100">
+                <h2 class="card-title">{{ vehicle.model }}</h2>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>{% translate "License Plate" %}:</strong> {{ vehicle.license_plate }}</li>
+                    <li class="list-group-item"><strong>{% translate "Vehicle Type" %}:</strong> {{ vehicle.get_vehicle_type_display }}</li>
+                    {# UPDATED AVAILABILITY DISPLAY #}
+                    <li class="list-group-item">
+                        <strong>{% translate "Availability" %}:</strong>
+                        {% if next_available_date is None %}
+                            <span class="badge bg-success">{% translate "Available Now" %}</span>
+                        {% else %}
+                            <span class="badge bg-info text-dark">
+                                {% translate "Next Available" %}: {{ next_available_date|date:"F d, Y" }}
+                            </span>
+                        {% endif %}
+                    </li>
+                    {% if vehicle.current_location %}
+                        <li class="list-group-item"><strong>{% translate "Current Location" %}:</strong> {{ vehicle.current_location.name }}</li>
+                    {% else %}
+                        <li class="list-group-item"><strong>{% translate "Current Location" %}:</strong> {% translate "Not Set" %}</li>
+                    {% endif %}
+                </ul>
+                <div class="mt-4">
+                    <a href="{% url 'booking_app:vehicle_list' %}" class="btn btn-secondary me-2">{% translate "Back to Vehicle List" %}</a>
+
+                    {# "Book Now" Button - Always Showing #}
+                    <a href="{% url 'booking_app:book_vehicle' vehicle_pk=vehicle.pk %}" class="btn btn-primary">{% translate "Book Now" %}</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock content %}

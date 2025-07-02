@@ -1,0 +1,14 @@
+{# truck_booking_app/templates/home.html #}
+{% extends 'base.html' %}
+{% load i18n %} {# <-- ADD THIS LINE #}
+
+{% block title %}{% translate "Home" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Welcome to TruckApp!" %}</h1>
+    <p>{% translate "Your reliable partner for efficient and timely truck bookings." %}</p>
+    <p>{% translate "Find the right truck for your needs, manage your bookings, and get your goods moving." %}</p>
+    <div class="call-to-action">
+        <a href="{% url 'booking_app:vehicle_list' %}" class="btn">{% translate "Browse Available Trucks" %}</a>
+    </div>
+{% endblock %}

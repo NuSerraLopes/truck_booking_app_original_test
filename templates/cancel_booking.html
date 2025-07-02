@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load i18n %} {# ADD THIS LINE #}
+
+{% block title %}{% translate "Cancel Booking" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Cancel Booking" %}: {{ booking.pk }}</h1>
+
+    <div class="booking-details card">
+        <p>{% translate "Are you sure you want to cancel the following booking?" %}</p>
+        <ul>
+            <li><strong>{% translate "Booking ID" %}:</strong> {{ booking.pk }}</li>
+            <li><strong>{% translate "Truck ID" %}:</strong> {{ booking.truck.truck_id }}</li>
+            <li><strong>{% translate "Origin" %}:</strong> {{ booking.origin }}</li>
+            <li><strong>{% translate "Destination" %}:</strong> {{ booking.destination }}</li>
+            <li><strong>{% translate "Start Time" %}:</strong> {{ booking.start_time|date:"Y-m-d H:i" }}</li>
+            <li><strong>{% translate "End Time" %}:</strong> {{ booking.end_time|date:"Y-m-d H:i" }}</li>
+            <li><strong>{% translate "Current Status" %}:</strong> {% translate booking.get_booking_status_display %}</li>
+        </ul>
+    </div>
+
+    <form method="post" class="card">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">{% translate "Yes, Cancel This Booking" %}</button>
+        <a href="{% url 'booking_app:my_bookings' %}" class="btn-secondary">{% translate "No, Go Back" %}</a>
+    </form>
+{% endblock %}

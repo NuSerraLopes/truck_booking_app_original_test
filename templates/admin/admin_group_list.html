@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Manage Groups" %}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>{% trans "Manage Groups" %}</h1>
+
+    <div class="dashboard-section">
+        <p><a href="{% url 'booking_app:admin_group_create' %}" class="btn btn-primary">{% trans "Create New Group" %}</a></p>
+    </div>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if groups %}
+        <table>
+            <thead>
+                <tr>
+                    <th>{% trans "Group Name" %}</th>
+                    <th>{% trans "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in groups %}
+                <tr>
+                    <td>{{ group.name }}</td>
+                    <td class="action-buttons">
+                        <a href="{% url 'booking_app:admin_group_edit' pk=group.pk %}" class="btn btn-info btn-small">{% trans "Edit" %}</a>
+                        <a href="{% url 'booking_app:admin_group_delete' pk=group.pk %}" class="btn btn-danger btn-small">{% trans "Delete" %}</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <span class="step-links">
+                {% if groups.has_previous %}
+                    <a href="?page=1">&laquo; {% trans "first" %}</a>
+                    <a href="?page={{ groups.previous_page_number }}">{% trans "previous" %}</a>
+                {% endif %}
+
+                <span class="current">
+                    {% trans "Page" %} {{ groups.number }} {% trans "of" %} {{ groups.paginator.num_pages }}.
+                </span>
+
+                {% if groups.has_next %}
+                    <a href="?page={{ groups.next_page_number }}">{% trans "next" %}</a>
+                    <a href="?page={{ groups.paginator.num_pages }}">{% trans "last" %} &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    {% else %}
+        <p>{% trans "No groups found." %}</p>
+    {% endif %}
+
+    <a href="{% url 'booking_app:admin_dashboard' %}" class="back-link">{% trans "Back to Admin Dashboard" %}</a>
+</div>
+{% endblock %}

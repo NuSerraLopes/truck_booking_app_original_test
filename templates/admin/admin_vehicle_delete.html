@@ -1,0 +1,18 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_vehicle_delete.html #}
+
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+    <h1>{{ page_title }}</h1>
+
+    <p>{% translate "Are you sure you want to delete the vehicle:" %} <strong>{{ vehicle_obj.license_plate }} ({{ vehicle_obj.model }})</strong>?</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">{% translate "Yes, Delete" %}</button>
+        <a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-secondary">{% translate "Cancel" %}</a>
+    </form>
+{% endblock content %}

@@ -1,0 +1,75 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\my_bookings.html #}
+
+{% extends 'base.html' %}
+{% load i18n %}
+{% load humanize %}
+
+{% block title %}{% translate "My Bookings" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "My Bookings" %}</h1>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if bookings %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>{% translate 'Booking ID' %}</th>
+                        <th>{% translate 'Vehicle Model' %}</th>
+                        <th>{% translate 'License Plate' %}</th>
+                        <th>{% translate 'Start Location' %}</th>
+                        <th>{% translate 'End Location' %}</th>
+                        <th>{% translate 'Start Date' %}</th>
+                        <th>{% translate 'End Date' %}</th>
+                        <th>{% translate 'Estimated Cost' %}</th>
+                        <th>{% translate 'Status' %}</th> {# This is the header #}
+                        <th>{% translate 'Actions' %}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                    <tr>
+                        <td>{{ booking.pk }}</td>
+                        <td>{{ booking.vehicle.model }}</td>
+                        <td>{{ booking.vehicle.license_plate }}</td>
+                        <td>{{ booking.start_location.name }}</td>
+                        <td>{{ booking.end_location.name }}</td>
+                        <td>{{ booking.start_date|date:"Y-m-d" }}</td>
+                        <td>{{ booking.end_date|date:"Y-m-d" }}</td>
+                        <td>
+                            {% if booking.estimated_cost %}
+                                ${{ booking.estimated_cost|floatformat:2 }}
+                            {% else %}
+                                {% translate 'N/A' %}
+                            {% endif %}
+                        </td>
+                        {# This is the data cell for status #}
+                        <td>{% translate booking.get_status_display %}</td>
+                        <td>
+                            <div class="action-buttons">
+                                {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                                    <a href="{% url 'booking_app:update_booking' booking.pk %}" class="btn btn-small btn-primary">{% translate 'Update' %}</a>
+                                    <a href="{% url 'booking_app:cancel_booking' booking.pk %}" class="btn btn-small btn-danger">{% translate 'Cancel' %}</a>
+                                {% else %}
+                                    <span class="text-muted">{% translate 'No Actions' %}</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p class="info-message">{% translate "You have no bookings yet." %}</p>
+        <p><a href="{% url 'booking_app:vehicle_list' %}" class="btn">{% translate "Browse Vehicles to Book" %}</a></p>
+    {% endif %}
+{% endblock %}

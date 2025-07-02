@@ -1,0 +1,35 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_location_create.html #}
+
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Create New Location" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Create New Location" %}</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+
+        {% for field in form %}
+            <div>
+                <label for="{{ field.id_for_label }}">{% translate field.label %}:</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <span class="helptext">{% translate field.help_text %}</span>
+                {% endif %}
+                {% if field.errors %}
+                    <ul class="errorlist">
+                        {% for error in field.errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <button type="submit">{% translate "Create Location" %}</button>
+    </form>
+    <p><a href="{% url 'booking_app:admin_dashboard' %}" class="back-link">{% translate "Back to Admin Dashboard" %}</a></p>
+{% endblock content %}

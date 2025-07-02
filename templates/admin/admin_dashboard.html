@@ -1,0 +1,36 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_dashboard.html #}
+
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Admin Dashboard" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Admin Dashboard" %}</h1>
+
+    <div class="admin-links">
+        <div class="admin-link-card">
+            <h2>{% translate "User Management" %}</h2>
+            <p><a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-primary">{% translate "View All Users" %}</a></p>
+            <p><a href="{% url 'booking_app:admin_user_create' %}" class="btn btn-primary">{% translate "Create New User" %}</a></p>
+        </div>
+
+        <div class="admin-link-card">
+            <h2>{% translate "Vehicle Management" %}</h2>
+            <p><a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-primary">{% translate "View All Vehicles" %}</a></p> {# This is the important link #}
+            <p><a href="{% url 'booking_app:admin_vehicle_create' %}" class="btn btn-primary">{% translate "Add New Vehicle" %}</a></p>
+        </div>
+
+        <div class="admin-link-card">
+            <h2>{% translate "Location Management" %}</h2>
+            <p><a href="{% url 'booking_app:admin_location_list' %}" class="btn btn-primary">{% translate "View All Locations" %}</a></p>
+            <p><a href="{% url 'booking_app:admin_location_create' %}" class="btn btn-primary">{% translate "Add New Location" %}</a></p>
+        </div>
+
+        <div class="admin-link-card">
+            <h2>{% translate "Groups" %}</h2>
+            <p><a href="{% url 'booking_app:admin_group_list' %}" class="btn btn-primary">{% trans "Manage Groups" %}</a></p>
+            <p><a href="{% url 'booking_app:admin_group_create' %}" class="btn btn-primary">{% trans "Add New Group" %}</a></p>
+        </div>
+    </div>
+{% endblock content %}

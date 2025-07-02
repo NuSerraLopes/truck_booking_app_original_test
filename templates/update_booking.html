@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load i18n %} {# ADD THIS LINE #}
+
+{% block title %}{% translate "Update Booking" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Update Booking" %}: {{ booking.pk }}</h1>
+
+    <div class="booking-details card">
+        <h2>{% translate "Current Booking Details" %}</h2>
+        <p><strong>{% translate "Truck ID" %}:</strong> {{ booking.truck.truck_id }}</p>
+        <p><strong>{% translate "Current Status" %}:</strong> {% translate booking.get_booking_status_display %}</p>
+    </div>
+
+    <div class="booking-form card">
+        <h2>{% translate "Modify Booking Information" %}</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn">{% translate "Update Booking" %}</button>
+            <a href="{% url 'booking_app:my_bookings' %}" class="btn-secondary">{% translate "Cancel" %}</a>
+        </form>
+    </div>
+{% endblock %}

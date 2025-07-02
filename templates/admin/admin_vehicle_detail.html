@@ -1,0 +1,34 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\vehicle_detail.html #}
+
+{% extends 'base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% translate "Vehicle Details" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Admin Vehicle Details" %}</h1>
+
+    <div class="vehicle-detail-card">
+        {% if vehicle.picture %}
+            <img src="{{ vehicle.picture.url }}" alt="{{ vehicle.license_plate }}" class="vehicle-detail-img">
+        {% else %}
+            <img src="{% static 'images/no_image.png' %}" alt="No Image" class="vehicle-detail-img">
+        {% endif %}
+
+        {# UPDATED: Relevant Data Only (Daily Rate removed) #}
+        <div class="detail-info">
+            <p><strong>{% translate "License Plate:" %}</strong> {{ vehicle.license_plate }}</p>
+            <p><strong>{% translate "Type:" %}</strong> {{ vehicle.vehicle_type }}</p>
+            <p><strong>{% translate "Model:" %}</strong> {{ vehicle.model }}</p>
+            <p><strong>{% translate "Available:" %}</strong> {% if vehicle.is_available %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}</p>
+            <p><strong>{% translate "Current Location:" %}</strong> {{ vehicle.current_location.name|default:_("N/A") }}</p>
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{% url 'booking_app:vehicle_edit' pk=vehicle.pk %}" class="btn btn-primary">{% translate "Edit" %}</a>
+        <a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-secondary">{% translate "Back to Admin Vehicle List" %}</a>
+    </div>
+
+{% endblock content %}

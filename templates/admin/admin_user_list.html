@@ -1,0 +1,67 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_user_list.html #}
+
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Manage Users" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Manage Users" %}</h1>
+
+    <p><a href="{% url 'booking_app:admin_user_create' %}" class="btn btn-primary">{% translate "Create New User" %}</a></p>
+
+    {% if users %}
+        <table>
+            <thead>
+                <tr>
+                    <th>{% translate "Username" %}</th>
+                    <th>{% translate "Email" %}</th>
+                    <th>{% translate "First Name" %}</th>
+                    <th>{% translate "Last Name" %}</th>
+                    <th>{% translate "Phone" %}</th>
+                    <th>{% translate "Is Active" %}</th>
+                    <th>{% translate "Actions" %}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user_obj in users %}
+                <tr>
+                    <td>{{ user_obj.username }}</td>
+                    <td>{{ user_obj.email }}</td>
+                    <td>{{ user_obj.first_name }}</td>
+                    <td>{{ user_obj.last_name }}</td>
+                    <td>{{ user_obj.phone_number|default:_("N/A") }}</td>
+                    <td>{% if user_obj.is_active %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}</td>
+                    <td class="action-buttons">
+                        <a href="{% url 'booking_app:admin_user_edit' pk=user_obj.pk %}" class="btn btn-small btn-secondary">{% translate "Edit" %}</a>
+                        <a href="#" class="btn btn-small btn-danger">{% translate "Delete" %}</a> {# Placeholder for future delete #}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <span class="step-links">
+                {% if users.has_previous %}
+                    <a href="?page=1">&laquo; {% translate "first" %}</a>
+                    <a href="?page={{ users.previous_page_number }}">{% translate "previous" %}</a>
+                {% endif %}
+
+                <span class="current">
+                    {% translate "Page" %} {{ users.number }} of {{ users.paginator.num_pages }}.
+                </span>
+
+                {% if users.has_next %}
+                    <a href="?page={{ users.next_page_number }}">{% translate "next" %}</a>
+                    <a href="?page={{ users.paginator.num_pages }}">{% translate "last" %} &raquo;</a>
+                </a>
+                {% endif %}
+            </span>
+        </div>
+    {% else %}
+        <p>{% translate "No users found." %}</p>
+    {% endif %}
+
+    <p><a href="{% url 'booking_app:admin_dashboard' %}" class="back-link">{% translate "Back to Admin Dashboard" %}</a></p>
+{% endblock content %}

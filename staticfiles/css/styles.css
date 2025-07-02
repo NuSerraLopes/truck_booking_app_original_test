@@ -1,0 +1,286 @@
+/* truck_booking_app/static/css/styles.css */
+
+/* Define Color Palette using CSS Variables for easy management */
+:root {
+    --brand-blue: #1554ff;
+    --white: #ffffff;
+    --text-color: #333; /* Dark grey for general text */
+    --background-color: #f4f4f4; /* Light grey background */
+    --border-color: #ddd; /* Light grey for borders */
+    --light-grey-bg: #f9f9f9; /* Slightly darker grey for some backgrounds */
+    --dark-grey-button: #6c757d; /* For secondary buttons */
+    --hover-blue: #0056b3; /* Darker blue for hover states */
+    --hover-dark-grey: #5a6268; /* Darker grey for secondary button hover */
+
+    /* Message colors (unchanged from previous) */
+    --success-bg: #d4edda;
+    --success-text: #155724;
+    --success-border: #c3e6cb;
+    --error-bg: #f8d7da;
+    --error-text: #721c24;
+    --error-border: #f5c6cb;
+    --info-bg: #d1ecf1;
+    --info-text: #0c5460;
+    --info-border: #bee5eb;
+    --warning-bg: #fff3cd;
+    --warning-text: #856404;
+    --warning-border: #ffeeba;
+}
+
+/* --- Typeface: Gill Sans MT, Gill Sans, sans-serif --- */
+/* Gill Sans MT is a system font that might be available.
+   Gill Sans is the preferred font but requires commercial licensing/web fonts.
+   sans-serif is a generic fallback. */
+body {
+    font-family: "Gill Sans MT", "Gill Sans", sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+
+/* Usage Rules: Headlines must always use Light and Semibold weights together */
+/* This implies you might style different parts of a headline.
+   For simple H1, H2, H3, we'll assign primary weights. */
+h1 {
+    font-weight: 300; /* Light for main titles */
+    color: var(--text-color);
+    margin-bottom: 20px;
+}
+h2 {
+    font-weight: 600; /* Semibold for section titles */
+    color: var(--text-color);
+    margin-bottom: 15px;
+}
+h3 {
+    font-weight: 300; /* Light for sub-headings like "Filter Trucks" */
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+/* Body Text or Paragraphs must always use the Regular weight */
+p, li, span, div, label, table td, .pagination a, .pagination span {
+    font-weight: 400; /* Regular */
+}
+
+/* The italic version of these weights are allowed only for technical terms or words in a different language. */
+em, i {
+    font-style: italic;
+}
+
+/* --- Color Palette & General Layout --- */
+.navbar {
+    background-color: var(--brand-blue); /* Apply brand blue */
+    color: var(--white);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.navbar a {
+    color: var(--white);
+    text-decoration: none;
+    margin: 0 10px;
+    font-weight: 600; /* Semibold for navigation links */
+}
+.navbar a:hover {
+    text-decoration: underline;
+}
+.navbar .nav-left, .navbar .nav-right {
+    display: flex;
+    align-items: center;
+}
+.navbar .nav-right span {
+    margin-right: 10px;
+    font-weight: 400; /* Regular for welcome message */
+}
+.container {
+    max-width: 960px;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: var(--white);
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Form Elements */
+form p {
+    margin-bottom: 15px;
+}
+form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600; /* Semibold for form labels */
+}
+form input[type="text"],
+form input[type="email"],
+form input[type="password"],
+form input[type="number"],
+form input[type="datetime-local"],
+form select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-weight: 400; /* Regular for input text */
+}
+form input[type="submit"],
+button[type="submit"] {
+    background-color: var(--brand-blue); /* Apply brand blue */
+    color: var(--white);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600; /* Semibold for buttons */
+    transition: background-color 0.3s ease;
+}
+form input[type="submit"]:hover,
+button[type="submit"]:hover {
+    background-color: var(--hover-blue); /* Darker blue on hover */
+}
+
+/* Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+table th, table td {
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    text-align: left;
+}
+table th {
+    background-color: var(--light-grey-bg);
+    font-weight: 600; /* Semibold for table headers */
+}
+table a {
+    color: var(--brand-blue); /* Apply brand blue for table links */
+    text-decoration: none;
+}
+table a:hover {
+    text-decoration: underline;
+}
+
+/* Action Buttons (Danger and Secondary) */
+.btn-danger {
+    background-color: #dc3545; /* Specific red for danger, you can define a variable if this is also branded */
+    color: var(--white);
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600; /* Semibold */
+    transition: background-color 0.3s ease;
+}
+.btn-danger:hover {
+    background-color: #c82333;
+}
+.btn-secondary {
+    background-color: var(--dark-grey-button); /* Apply dark grey */
+    color: var(--white);
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600; /* Semibold */
+    transition: background-color 0.3s ease;
+}
+.btn-secondary:hover {
+    background-color: var(--hover-dark-grey); /* Darker grey on hover */
+}
+
+/* Form Validation Errors */
+.errorlist {
+    color: var(--error-text);
+    list-style-type: none;
+    padding: 0;
+    margin-bottom: 10px;
+    font-weight: 400; /* Regular */
+}
+.errorlist li {
+    margin-bottom: 5px;
+}
+
+/* Pagination */
+.pagination a, .pagination span {
+    display: inline-block;
+    padding: 8px 12px;
+    margin: 0 4px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    text-decoration: none;
+    color: var(--brand-blue); /* Brand blue for pagination links */
+}
+.pagination a:hover {
+    background-color: var(--light-grey-bg);
+}
+.pagination .current {
+    background-color: var(--brand-blue); /* Brand blue for current page */
+    color: var(--white);
+    border-color: var(--brand-blue);
+    font-weight: 600; /* Semibold for current page number */
+}
+
+/* --- Styles for Django Messages --- */
+.messages {
+    list-style-type: none;
+    padding: 0;
+    margin: 20px 0;
+}
+.messages li {
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    font-weight: 600; /* Messages are important, use Semibold */
+    border: 1px solid transparent;
+}
+.messages li.success {
+    background-color: var(--success-bg);
+    color: var(--success-text);
+    border-color: var(--success-border);
+}
+.messages li.error {
+    background-color: var(--error-bg);
+    color: var(--error-text);
+    border-color: var(--error-border);
+}
+.messages li.info {
+    background-color: var(--info-bg);
+    color: var(--info-text);
+    border-color: var(--info-border);
+}
+.messages li.warning {
+    background-color: var(--warning-bg);
+    color: var(--warning-text);
+    border-color: var(--warning-border);
+}
+
+/* Filter Section Specific Styles */
+.filter-section {
+    margin-top: 20px;
+    background-color: var(--light-grey-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.filter-section h3 {
+    color: var(--brand-blue); /* Make filter heading stand out with brand color */
+    font-weight: 600; /* Use Semibold for this heading */
+}
+.filter-section form div {
+    margin-bottom: 10px; /* Space between filter inputs */
+}
+.filter-section button, .filter-section a.button {
+    margin-top: 10px;
+}

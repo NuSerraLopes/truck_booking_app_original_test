@@ -1,0 +1,136 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\book_vehicle.html #}
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Book Vehicle" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Book" %} {{ vehicle.model }} ({{ vehicle.license_plate }})</h1>
+
+    {% if messages %}
+        <ul class="messages">
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {# Display earliest booking date prominently #}
+    {% if vehicle.available_after %} {# If available_after is not None #}
+        <p class="info-message">
+            {% translate "This vehicle is available for booking on or after" %}
+            <strong><span id="earliest-booking-date">{{ vehicle.available_after|date:"Y-m-d" }}</span></strong>.
+            {% translate "Please select your start date accordingly." %}
+        </p>
+    {% else %}
+        <p class="info-message">
+            {% translate "This vehicle is currently available for booking without any prior commitments." %}
+        </p>
+    {% endif %}
+
+
+    <form method="post" class="booking-form" id="booking-form">
+        {% csrf_token %}
+        {{ form.non_field_errors }} {# Display form-wide errors here #}
+
+        {% for field in form %}
+            <div class="form-group">
+                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <small class="form-text text-muted">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                    <span class="error-message">{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        {# NEW: Message for availability constraint #}
+        <div id="availability-error-message" style="color: red; display: none; margin-bottom: 10px;">
+            {% translate "Start date is before the vehicle's earliest availability." %}
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="submit-booking-btn">{% translate "Submit Booking Request" %}</button>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const startDateInput = document.getElementById('id_start_date');
+            const submitButton = document.getElementById('submit-booking-btn');
+            const earliestBookingDateElement = document.getElementById('earliest-booking-date');
+            const errorMessageDiv = document.getElementById('availability-error-message'); // Get reference to the new div
+
+            // --- Debugging Logs (can be removed after verification) ---
+            console.log('DOM Content Loaded.');
+            console.log('startDateInput element:', startDateInput);
+            console.log('submitButton element:', submitButton);
+            console.log('earliestBookingDateElement element:', earliestBookingDateElement);
+            console.log('errorMessageDiv element:', errorMessageDiv);
+            // --- End Debugging Logs ---
+
+            let earliestBookingDate = null;
+            if (earliestBookingDateElement) {
+                const dateString = earliestBookingDateElement.textContent.trim();
+                // console.log('Raw earliestBookingDate string from HTML:', dateString); // Debug
+                earliestBookingDate = parseDate(dateString);
+                // console.log('Parsed earliestBookingDate (JS Date object):', earliestBookingDate); // Debug
+            } else {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Normalize to start of day
+                earliestBookingDate = today;
+                // console.log('No earliestBookingDateElement found, defaulting earliestBookingDate to today:', earliestBookingDate); // Debug
+            }
+
+            // Helper function to parse YYYY-MM-DD date strings
+            function parseDate(dateString) {
+                const parts = dateString.split('-');
+                const parsed = new Date(parts[0], parts[1] - 1, parts[2]); // Month is 0-indexed in JS
+                if (isNaN(parsed.getTime())) {
+                    console.error("ERROR: Failed to parse date string:", dateString);
+                    return null;
+                }
+                return parsed;
+            }
+
+            function updateSubmitButtonState() {
+                const selectedStartDateStr = startDateInput.value;
+                // console.log('Selected Start Date String from input:', selectedStartDateStr); // Debug
+
+                if (selectedStartDateStr && earliestBookingDate && earliestBookingDate !== null) {
+                    const selectedDate = parseDate(selectedStartDateStr);
+                    selectedDate.setHours(0, 0, 0, 0); // Normalize to start of day
+
+                    // console.log('Selected Date (JS Date object):', selectedDate); // Debug
+                    // console.log('Comparing selectedDate (', selectedDate.toISOString(), ') >= earliestBookingDate (', earliestBookingDate.toISOString(), ')'); // Debug
+
+                    if (selectedDate >= earliestBookingDate) {
+                        submitButton.removeAttribute('disabled');
+                        errorMessageDiv.style.display = 'none'; // Hide the error message
+                        // console.log('Button: ENABLED, Message: HIDDEN'); // Debug
+                    } else {
+                        submitButton.setAttribute('disabled', 'disabled');
+                        errorMessageDiv.style.display = 'block'; // Show the error message
+                        // console.log('Button: DISABLED, Message: SHOWN (Selected date is too early)'); // Debug
+                    }
+                } else {
+                    // If no start date selected or earliest date couldn't be determined
+                    submitButton.setAttribute('disabled', 'disabled');
+                    errorMessageDiv.style.display = 'none'; // Hide if no date selected, or problem with earliest date
+                    // console.log('Button: DISABLED (No start date selected or earliest booking date is invalid), Message: HIDDEN'); // Debug
+                }
+            }
+
+            // Initial check when the page loads
+            updateSubmitButtonState();
+
+            // Attach event listener for changes on the start date input
+            if (startDateInput) {
+                startDateInput.addEventListener('change', updateSubmitButtonState);
+                // console.log('Event listener attached to startDateInput.'); // Debug
+            } else {
+                console.error('ERROR: startDateInput element not found! Cannot attach event listener.');
+            }
+        });
+    </script>
+{% endblock %}

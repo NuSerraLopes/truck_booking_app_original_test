@@ -1,0 +1,54 @@
+{% load i18n %} {# ADD THIS LINE #}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{% translate "Booking Update Notification" %}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .header { background-color: #FFC107; color: white; padding: 10px 20px; text-align: center; border-radius: 5px 5px 0 0; }
+        .content { padding: 20px 0; }
+        .footer { text-align: center; font-size: 0.8em; color: #777; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px; }
+        .button { display: inline-block; padding: 10px 20px; margin-top: 15px; background-color: #1554ff; color: white; text-decoration: none; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>{% translate "TruckApp Booking Update" %}</h2>
+        </div>
+        <div class="content">
+            <p>{% translate "Dear" %} {{ user.username }},</p>
+            <p>{% translate "Your booking for Truck ID" %} {{ booking.truck.truck_id }} ({% translate "Booking ID" %} {{ booking.pk }}) {% translate "has been updated." %}</p>
+            <p>{% translate "Here are the revised booking details:" %}</p>
+            <ul>
+                <li><strong>{% translate "Booking ID" %}:</strong> {{ booking.pk }}</li>
+                <li><strong>{% translate "Truck ID" %}:</strong> {{ booking.truck.truck_id }}</li>
+                <li><strong>{% translate "Customer Name" %}:</strong> {{ booking.customer_name }}</li>
+                <li><strong>{% translate "Origin" %}:</strong> {{ booking.origin }}</li>
+                <li><strong>{% translate "Destination" %}:</strong> {{ booking.destination }}</li>
+                <li><strong>{% translate "Start Time" %}:</strong> {{ booking.start_time|date:"Y-m-d H:i" }}</li>
+                <li><strong>{% translate "End Time" %}:</strong> {{ booking.end_time|date:"Y-m-d H:i" }}</li>
+                <li><strong>{% translate "Estimated Cost" %}:</strong>
+                    {% if booking.estimated_cost %}
+                        ${{ booking.estimated_cost|floatformat:2 }}
+                    {% else %}
+                        {% translate 'N/A' %}
+                    {% endif %}
+                </li>
+                <li><strong>{% translate "Status" %}:</strong> {% translate booking.get_booking_status_display %}</li>
+            </ul>
+            <p>{% translate "You can review your updated booking details by logging into your account:" %}</p>
+            <p style="text-align: center;">
+                <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'booking_app:my_bookings' %}" class="button">{% translate "View My Bookings" %}</a>
+            </p>
+            <p>{% translate "If you have any questions, please do not hesitate to contact us." %}</p>
+            <p>{% translate "Best regards," %}<br>{% translate "The TruckApp Team" %}</p>
+        </div>
+        <div class="footer">
+            <p>{% translate "This is an automated email, please do not reply." %}</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\templates\admin_vehicle_edit.html #}
+
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Edit Vehicle" %}{% endblock %}
+
+{% block content %}
+    <h1>{% translate "Edit Vehicle" %} - {{ vehicle.license_plate }}</h1>
+
+    <form method="post" enctype="multipart/form-data" class="form-container">
+        {% csrf_token %}
+        {{ form.as_p }} {# Renders form fields as paragraphs. Consider custom rendering for better styling #}
+        <button type="submit" class="btn btn-primary">{% translate "Save Changes" %}</button>
+        <a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-secondary">{% translate "Cancel" %}</a>
+    </form>
+
+{% endblock content %}
