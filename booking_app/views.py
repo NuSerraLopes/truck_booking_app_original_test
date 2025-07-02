@@ -123,84 +123,25 @@ def vehicle_delete_view(request, pk):
         return render(request, 'admin/admin_vehicle_delete.html', context)
 
 
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from .models import Vehicle
+
 @login_required
-def vehicle_list_view(request, group_name=None):
-    vehicles = Vehicle.objects.all()
-    all_groups = Group.objects.all().order_by('name')
+def vehicle_list_view(request):
+    user = request.user
+    user_groups = user.groups.values_list('name', flat=True)
 
-    effective_group_for_filter = None
-
-    # Determine filter based on URL or user group
-    if group_name:
-        effective_group_for_filter = group_name.lower()
-        # messages.info(request, _(f"Filtering by URL parameter: '{group_name}'.")) # Remove or uncomment if too noisy
+    if user_groups:
+        group_name = user_groups[0]  # Assuming one group per user
+        vehicles = Vehicle.objects.filter(type__iexact=group_name)
     else:
-        user_groups = request.user.groups.all()
-        for group in user_groups:
-            normalized_user_group_name = group.name.lower()
-            if normalized_user_group_name in ['light', 'tllight', 'heavy', 'tlheavy']:
-                effective_group_for_filter = normalized_user_group_name
-                # messages.info(request, _(f"Filtering by your group membership: '{group.name}'.")) # Remove or uncomment
-                break
-
-    # Apply type filter based on effective_group_for_filter
-    if effective_group_for_filter:
-        if effective_group_for_filter in ['light', 'tllight']:
-            vehicles = vehicles.filter(vehicle_type='LIGHT')
-        elif effective_group_for_filter in ['heavy', 'tlheavy']:
-            vehicles = vehicles.filter(vehicle_type='HEAVY')
-
-    # --- NEW: Get selected date from request.GET ---
-    selected_date_str = request.GET.get('date')
-    selected_display_date = date.today()  # Default to today if no date or invalid date
-
-    if selected_date_str:
-        try:
-            selected_display_date = datetime.datetime.strptime(selected_date_str, '%Y-%m-%d').date()
-        except ValueError:
-            messages.error(request, _("Invalid date format for availability check. Displaying for today."))
-            # selected_display_date remains date.today() due to default
-    # --- END NEW: Get selected date ---
-
-    # --- Optimizing availability calculation for the list view ---
-    # Subquery to get the maximum end_date for each vehicle's active bookings
-    # This efficiently fetches the latest 'end_date' for any 'pending' or 'confirmed' booking
-    # for each vehicle in a single database query, reducing N+1 problems.
-    latest_booking_end_dates_subquery = Booking.objects.filter(
-        vehicle=OuterRef('pk'),  # Correlate with the outer Vehicle query
-        status__in=['pending', 'confirmed']
-    ).order_by('-end_date').values('end_date')[:1]  # Get only the latest one if multiple
-
-    # Annotate each vehicle in the queryset with its latest booking end date
-    vehicles = vehicles.annotate(
-        _latest_booking_end_date=Subquery(latest_booking_end_dates_subquery)
-    )
-
-    for vehicle in vehicles:
-        latest_end_date = vehicle._latest_booking_end_date
-
-
-        vehicle_free_from_date = date.today()
-
-        if latest_end_date:
-            calculated_free_date = add_business_days(latest_end_date, 3)
-
-            if calculated_free_date > date.today():
-                vehicle_free_from_date = calculated_free_date
-
-        vehicle.next_available_booking_start = vehicle_free_from_date
-
-        vehicle.is_available_on_selected_date = (selected_display_date >= vehicle.next_available_booking_start)
-
-
-    vehicles = vehicles.order_by('vehicle_type', 'model', 'license_plate')
+        vehicles = Vehicle.objects.none()
+        group_name = "No group assigned"
 
     context = {
         'vehicles': vehicles,
-        'all_groups': all_groups,
-        'selected_group': group_name,
-        'selected_display_date': selected_display_date,
-        'page_title': _("Vehicle List") + (f" ({group_name})" if group_name else "")
+        'page_title': f"Vehicles for Group: {group_name}",
     }
     return render(request, 'vehicle_list.html', context)
 

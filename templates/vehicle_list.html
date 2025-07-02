@@ -10,30 +10,6 @@
 <div class="container my-4">
     <h1 class="mb-4">{{ page_title }}</h1>
 
-    <div class="row mb-3 align-items-center">
-        <div class="col-md-auto">
-            <strong>{% translate "Filter by Group" %}:</strong>
-            <a href="{% url 'booking_app:vehicle_list' %}" class="btn btn-outline-secondary btn-sm {% if not selected_group %}active{% endif %}">{% translate "All" %}</a>
-            {% for group in all_groups %}
-                <a href="{% url 'booking_app:vehicle_list_by_group' group_name=group.name %}" 
-                   class="btn btn-outline-primary btn-sm {% if selected_group and selected_group == group.name|lower %}active{% endif %}">
-                    {{ group.name }}
-                </a>
-            {% endfor %}
-        </div>
-        
-        {# NEW: Date Selection Form #}
-        <div class="col-md-auto ms-md-auto"> {# ms-md-auto pushes this div to the right on medium+ screens #}
-            <form method="GET" class="d-flex align-items-center">
-                <label for="id_date" class="form-label me-2 mb-0">{% translate "Show Availability For" %}:</label>
-                <input type="date" id="id_date" name="date" class="form-control me-2" style="width: 180px;" 
-                       value="{{ selected_display_date|date:'Y-m-d' }}"> {# Pre-fill with selected date #}
-                <button type="submit" class="btn btn-dark">{% translate "Go" %}</button>
-            </form>
-        </div>
-        {# END NEW: Date Selection Form #}
-    </div>
-
     {% if messages %}
         <div class="alert alert-info">
             <ul class="list-unstyled mb-0">
