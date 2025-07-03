@@ -7,20 +7,23 @@
 {% block title %}{% translate "My Bookings" %}{% endblock %}
 
 {% block content %}
+<div class="container my-4">
     <h1>{% translate "My Bookings" %}</h1>
 
     {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
+        <div class="alert alert-info">
+            <ul class="list-unstyled mb-0">
+                {% for message in messages %}
+                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
     {% endif %}
 
     {% if bookings %}
-        <div class="table-container">
-            <table>
-                <thead>
+    <div class="table-responsive">
+        <table class="table table-hover table-striped">
+            <thead class="table-dark">
                     <tr>
                         <th>{% translate 'Booking ID' %}</th>
                         <th>{% translate 'Vehicle Model' %}</th>
@@ -29,7 +32,6 @@
                         <th>{% translate 'End Location' %}</th>
                         <th>{% translate 'Start Date' %}</th>
                         <th>{% translate 'End Date' %}</th>
-                        <th>{% translate 'Estimated Cost' %}</th>
                         <th>{% translate 'Status' %}</th> {# This is the header #}
                         <th>{% translate 'Actions' %}</th>
                     </tr>
@@ -44,13 +46,6 @@
                         <td>{{ booking.end_location.name }}</td>
                         <td>{{ booking.start_date|date:"Y-m-d" }}</td>
                         <td>{{ booking.end_date|date:"Y-m-d" }}</td>
-                        <td>
-                            {% if booking.estimated_cost %}
-                                ${{ booking.estimated_cost|floatformat:2 }}
-                            {% else %}
-                                {% translate 'N/A' %}
-                            {% endif %}
-                        </td>
                         {# This is the data cell for status #}
                         <td>{% translate booking.get_status_display %}</td>
                         <td>
@@ -72,4 +67,5 @@
         <p class="info-message">{% translate "You have no bookings yet." %}</p>
         <p><a href="{% url 'booking_app:vehicle_list' %}" class="btn">{% translate "Browse Vehicles to Book" %}</a></p>
     {% endif %}
+</div>
 {% endblock %}

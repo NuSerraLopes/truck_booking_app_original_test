@@ -8,7 +8,7 @@
 {% block content %}
     <h1>{% translate "Manage Locations" %}</h1>
 
-    <p><a href="{% url 'booking_app:location_create' %}" class="btn btn-primary">{% translate "Create New Location" %}</a></p>
+    <p><a href="{% url 'booking_app:admin_location_create' %}" class="btn btn-primary">{% translate "Create New Location" %}</a></p>
 
     {% if locations %}
         <table>

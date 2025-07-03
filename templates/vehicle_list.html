@@ -1,4 +1,4 @@
-{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_vehicle_list.html #}
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\vehicle_list.html #}
 
 {% extends 'base.html' %}
 {% load i18n %}
@@ -28,13 +28,7 @@
                     <th>{% translate "Model" %}</th>
                     <th>{% translate "License Plate" %}</th>
                     <th>{% translate "Type" %}</th>
-                    {# UPDATED COLUMN HEADER FOR SELECTED DATE AVAILABILITY #}
-                    <th>
-                        {% translate "Availability on" %} <br> {{ selected_display_date|date:"F d, Y" }}
-                    </th>
-                    {# NEW COLUMN FOR "AVAILABLE FROM (CONSIDERING BUFFER)" #}
-                    <th>{% translate "Available From (Considering Buffer)" %}</th>
-                    {# END NEW COLUMN #}
+                    <th>{% translate "Available From" %}</th>
                     <th>{% translate "Location" %}</th>
                     <th>{% translate "Actions" %}</th>
                 </tr>
@@ -52,26 +46,19 @@
                     <td>{{ vehicle.model }}</td>
                     <td>{{ vehicle.license_plate }}</td>
                     <td>{{ vehicle.get_vehicle_type_display }}</td>
-                    
-                    {# UPDATED AVAILABILITY DISPLAY FOR SELECTED DATE #}
+
+                    {# UPDATED COLUMN FOR "AVAILABLE FROM" #}
                     <td>
-                        {% if vehicle.is_available_on_selected_date %}
-                            <span class="badge bg-success">{% translate "Available" %}</span>
-                        {% else %}
-                            <span class="badge bg-danger">{% translate "Not Available" %}</span>
-                        {% endif %}
-                    </td>
-                    {# NEW COLUMN FOR "AVAILABLE FROM" (shows the earliest date a booking can *start*) #}
-                    <td>
-                        {% if vehicle.next_available_booking_start == selected_display_date %} {# If it's available today, and selected date IS today #}
+                        {% if vehicle.next_available_date is None %}
                             <span class="badge bg-success">{% translate "Available Now" %}</span>
                         {% else %}
                             <span class="badge bg-info text-dark">
-                                {{ vehicle.next_available_booking_start|date:"F d, Y" }}
+                                {% translate "Next Available" %}: {{ vehicle.next_available_date|date:"F d, Y" }}
                             </span>
                         {% endif %}
                     </td>
-                    {# END NEW COLUMN #}
+                    {# END UPDATED COLUMN #}
+
                     <td>
                         {% if vehicle.current_location %}
                             {{ vehicle.current_location.name }}

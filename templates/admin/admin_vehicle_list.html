@@ -9,7 +9,7 @@
 {% block content %}
     <h1>{% translate "Manage Vehicles" %}</h1>
 
-    <p><a href="{% url 'booking_app:vehicle_create' %}" class="btn btn-primary">{% translate "Add New Vehicle" %}</a></p>
+    <p><a href="{% url 'booking_app:admin_vehicle_create' %}" class="btn btn-primary">{% translate "Add New Vehicle" %}</a></p>
 
     {% if vehicles %}
         <table>
@@ -41,8 +41,8 @@
                     <td>{{ vehicle.current_location.name|default:_("N/A") }}</td>
                     <td>
                     <a href="{% url 'booking_app:admin_vehicle_detail' pk=vehicle.pk %}" class="btn btn-small btn-info">{% translate "Details" %}</a>
-                    <a href="{% url 'booking_app:vehicle_edit' pk=vehicle.pk %}" class="btn btn-small btn-secondary">{% translate "Edit" %}</a>
-                    <a href="{% url 'booking_app:vehicle_delete' pk=vehicle.pk %}" class="btn btn-small btn-danger">{% translate "Delete" %}</a>
+                    <a href="{% url 'booking_app:admin_vehicle_edit' pk=vehicle.pk %}" class="btn btn-small btn-secondary">{% translate "Edit" %}</a>
+                    <a href="{% url 'booking_app:admin_vehicle_delete' pk=vehicle.pk %}" class="btn btn-small btn-danger">{% translate "Delete" %}</a>
                 </td>
                 </tr>
                 {% endfor %}

@@ -123,25 +123,63 @@ def vehicle_delete_view(request, pk):
         return render(request, 'admin/admin_vehicle_delete.html', context)
 
 
-from django.contrib.auth.decorators import login_required
-from django.shortcuts import render
-from .models import Vehicle
-
 @login_required
-def vehicle_list_view(request):
-    user = request.user
-    user_groups = user.groups.values_list('name', flat=True)
+def vehicle_list_view(request, group_name=None):
+    vehicles_qs = Vehicle.objects.all()  # Renamed to avoid confusion in the loop
+    all_groups = Group.objects.all().order_by('name')
 
-    if user_groups:
-        group_name = user_groups[0]  # Assuming one group per user
-        vehicles = Vehicle.objects.filter(type__iexact=group_name)
+    effective_group_for_filter = None
+
+    # Determine filter based on URL or user group
+    if group_name:
+        effective_group_for_filter = group_name.lower()
     else:
-        vehicles = Vehicle.objects.none()
-        group_name = "No group assigned"
+        user_groups = request.user.groups.all()
+        for group in user_groups:
+            normalized_user_group_name = group.name.lower()
+            if normalized_user_group_name in ['light', 'tllight', 'heavy', 'tlheavy']:
+                effective_group_for_filter = normalized_user_group_name
+                break
 
+    # Apply type filter
+    if effective_group_for_filter:
+        if effective_group_for_filter in ['light', 'tllight']:
+            vehicles_qs = vehicles_qs.filter(vehicle_type='LIGHT')
+        elif effective_group_for_filter in ['heavy', 'tlheavy']:
+            vehicles_qs = vehicles_qs.filter(vehicle_type='HEAVY')
+
+    #
+    # --- KEY CHANGE IS HERE ---
+    #
+
+    # 1. Fetch all vehicles and pre-calculate dates
+    # You can make this more efficient if needed, but the logic is sound.
+    vehicles_with_dates = []
+    for vehicle in vehicles_qs.order_by('vehicle_type', 'model', 'license_plate'):
+        latest_booking_data = Booking.objects.filter(
+            vehicle=vehicle,
+            status__in=['pending', 'confirmed']
+        ).aggregate(max_end_date=Max('end_date'))
+
+        latest_end_date = latest_booking_data['max_end_date']
+
+        calculated_date = None  # Default to None
+        if latest_end_date:
+            possible_next_date = add_business_days(latest_end_date, 3)
+            if possible_next_date > date.today():
+                calculated_date = possible_next_date
+
+        # 2. Attach the calculated date as a new property to the vehicle object
+        vehicle.next_available_date = calculated_date
+        vehicles_with_dates.append(vehicle)
+
+    # 3. Pass the modified list of vehicle objects to the context
     context = {
-        'vehicles': vehicles,
-        'page_title': f"Vehicles for Group: {group_name}",
+        'vehicles': vehicles_with_dates,  # This list now contains vehicles with the .next_available_date attribute
+        'all_groups': all_groups,
+        'selected_group': group_name,
+        # 'next_available_date' dictionary is no longer needed here
+        'page_title': _("Vehicle List") + (f" ({group_name})" if group_name else "")
     }
     return render(request, 'vehicle_list.html', context)
 
