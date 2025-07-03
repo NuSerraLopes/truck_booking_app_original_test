@@ -4,25 +4,58 @@
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>{{ page_title }}</h1>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h1 class="card-title text-center mb-4">{{ page_title }}</h1>
 
-    {% if messages %}
-        <ul class="messages">
-            {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
 
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit" class="btn btn-primary">
-            {% if group_obj %}{% trans "Update Group" %}{% else %}{% trans "Create Group" %}{% endif %}
-        </button>
-    </form>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
 
-    <a href="{% url 'booking_app:admin_group_list' %}" class="back-link">{% trans "Back to Group List" %}</a>
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                                       name="{{ field.name }}" 
+                                       id="{{ field.id_for_label }}" 
+                                       class="form-control {% if field.errors %}is-invalid{% endif %}"
+                                       value="{{ field.value|default:'' }}"
+                                       {% if field.field.required %}required{% endif %}>
+                                
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text|safe }}</div>
+                                {% endif %}
+                                
+                                {% if field.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in field.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'booking_app:admin_group_list' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
+                            <button type="submit" class="btn btn-primary">
+                                {% if group_obj %}{% trans "Update Group" %}{% else %}{% trans "Create Group" %}{% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}

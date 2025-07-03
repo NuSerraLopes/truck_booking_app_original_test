@@ -1,14 +1,24 @@
 {# truck_booking_app/templates/home.html #}
 {% extends 'base.html' %}
-{% load i18n %} {# <-- ADD THIS LINE #}
+{% load i18n %}
 
 {% block title %}{% translate "Home" %}{% endblock %}
 
 {% block content %}
-    <h1>{% translate "Welcome to TruckApp!" %}</h1>
-    <p>{% translate "Your reliable partner for efficient and timely truck bookings." %}</p>
-    <p>{% translate "Find the right truck for your needs, manage your bookings, and get your goods moving." %}</p>
-    <div class="call-to-action">
-        <a href="{% url 'booking_app:vehicle_list' %}" class="btn">{% translate "Browse Available Trucks" %}</a>
-    </div>
+    <h1>{% translate "Welcome to Iveco Demo Booking App!" %}</h1>
+    <p>{% translate "A new way of bookings demonstration vehicles for your clients." %}</p>
+
+    {% if user.is_authenticated %}
+        {# If the user is logged in, show the link to the vehicle list #}
+        <p>{% translate "Here you can find the right truck for you next sale." %}</p>
+        <div class="call-to-action">
+            <a href="{% url 'booking_app:vehicle_list' %}" class="btn">{% translate "Browse Available Trucks" %}</a>
+        </div>
+    {% else %}
+        {# If the user is not logged in, show the login button #}
+        <p>{% translate "Please log in to browse available trucks and manage your bookings." %}</p>
+        <div class="call-to-action">
+            <a href="{% url 'booking_app:login_user' %}" class="btn">{% translate "Login" %}</a>
+        </div>
+    {% endif %}
 {% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">{{ page_title }}</h1>
+            <a href="{% url 'booking_app:admin_email_template_create' %}" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle-fill me-1" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/></svg>
+                {% translate "Create New Template" %}
+            </a>
+        </div>
+        <div class="card-body">
+            <p class="text-muted">{% translate "Here you can edit the content of the automated notification emails sent to users. The 'Template Key' is used by the system and cannot be changed." %}</p>
+            {% if templates %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>{% translate "Template Name" %}</th>
+                                <th>{% translate "Template Key" %}</th>
+                                <th>{% translate "Subject" %}</th>
+                                <th class="text-end">{% translate "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for template in templates %}
+                            <tr>
+                                <td>{{ template.name }}</td>
+                                <td><code>{{ template.template_key }}</code></td>
+                                <td>{{ template.subject }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'booking_app:admin_email_template_edit' pk=template.pk %}" class="btn btn-info btn-sm">{% translate "Edit" %}</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    {% translate "No email templates found. Please click the button above to create one." %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="card-footer text-end">
+             <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary">{% translate "Back to Admin Dashboard" %}</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

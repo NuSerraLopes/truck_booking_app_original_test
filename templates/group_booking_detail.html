@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Group Booking Details" %}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">{% translate "Booking Details" %} #{{ booking.pk }}</h1>
+                    <a href="{% url 'booking_app:my_group_bookings' %}" class="btn btn-secondary btn-sm">{% translate "Back to Group Bookings" %}</a>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Left Column: Booking & Vehicle Info -->
+                        <div class="col-md-6">
+                            <h2 class="h5">{% translate "Booking Information" %}</h2>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Status" %}:</strong>
+                                    <span class="badge
+                                        {% if booking.status == 'pending' %}bg-warning text-dark
+                                        {% elif booking.status == 'confirmed' %}bg-success
+                                        {% elif booking.status == 'cancelled' %}bg-danger
+                                        {% elif booking.status == 'completed' %}bg-secondary
+                                        {% else %}bg-info
+                                        {% endif %} fs-6">
+                                        {% translate booking.get_status_display %}
+                                    </span>
+                                </li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Salesperson" %}:</strong> <span>{{ booking.user.get_full_name }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Start Date" %}:</strong> <span>{{ booking.start_date|date:"Y-m-d" }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "End Date" %}:</strong> <span>{{ booking.end_date|date:"Y-m-d" }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Start Location" %}:</strong> <span>{{ booking.start_location.name }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "End Location" %}:</strong> <span>{{ booking.end_location.name }}</span></li>
+                            </ul>
+
+                            <h2 class="h5 mt-4">{% translate "Vehicle" %}</h2>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Model" %}:</strong> <span>{{ booking.vehicle.model }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "License Plate" %}:</strong> <span>{{ booking.vehicle.license_plate }}</span></li>
+                            </ul>
+                        </div>
+
+                        <!-- Right Column: Client Info -->
+                        <div class="col-md-6">
+                            <h2 class="h5">{% translate "Client Information" %}</h2>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Client Name" %}:</strong> <span>{{ booking.customer_name }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Client Email" %}:</strong> <span>{{ booking.customer_email|default:_("N/A") }}</span></li>
+                                <li class="list-group-item px-_0 d-flex justify-content-between"><strong>{% translate "Client Phone" %}:</strong> <span>{{ booking.customer_phone|default:_("N/A") }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Tax Number (NIF)" %}:</strong> <span>{{ booking.client_tax_number }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Company Registration" %}:</strong> <span>{{ booking.client_company_registration }}</span></li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons for Managers -->
+                    <div class="mt-4 pt-3 border-top text-end">
+                        <form action="{% url 'booking_app:update_booking' booking.pk %}" method="post" class="d-inline-flex gap-2">
+                            {% csrf_token %}
+                            {% if can_approve %}
+                                <button type="submit" name="action" value="approve" class="btn btn-success">{% translate "Approve Booking" %}</button>
+                            {% endif %}
+                            {% if can_cancel_by_manager %}
+                                <button type="submit" name="action" value="cancel_by_manager" class="btn btn-danger">{% translate "Cancel as Manager" %}</button>
+                            {% endif %}
+                        </form>
+                        {% if not can_approve and not can_cancel_by_manager %}
+                            <p class="text-muted mb-0">{% translate "No management actions are available for this booking's current status." %}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

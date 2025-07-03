@@ -8,8 +8,10 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.validators import UnicodeUsernameValidator
 import os
+from django.core.exceptions import ValidationError
 
 from django.templatetags.static import static
+
 
 # --- Custom User Manager ---
 class CustomUserManager(BaseUserManager):
@@ -63,16 +65,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
     is_active = models.BooleanField(_("active"), default=True)
     is_staff = models.BooleanField(_("staff status"), default=False)
-    is_superuser = models.BooleanField(_("superuser status"), default=False) # Explicitly define for clarity
+    is_superuser = models.BooleanField(_("superuser status"), default=False)  # Explicitly define for clarity
     requires_password_change = models.BooleanField(default=False)
 
     @property
     def is_admin_member(self):
         """
-        Checks if the user belongs to the 'admin' group.
-        Ensure you have a Django Group named 'admin' created for this to work.
+        Checks if the user belongs to the 'Admin' group.
+        Ensure you have a Django Group named 'Admin' created for this to work.
         """
-        return self.groups.filter(name='admin').exists()
+        return self.groups.filter(name='Admin').exists()
 
     def __str__(self):
         return self.username
@@ -142,7 +144,7 @@ class Vehicle(models.Model):
             return static('default_pics/light.jpg')
         elif self.vehicle_type == 'HEAVY':
             return static('default_pics/heavy.jpg')
-        return static('static/images/no_image.png') # Generic Default
+        return static('static/images/no_image.png')  # Generic Default
 
     def __str__(self):
         return f"{self.vehicle_type} - {self.model} ({self.license_plate})"
@@ -160,8 +162,13 @@ class Booking(models.Model):
     vehicle = models.ForeignKey('Vehicle', on_delete=models.CASCADE, related_name='bookings')
 
     customer_name = models.CharField(max_length=255)
-    customer_email = models.EmailField()
+    # --- UPDATED: Email is now optional to allow phone as an alternative ---
+    customer_email = models.EmailField(blank=True, null=True)
     customer_phone = models.CharField(max_length=20, blank=True, null=True)
+    # --- UPDATED: Tax and Registration are now required ---
+    client_tax_number = models.CharField(max_length=50, blank=False, verbose_name=_("Client Tax Number"))
+    client_company_registration = models.CharField(max_length=100, blank=False,
+                                                   verbose_name=_("Client Company Registration"))
 
     start_date = models.DateField()
     end_date = models.DateField()
@@ -188,3 +195,35 @@ class Booking(models.Model):
 
     def is_active(self):
         return self.status in ['pending', 'confirmed']
+
+    def clean(self):
+        """
+        Add custom model-level validation.
+        """
+        super().clean()
+        # Ensure that either email or phone is provided.
+        if not self.customer_email and not self.customer_phone:
+            raise ValidationError(
+                _("A booking must have either a customer email or a customer phone number.")
+            )
+
+class EmailTemplate(models.Model):
+    """
+    Stores email templates that can be edited in the Django admin.
+    """
+    name = models.CharField(max_length=100, help_text=_("The internal name for this template."))
+    template_key = models.CharField(
+        max_length=50,
+        unique=True,
+        help_text=_("A unique key to identify this template in the code (e.g., 'booking_created'). Do not change this after creation.")
+    )
+    subject = models.CharField(max_length=255, help_text=_("The email subject line. You can use template variables like {{ booking.pk }}."))
+    body = models.TextField(help_text=_("The email body. Can contain HTML and template variables like {{ booking.customer_name }}."))
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _("Email Template")
+        verbose_name_plural = _("Email Templates")
+        ordering = ['name']

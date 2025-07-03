@@ -1,27 +1,60 @@
 {% extends 'base.html' %}
-{% load i18n %} {# ADD THIS LINE #}
+{% load i18n %}
 
 {% block title %}{% translate "Cancel Booking" %}{% endblock %}
 
 {% block content %}
-    <h1>{% translate "Cancel Booking" %}: {{ booking.pk }}</h1>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-header bg-danger text-white">
+                    <h1 class="h3 mb-0">{% translate "Confirm Cancellation" %}</h1>
+                </div>
+                <div class="card-body">
+                    <p class="lead">{% translate "Are you sure you want to cancel the following booking?" %}</p>
+                    
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{% translate "Booking ID" %}:</strong>
+                            <span>#{{ booking.pk }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{% translate "Vehicle" %}:</strong>
+                            <span>{{ booking.vehicle.model }} ({{ booking.vehicle.license_plate }})</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{% translate "Start Location" %}:</strong>
+                            <span>{{ booking.start_location.name }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{% translate "End Location" %}:</strong>
+                            <span>{{ booking.end_location.name }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{% translate "Start Date" %}:</strong>
+                            <span>{{ booking.start_date|date:"Y-m-d" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{% translate "End Date" %}:</strong>
+                            <span>{{ booking.end_date|date:"Y-m-d" }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>{% translate "Current Status" %}:</strong>
+                            <span class="badge bg-warning text-dark">{% translate booking.get_status_display %}</span>
+                        </li>
+                    </ul>
 
-    <div class="booking-details card">
-        <p>{% translate "Are you sure you want to cancel the following booking?" %}</p>
-        <ul>
-            <li><strong>{% translate "Booking ID" %}:</strong> {{ booking.pk }}</li>
-            <li><strong>{% translate "Truck ID" %}:</strong> {{ booking.truck.truck_id }}</li>
-            <li><strong>{% translate "Origin" %}:</strong> {{ booking.origin }}</li>
-            <li><strong>{% translate "Destination" %}:</strong> {{ booking.destination }}</li>
-            <li><strong>{% translate "Start Time" %}:</strong> {{ booking.start_time|date:"Y-m-d H:i" }}</li>
-            <li><strong>{% translate "End Time" %}:</strong> {{ booking.end_time|date:"Y-m-d H:i" }}</li>
-            <li><strong>{% translate "Current Status" %}:</strong> {% translate booking.get_booking_status_display %}</li>
-        </ul>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-end">
+                            <a href="{% url 'booking_app:my_bookings' %}" class="btn btn-secondary me-2">{% translate "No, Go Back" %}</a>
+                            <button type="submit" class="btn btn-danger">{% translate "Yes, Cancel This Booking" %}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <form method="post" class="card">
-        {% csrf_token %}
-        <button type="submit" class="btn btn-danger">{% translate "Yes, Cancel This Booking" %}</button>
-        <a href="{% url 'booking_app:my_bookings' %}" class="btn-secondary">{% translate "No, Go Back" %}</a>
-    </form>
+</div>
 {% endblock %}

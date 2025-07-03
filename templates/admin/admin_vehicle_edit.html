@@ -2,17 +2,91 @@
 
 {% extends 'base.html' %}
 {% load i18n %}
+{% load static %}
 
-{% block title %}{% translate "Edit Vehicle" %}{% endblock %}
+{% block title %}{% translate "Edit Vehicle" %}: {{ vehicle.license_plate }}{% endblock %}
 
 {% block content %}
-    <h1>{% translate "Edit Vehicle" %} - {{ vehicle.license_plate }}</h1>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h1 class="card-title text-center mb-4">{% translate "Edit Vehicle" %}</h1>
+                    <h2 class="h5 text-center text-muted mb-4">{{ vehicle.model }} ({{ vehicle.license_plate }})</h2>
 
-    <form method="post" enctype="multipart/form-data" class="form-container">
-        {% csrf_token %}
-        {{ form.as_p }} {# Renders form fields as paragraphs. Consider custom rendering for better styling #}
-        <button type="submit" class="btn btn-primary">{% translate "Save Changes" %}</button>
-        <a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-secondary">{% translate "Cancel" %}</a>
-    </form>
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {% for error in form.non_field_errors %}
+                                <p class="mb-0">{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
 
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+
+                        {% for field in form %}
+                            <div class="mb-3">
+                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+
+                                {# Special handling for the picture field to show current image #}
+                                {% if field.name == 'picture' %}
+                                    <div class="mb-2">
+                                        {% if vehicle.picture %}
+                                            <img src="{{ vehicle.picture.url }}" alt="{% translate 'Current Image' %}" class="img-thumbnail" style="max-width: 150px; height: auto;">
+                                            <p class="form-text mt-1">{% translate "Current image. Upload a new one to replace it." %}</p>
+                                        {% else %}
+                                             <p class="form-text">{% translate "No image currently uploaded." %}</p>
+                                        {% endif %}
+                                    </div>
+                                    <input type="file" 
+                                           name="{{ field.name }}" 
+                                           id="{{ field.id_for_label }}"
+                                           class="form-control {% if field.errors %}is-invalid{% endif %}">
+                                {% elif field.field.widget.input_type == 'select' %}
+                                     <select name="{{ field.name }}" 
+                                             id="{{ field.id_for_label }}" 
+                                             class="form-select {% if field.errors %}is-invalid{% endif %}">
+                                        {% for choice in field %}
+                                            {{ choice }}
+                                        {% endfor %}
+                                    </select>
+                                {% elif field.field.widget.input_type == 'checkbox' %}
+                                    <div class="form-check form-switch">
+                                        {{ field }}
+                                        {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors.as_text }}</div>{% endif %}
+                                    </div>
+                                {% else %}
+                                    <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                                           name="{{ field.name }}" 
+                                           id="{{ field.id_for_label }}" 
+                                           class="form-control {% if field.errors %}is-invalid{% endif %}"
+                                           value="{{ field.value|default:'' }}">
+                                {% endif %}
+                                
+                                {% if field.help_text %}
+                                    <div class="form-text">{{ field.help_text|safe }}</div>
+                                {% endif %}
+                                
+                                {% if field.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {% for error in field.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
+                            <button type="submit" class="btn btn-primary">{% translate "Save Changes" %}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock content %}

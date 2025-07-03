@@ -3,54 +3,76 @@
 {% extends 'base.html' %}
 {% load i18n %}
 
-{% block title %{% translate "Manage Locations" %}{% endblock %}
+{% block title %}{% translate "Manage Locations" %}{% endblock %}
 
 {% block content %}
-    <h1>{% translate "Manage Locations" %}</h1>
-
-    <p><a href="{% url 'booking_app:location_create' %}" class="btn btn-primary">{% translate "Create New Location" %}</a></p>
-
-    {% if locations %}
-        <table>
-            <thead>
-                <tr>
-                    <th>{% translate "Location Name" %}</th>
-                    <th>{% translate "Actions" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for location in locations %}
-                <tr>
-                    <td>{{ location.name }}</td>
-                    <td class="action-buttons">
-                        <a href="{% url 'booking_app:location_edit' pk=location.pk %}" class="btn btn-small btn-secondary">{% translate "Edit" %}</a>
-                        <a href="#" class="btn btn-small btn-danger">{% translate "Delete" %}</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-
-        <div class="pagination">
-            <span class="step-links">
-                {% if locations.has_previous %}
-                    <a href="?page=1">&laquo; {% translate "first" %}</a>
-                    <a href="?page={{ locations.previous_page_number }}">{% translate "previous" %}</a>
-                {% endif %}
-
-                <span class="current">
-                    {% translate "Page" %} {{ locations.number }} of {{ locations.paginator.num_pages }}.
-                </span>
-
-                {% if locations.has_next %}
-                    <a href="?page={{ locations.next_page_number }}">{% translate "next" %}</a>
-                    <a href="?page={{ locations.paginator.num_pages }}">{% translate "last" %} &raquo;</a>
-                {% endif %}
-            </span>
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">{% translate "Manage Locations" %}</h1>
+            <a href="{% url 'booking_app:admin_location_create' %}" class="btn btn-primary">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle-fill me-1" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/></svg>
+                {% translate "Create New Location" %}
+            </a>
         </div>
-    {% else %}
-        <p>{% translate "No locations found." %}</p>
-    {% endif %}
+        <div class="card-body">
+            {% if locations %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>{% translate "Location Name" %}</th>
+                                <th class="text-end">{% translate "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for location in locations %}
+                            <tr>
+                                <td>{{ location.name }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'booking_app:admin_location_edit' pk=location.pk %}" class="btn btn-info btn-sm">{% translate "Edit" %}</a>
+                                    <a href="{% url 'booking_app:admin_location_delete' pk=location.pk %}" class="btn btn-danger btn-sm">{% translate "Delete" %}</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
 
-    <p><a href="{% url 'booking_app:admin_dashboard' %}" class="back-link">{% translate "Back to Admin Dashboard" %}</a></p>
+                {% if locations.has_other_pages %}
+                <nav aria-label="Location list navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if locations.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page=1">&laquo; {% trans "first" %}</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ locations.previous_page_number }}">{% trans "previous" %}</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&laquo; {% trans "first" %}</span></li>
+                            <li class="page-item disabled"><span class="page-link">{% trans "previous" %}</span></li>
+                        {% endif %}
+
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">{% trans "Page" %} {{ locations.number }} {% trans "of" %} {{ locations.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if locations.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ locations.next_page_number }}">{% trans "next" %}</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ locations.paginator.num_pages }}">{% trans "last" %} &raquo;</a></li>
+                        {% else %}
+                             <li class="page-item disabled"><span class="page-link">{% trans "next" %}</span></li>
+                             <li class="page-item disabled"><span class="page-link">{% trans "last" %} &raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    {% translate "No locations found." %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="card-footer text-end">
+             <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary">{% translate "Back to Admin Dashboard" %}</a>
+        </div>
+    </div>
+</div>
 {% endblock content %}

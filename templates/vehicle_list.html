@@ -10,16 +10,6 @@
 <div class="container my-4">
     <h1 class="mb-4">{{ page_title }}</h1>
 
-    {% if messages %}
-        <div class="alert alert-info">
-            <ul class="list-unstyled mb-0">
-                {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-    {% endif %}
-
     <div class="table-responsive">
         <table class="table table-hover table-striped">
             <thead class="table-dark">
@@ -52,7 +42,7 @@
                         {% if vehicle.next_available_date is None %}
                             <span class="badge bg-success">{% translate "Available Now" %}</span>
                         {% else %}
-                            <span class="badge bg-info text-dark">
+                            <span class="badge bg-info text-white">
                                 {% translate "Next Available" %}: {{ vehicle.next_available_date|date:"F d, Y" }}
                             </span>
                         {% endif %}

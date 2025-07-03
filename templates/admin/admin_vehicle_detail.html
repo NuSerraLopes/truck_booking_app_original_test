@@ -1,34 +1,100 @@
-{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\vehicle_detail.html #}
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_vehicle_detail.html #}
 
 {% extends 'base.html' %}
 {% load i18n %}
 {% load static %}
 
-{% block title %}{% translate "Vehicle Details" %}{% endblock %}
+{% block title %}{% translate "Admin Vehicle Details" %}{% endblock %}
 
 {% block content %}
-    <h1>{% translate "Admin Vehicle Details" %}</h1>
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">{% translate "Admin Vehicle Details" %}</h1>
+            <a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-secondary btn-sm">{% translate "Back to Vehicle List" %}</a>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <!-- Left Column: Picture -->
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    {% if vehicle.picture %}
+                        <img src="{{ vehicle.picture.url }}" class="img-fluid rounded border" alt="{{ vehicle.model }}">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center bg-light rounded border text-muted" style="min-height: 250px;">
+                            <div class="text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-image-fill" viewBox="0 0 16 16"><path d="M.002 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-12a2 2 0 0 1-2-2V3zm1 9l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V3a1 1 0 0 0-1-1h-12a1 1 0 0 0-1 1v8z"/></svg>
+                                <p class="mt-2 mb-0">{% translate "No Image Available" %}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
 
-    <div class="vehicle-detail-card">
-        {% if vehicle.picture %}
-            <img src="{{ vehicle.picture.url }}" alt="{{ vehicle.license_plate }}" class="vehicle-detail-img">
-        {% else %}
-            <img src="{% static 'images/no_image.png' %}" alt="No Image" class="vehicle-detail-img">
-        {% endif %}
+                <!-- Right Column: Details -->
+                <div class="col-lg-8">
+                    <h2>{{ vehicle.model }}</h2>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "License Plate" %}:</strong> <span>{{ vehicle.license_plate }}</span></li>
+                        <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Type" %}:</strong> <span>{{ vehicle.get_vehicle_type_display }}</span></li>
+                        <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Is Available" %}:</strong> 
+                            <span>
+                                {% if vehicle.is_available %}
+                                    <span class="badge bg-success">{% translate "Yes" %}</span>
+                                {% else %}
+                                    <span class="badge bg-danger">{% translate "No" %}</span>
+                                {% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Current Location" %}:</strong> <span>{{ vehicle.current_location.name|default:_("N/A") }}</span></li>
+                    </ul>
+                    <div class="mt-4">
+                        <a href="{% url 'booking_app:admin_vehicle_edit' pk=vehicle.pk %}" class="btn btn-primary">{% translate "Edit Vehicle" %}</a>
+                    </div>
+                </div>
+            </div>
 
-        {# UPDATED: Relevant Data Only (Daily Rate removed) #}
-        <div class="detail-info">
-            <p><strong>{% translate "License Plate:" %}</strong> {{ vehicle.license_plate }}</p>
-            <p><strong>{% translate "Type:" %}</strong> {{ vehicle.vehicle_type }}</p>
-            <p><strong>{% translate "Model:" %}</strong> {{ vehicle.model }}</p>
-            <p><strong>{% translate "Available:" %}</strong> {% if vehicle.is_available %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}</p>
-            <p><strong>{% translate "Current Location:" %}</strong> {{ vehicle.current_location.name|default:_("N/A") }}</p>
+            <!-- Booking History Section -->
+            <div class="mt-5">
+                <h3 class="mb-3">{% translate "Booking History" %}</h3>
+                {% if upcoming_bookings %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>{% translate "Booking ID" %}</th>
+                                    <th>{% translate "User" %}</th>
+                                    <th>{% translate "Start Date" %}</th>
+                                    <th>{% translate "End Date" %}</th>
+                                    <th>{% translate "Status" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in upcoming_bookings %}
+                                    <tr>
+                                        <td>{{ booking.pk }}</td>
+                                        <td>{{ booking.user.username }}</td>
+                                        <td>{{ booking.start_date|date:"Y-m-d" }}</td>
+                                        <td>{{ booking.end_date|date:"Y-m-d" }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if booking.status == 'pending' %}bg-warning text-dark
+                                                {% elif booking.status == 'confirmed' %}bg-success
+                                                {% elif booking.status == 'cancelled' %}bg-danger
+                                                {% elif booking.status == 'completed' %}bg-secondary
+                                                {% else %}bg-info
+                                                {% endif %}">
+                                                {% translate booking.get_status_display %}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">{% translate "This vehicle has no upcoming or current bookings." %}</div>
+                {% endif %}
+            </div>
         </div>
     </div>
-
-    <div class="actions">
-        <a href="{% url 'booking_app:admin_vehicle_edit' pk=vehicle.pk %}" class="btn btn-primary">{% translate "Edit" %}</a>
-        <a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-secondary">{% translate "Back to Admin Vehicle List" %}</a>
-    </div>
-
+</div>
 {% endblock content %}

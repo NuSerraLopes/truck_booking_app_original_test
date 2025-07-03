@@ -6,31 +6,88 @@
 {% block title %}{% translate "Admin Dashboard" %}{% endblock %}
 
 {% block content %}
-    <h1>{% translate "Admin Dashboard" %}</h1>
+<div class="container my-5">
+    <h1 class="mb-4">{% translate "Admin Dashboard" %}</h1>
 
-    <div class="admin-links">
-        <div class="admin-link-card">
-            <h2>{% translate "User Management" %}</h2>
-            <p><a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-primary">{% translate "View All Users" %}</a></p>
-            <p><a href="{% url 'booking_app:admin_user_create' %}" class="btn btn-primary">{% translate "Create New User" %}</a></p>
+    <div class="row">
+        <!-- User Management Card -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm text-center">
+                <div class="card-body d-flex flex-column">
+                    <h2 class="h5 card-title">{% translate "User Management" %}</h2>
+                    <p class="card-text text-muted">{% translate "Manage user accounts, permissions, and groups." %}</p>
+                    <div class="mt-auto">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-primary">{% translate "View All Users" %}</a>
+                            <a href="{% url 'booking_app:admin_user_create' %}" class="btn btn-outline-primary">{% translate "Create New User" %}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="admin-link-card">
-            <h2>{% translate "Vehicle Management" %}</h2>
-            <p><a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-primary">{% translate "View All Vehicles" %}</a></p> {# This is the important link #}
-            <p><a href="{% url 'booking_app:admin_vehicle_create' %}" class="btn btn-primary">{% translate "Add New Vehicle" %}</a></p>
+        <!-- Vehicle Management Card -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm text-center">
+                <div class="card-body d-flex flex-column">
+                    <h2 class="h5 card-title">{% translate "Vehicle Management" %}</h2>
+                    <p class="card-text text-muted">{% translate "Add, edit, and manage the vehicle fleet." %}</p>
+                    <div class="mt-auto">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-primary">{% translate "View All Vehicles" %}</a>
+                            <a href="{% url 'booking_app:admin_vehicle_create' %}" class="btn btn-outline-primary">{% translate "Add New Vehicle" %}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="admin-link-card">
-            <h2>{% translate "Location Management" %}</h2>
-            <p><a href="{% url 'booking_app:admin_location_list' %}" class="btn btn-primary">{% translate "View All Locations" %}</a></p>
-            <p><a href="{% url 'booking_app:admin_location_create' %}" class="btn btn-primary">{% translate "Add New Location" %}</a></p>
+        <!-- Location Management Card -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm text-center">
+                <div class="card-body d-flex flex-column">
+                    <h2 class="h5 card-title">{% translate "Location Management" %}</h2>
+                    <p class="card-text text-muted">{% translate "Manage pickup and drop-off locations." %}</p>
+                    <div class="mt-auto">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'booking_app:admin_location_list' %}" class="btn btn-primary">{% translate "View All Locations" %}</a>
+                            <a href="{% url 'booking_app:admin_location_create' %}" class="btn btn-outline-primary">{% translate "Add New Location" %}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="admin-link-card">
-            <h2>{% translate "Groups" %}</h2>
-            <p><a href="{% url 'booking_app:admin_group_list' %}" class="btn btn-primary">{% trans "Manage Groups" %}</a></p>
-            <p><a href="{% url 'booking_app:admin_group_create' %}" class="btn btn-primary">{% trans "Add New Group" %}</a></p>
+        <!-- Group Management Card -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm text-center">
+                <div class="card-body d-flex flex-column">
+                    <h2 class="h5 card-title">{% translate "Group Management" %}</h2>
+                    <p class="card-text text-muted">{% translate "Manage user groups and their permissions." %}</p>
+                    <div class="mt-auto">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'booking_app:admin_group_list' %}" class="btn btn-primary">{% translate "Manage Groups" %}</a>
+                            <a href="{% url 'booking_app:admin_group_create' %}" class="btn btn-outline-primary">{% translate "Add New Group" %}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Email Template Management Card -->
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm text-center">
+                <div class="card-body d-flex flex-column">
+                    <h2 class="h5 card-title">{% translate "Email Templates" %}</h2>
+                    <p class="card-text text-muted">{% translate "Edit the content of notification emails." %}</p>
+                    <div class="mt-auto">
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'booking_app:admin_email_template_list' %}" class="btn btn-primary">{% translate "Manage Email Templates" %}</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 {% endblock content %}

@@ -16,9 +16,10 @@ from datetime import date, timedelta
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
 from .forms import UserCreateForm, VehicleCreateForm, LocationCreateForm, BookingForm, UpdateUserForm, \
-    LocationUpdateForm, VehicleEditForm, GroupForm
-from .models import User, Vehicle, Location, Booking
-from .utils import add_business_days
+    LocationUpdateForm, VehicleEditForm, GroupForm, EmailTemplateForm
+from .models import User, Vehicle, Location, Booking, EmailTemplate
+from .utils import add_business_days, send_booking_notification
+
 
 def is_admin(user):
     return user.is_authenticated and user.is_admin_member
@@ -148,12 +149,6 @@ def vehicle_list_view(request, group_name=None):
         elif effective_group_for_filter in ['heavy', 'tlheavy']:
             vehicles_qs = vehicles_qs.filter(vehicle_type='HEAVY')
 
-    #
-    # --- KEY CHANGE IS HERE ---
-    #
-
-    # 1. Fetch all vehicles and pre-calculate dates
-    # You can make this more efficient if needed, but the logic is sound.
     vehicles_with_dates = []
     for vehicle in vehicles_qs.order_by('vehicle_type', 'model', 'license_plate'):
         latest_booking_data = Booking.objects.filter(
@@ -163,22 +158,19 @@ def vehicle_list_view(request, group_name=None):
 
         latest_end_date = latest_booking_data['max_end_date']
 
-        calculated_date = None  # Default to None
+        calculated_date = None
         if latest_end_date:
             possible_next_date = add_business_days(latest_end_date, 3)
             if possible_next_date > date.today():
                 calculated_date = possible_next_date
 
-        # 2. Attach the calculated date as a new property to the vehicle object
         vehicle.next_available_date = calculated_date
         vehicles_with_dates.append(vehicle)
 
-    # 3. Pass the modified list of vehicle objects to the context
     context = {
-        'vehicles': vehicles_with_dates,  # This list now contains vehicles with the .next_available_date attribute
+        'vehicles': vehicles_with_dates,
         'all_groups': all_groups,
         'selected_group': group_name,
-        # 'next_available_date' dictionary is no longer needed here
         'page_title': _("Vehicle List") + (f" ({group_name})" if group_name else "")
     }
     return render(request, 'vehicle_list.html', context)
@@ -186,8 +178,8 @@ def vehicle_list_view(request, group_name=None):
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def admin_vehicle_list_view(request):
-    vehicles = Vehicle.objects.all() # Get all vehicles, not just available ones for admin
-    paginator = Paginator(vehicles, 10) # 10 vehicles per page
+    vehicles = Vehicle.objects.all()
+    paginator = Paginator(vehicles, 10)
     page = request.GET.get('page')
     try:
         vehicles = paginator.page(page)
@@ -202,7 +194,7 @@ def admin_vehicle_list_view(request):
     }
     return render(request, 'admin/admin_vehicle_list.html', context)
 
-@login_required # This is for general user vehicle detail, showing availability
+@login_required
 def vehicle_detail_view(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
 
@@ -212,18 +204,12 @@ def vehicle_detail_view(request, pk):
     ).aggregate(max_end_date=Max('end_date'))
 
     latest_end_date = latest_booking_data['max_end_date']
-
     next_available_date = None
 
     if latest_end_date:
         calculated_date = add_business_days(latest_end_date, 3)
-
-        if calculated_date <= date.today():
-            next_available_date = None
-        else:
-            next_available_date = calculated_date #
-    else:
-        next_available_date = None
+        if calculated_date > date.today():
+            next_available_date = calculated_date
 
     context = {
         'vehicle': vehicle,
@@ -237,27 +223,23 @@ def vehicle_detail_view(request, pk):
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def admin_vehicle_detail_view(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
-    current_date = timezone.now()
+    current_date = timezone.now().date()
 
-    # Get upcoming bookings for this vehicle (filtered for future bookings)
-    # Order by start_time to ensure they are processed chronologically
     upcoming_bookings = vehicle.bookings.filter(
-        end_date__gt=current_date
+        end_date__gte=current_date
     ).order_by('start_date')
 
-    # Iterate through upcoming bookings and calculate the 'next_available_date' for each
     for booking in upcoming_bookings:
         if booking.end_date:
-            # Calculate the end of the current booking + 3 business days
             booking.next_available_date_display = add_business_days(booking.end_date, 3)
         else:
-            booking.next_available_date_display = None # Handle cases where end_time might be missing
+            booking.next_available_date_display = None
 
     context = {
         'vehicle': vehicle,
         'page_title': _("Vehicle Details"),
         'current_time': current_date,
-        'upcoming_bookings': upcoming_bookings, # Pass the filtered and modified bookings to the template
+        'upcoming_bookings': upcoming_bookings,
     }
     return render(request, 'admin/admin_vehicle_detail.html', context)
 
@@ -266,12 +248,10 @@ def admin_vehicle_detail_view(request, pk):
 def book_vehicle_view(request, vehicle_pk):
     vehicle = get_object_or_404(Vehicle, pk=vehicle_pk)
 
-    # --- START: Recalculate vehicle availability for booking form ---
     latest_booking_data = Booking.objects.filter(
         vehicle=vehicle,
         status__in=['pending', 'confirmed']
     ).aggregate(max_end_date=Max('end_date'))
-
     latest_end_date = latest_booking_data['max_end_date']
 
     if latest_end_date:
@@ -280,7 +260,6 @@ def book_vehicle_view(request, vehicle_pk):
             vehicle.available_after = None
     else:
         vehicle.available_after = None
-    # --- END: Recalculate vehicle availability for booking form ---
 
     if request.method == 'POST':
         form = BookingForm(request.POST, vehicle=vehicle)
@@ -289,8 +268,8 @@ def book_vehicle_view(request, vehicle_pk):
             booking.user = request.user
             booking.vehicle = vehicle
             booking.status = 'pending'
-
             booking.save()
+            send_booking_notification(booking, 'booking_created')
             messages.success(request, _('Your booking request has been submitted successfully!'))
             return redirect('booking_app:my_bookings')
         else:
@@ -307,9 +286,6 @@ def book_vehicle_view(request, vehicle_pk):
 
 @login_required
 def my_bookings_view(request):
-    """
-    Displays bookings made by the current user.
-    """
     bookings = Booking.objects.filter(user=request.user).order_by('-start_date')
     context = {
         'bookings': bookings,
@@ -319,37 +295,82 @@ def my_bookings_view(request):
 
 @login_required
 def update_booking_view(request, booking_pk):
-    """
-    Allows the user to update their own booking.
-    """
-    booking = get_object_or_404(Booking, pk=booking_pk, user=request.user)
+    booking = get_object_or_404(Booking, pk=booking_pk)
 
-    if booking.status in ['confirmed', 'cancelled']:
-        messages.warning(request, _("This booking cannot be updated as it is already confirmed or cancelled."))
+    is_admin = getattr(request.user, 'is_admin_member', False)
+    is_sd_group = request.user.groups.filter(name='sd').exists()
+    is_tl_heavy_group = request.user.groups.filter(name='tlheavy').exists()
+    is_tl_light_group = request.user.groups.filter(name='tllight').exists()
+
+    can_manage_booking_status = (
+        is_admin or
+        is_sd_group or
+        (is_tl_heavy_group and booking.vehicle.vehicle_type == 'HEAVY') or
+        (is_tl_light_group and booking.vehicle.vehicle_type == 'LIGHT')
+    )
+
+    can_approve = booking.status == 'pending' and can_manage_booking_status
+    can_cancel_by_manager = booking.status in ['pending', 'confirmed'] and can_manage_booking_status
+
+    can_update_form_fields = (
+        request.user == booking.user and
+        booking.status not in ['confirmed', 'cancelled', 'completed']
+    )
+
+    if not (request.user == booking.user or can_manage_booking_status):
+        messages.error(request, _("You do not have permission to access or manage this booking."))
         return redirect('booking_app:my_bookings')
 
     if request.method == 'POST':
-        form = BookingForm(request.POST, instance=booking)
-        if form.is_valid():
-            form.save()
-            messages.success(request, _("Booking updated successfully."))
-            return redirect('booking_app:my_bookings')
+        action = request.POST.get('action')
+
+        if action == 'approve' and can_approve:
+            booking.status = 'confirmed'
+            booking.save()
+            send_booking_notification(booking, 'booking_approved')
+            messages.success(request, _(f"Booking {booking.pk} for {booking.vehicle.license_plate} has been approved."))
+            return redirect('booking_app:my_group_bookings')
+
+        elif action == 'cancel_by_manager' and can_cancel_by_manager:
+            booking.status = 'cancelled'
+            booking.save()
+            send_booking_notification(booking, 'booking_canceled_by_manager')
+            messages.success(request, _(f"Booking {booking.pk} for {booking.vehicle.license_plate} has been cancelled by management."))
+            return redirect('booking_app:my_group_bookings')
+
         else:
-            messages.error(request, _("Error updating booking. Please check the form."))
+            if can_update_form_fields:
+                form = BookingForm(request.POST, instance=booking, vehicle=booking.vehicle)
+                if form.is_valid():
+                    form.save()
+                    send_booking_notification(booking, 'booking_updated')
+                    messages.success(request, _("Your booking has been updated successfully."))
+                    return redirect('booking_app:my_bookings')
+                else:
+                    messages.error(request, _("Error updating booking. Please check the form."))
+            else:
+                messages.error(request, _("You do not have permission to update this booking's details or its status prevents it."))
+                return redirect(request.path_info)
+
     else:
-        form = BookingForm(instance=booking)
+        form = BookingForm(instance=booking, vehicle=booking.vehicle)
+        if not can_update_form_fields:
+            for field in form.fields.values():
+                field.widget.attrs['readonly'] = 'readonly'
+                field.widget.attrs['disabled'] = 'disabled'
+
     context = {
         'form': form,
         'booking': booking,
+        'can_approve': can_approve,
+        'can_cancel_by_manager': can_cancel_by_manager,
+        'can_update_form_fields': can_update_form_fields,
     }
     return render(request, 'update_booking.html', context)
 
 
 @login_required
-def cancel_booking_view(request, booking_pk): # This function is present here
-    """
-    Allows the user to cancel their own booking.
-    """
+def cancel_booking_view(request, booking_pk):
     booking = get_object_or_404(Booking, pk=booking_pk, user=request.user)
 
     if booking.status in ['cancelled', 'completed']:
@@ -357,12 +378,6 @@ def cancel_booking_view(request, booking_pk): # This function is present here
         return redirect('booking_app:my_bookings')
 
     if request.method == 'POST':
-        if booking.status not in ['cancelled', 'completed'] and not booking.vehicle.is_available:
-            # Assuming 'is_available' is a field on your Vehicle model.
-            # If not, you might need to adjust how vehicle availability is tracked.
-            booking.vehicle.is_available = True
-            booking.vehicle.save()
-
         booking.status = 'cancelled'
         booking.save()
         messages.success(request, _("Booking cancelled successfully."))
@@ -372,25 +387,105 @@ def cancel_booking_view(request, booking_pk): # This function is present here
     }
     return render(request, 'cancel_booking.html', context)
 
+@login_required
+def my_group_bookings_view(request):
+    user = request.user
+    bookings = Booking.objects.select_related('user', 'vehicle', 'start_location', 'end_location').all()
+
+    is_admin_user = getattr(user, 'is_admin_member', False)
+    is_sd_group = user.groups.filter(name='sd').exists()
+    is_tllight_group = user.groups.filter(name='tllight').exists()
+    is_tlheavy_group = user.groups.filter(name='tlheavy').exists()
+
+    if is_admin_user or is_sd_group:
+        pass
+    elif is_tllight_group:
+        bookings = bookings.filter(vehicle__vehicle_type='LIGHT')
+    elif is_tlheavy_group:
+        bookings = bookings.filter(vehicle__vehicle_type='HEAVY')
+    else:
+        bookings = bookings.filter(user=user)
+
+    bookings = bookings.order_by('-start_date')
+
+    paginator = Paginator(bookings, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'page_title': _("Group Bookings Overview"),
+    }
+    return render(request, 'my_group_bookings.html', context)
+
+@login_required
+def booking_detail_view(request, booking_pk):
+    """
+    Displays the details of a specific booking for the user who created it.
+    """
+    booking = get_object_or_404(Booking, pk=booking_pk)
+
+    # Simplified permission check: only the owner can view this page.
+    if request.user != booking.user:
+        messages.error(request, _("You do not have permission to view this booking."))
+        return redirect('booking_app:my_bookings')
+
+    context = {
+        'booking': booking,
+        'page_title': _("Booking Details")
+    }
+    return render(request, 'booking_detail.html', context)
+
+@login_required
+def group_booking_detail_view(request, booking_pk):
+    """
+    Displays booking details for managers with appropriate permissions.
+    """
+    booking = get_object_or_404(Booking, pk=booking_pk)
+    user = request.user
+
+    is_admin = getattr(user, 'is_admin_member', False)
+    is_sd_group = user.groups.filter(name='sd').exists()
+    is_tllight_group = user.groups.filter(name='tllight').exists()
+    is_tlheavy_group = user.groups.filter(name='tlheavy').exists()
+
+    # Check if the user has permission to view this booking in a group context
+    can_view_in_group = (
+        is_admin or
+        is_sd_group or
+        (is_tllight_group and booking.vehicle.vehicle_type == 'LIGHT') or
+        (is_tlheavy_group and booking.vehicle.vehicle_type == 'HEAVY')
+    )
+
+    if not can_view_in_group:
+        messages.error(request, _("You do not have permission to view this group booking."))
+        return redirect('booking_app:my_group_bookings')
+
+    # Determine if manager can take action
+    can_approve = booking.status == 'pending' and can_view_in_group
+    can_cancel_by_manager = booking.status in ['pending', 'confirmed'] and can_view_in_group
+
+    context = {
+        'booking': booking,
+        'can_approve': can_approve,
+        'can_cancel_by_manager': can_cancel_by_manager,
+        'page_title': _("Group Booking Details")
+    }
+    return render(request, 'group_booking_detail.html', context)
 
 @login_required
 def my_account_view(request):
-    """
-    Displays the user's account dashboard.
-    """
+    bookings = Booking.objects.filter(user=request.user).order_by('-start_date')[:5]
     context = {
         'user': request.user,
+        'bookings': bookings,
     }
     return render(request, 'my_account.html', context)
 
 
 @login_required
 def update_user_data_view(request):
-    """
-    Allows the user to update their personal data (email, first name, last name).
-    """
     user = request.user
-
     if request.method == 'POST':
         form = UpdateUserForm(request.POST, instance=user)
         if form.is_valid():
@@ -411,9 +506,6 @@ def update_user_data_view(request):
 
 @login_required
 def change_password_view(request):
-    """
-    Allows the user to change their password.
-    """
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
@@ -428,24 +520,20 @@ def change_password_view(request):
 
     context = {
         'form': form,
-        'user': request.user,
     }
     return render(request, 'change_password.html', context)
 
-# --- ADMIN-FACING PASSWORD RESET VIEW ---
+# --- ADMIN-FACING VIEWS ---
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def admin_user_reset_password_view(request, pk):
-    """Allows an admin to reset a specific user's password."""
     user_to_reset = get_object_or_404(User, pk=pk)
-
     if request.method == 'POST':
         form = SetPasswordForm(user_to_reset, request.POST)
         if form.is_valid():
             form.save()
             messages.success(request, _(f"Password for user '{user_to_reset.username}' has been reset successfully!"))
-            # Redirect back to the user edit page after successful reset
-            return redirect('booking_app:user_edit', pk=user_to_reset.pk) # Changed to user_edit
+            return redirect('booking_app:admin_user_edit', pk=user_to_reset.pk)
         else:
             messages.error(request, _("Error resetting password. Please check the form."))
     else:
@@ -457,7 +545,6 @@ def admin_user_reset_password_view(request, pk):
     }
     return render(request, 'admin/admin_user_reset_password.html', context)
 
-# --- Admin Views (existing and new) ---
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def admin_dashboard_view(request):
@@ -467,20 +554,16 @@ def admin_dashboard_view(request):
     return render(request, 'admin/admin_dashboard.html', context)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user') # Ensure only admin users can access
+@user_passes_test(is_admin, login_url='booking_app:login_user')
 def user_create_view(request):
     if request.method == 'POST':
-        # Pass request.POST data and the request object itself to the form
         form = UserCreateForm(request.POST, request=request)
         if form.is_valid():
-            form.save(request=request) # The form's save method now handles password setting and messages.success
-            # No need for messages.success(request, ...) here, as the form handles it.
-            return redirect(reverse('booking_app:admin_user_list')) # Redirect to the user list on success
+            form.save(request=request)
+            return redirect(reverse('booking_app:admin_user_list'))
         else:
-            # If form is not valid, add an error message
             messages.error(request, _("Error creating user. Please check the form for errors."))
     else:
-        # For GET request, initialize an empty form, passing the request object
         form = UserCreateForm(request=request)
 
     context = {
@@ -495,12 +578,7 @@ def user_list_view(request):
     users = User.objects.all().order_by('username')
     paginator = Paginator(users, 10)
     page = request.GET.get('page')
-    try:
-        users = paginator.page(page)
-    except PageNotAnInteger:
-        users = paginator.page(1)
-    except EmptyPage:
-        users = paginator.page(paginator.num_pages)
+    users = paginator.get_page(page)
 
     context = {
         'users': users,
@@ -510,26 +588,23 @@ def user_list_view(request):
 
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
-def admin_user_edit_view(request, pk): # Assuming your view is named something like this
+def admin_user_edit_view(request, pk):
     user_to_edit = get_object_or_404(User, pk=pk)
-
     if request.method == 'POST':
-        # Pass the instance of the user being edited AND the request to the form
         form = UpdateUserForm(request.POST, instance=user_to_edit, request=request)
         if form.is_valid():
-            form.save(commit=True) # The form's save method handles groups
+            form.save(commit=True)
             messages.success(request, _(f"User '{user_to_edit.username}' updated successfully!"))
             return redirect(reverse('booking_app:admin_user_list'))
         else:
             messages.error(request, _("Error updating user. Please check the form."))
     else:
-        # For GET request, pre-populate the form with existing user data
         form = UpdateUserForm(instance=user_to_edit, request=request)
 
     context = {
         'form': form,
         'page_title': _("Edit User"),
-        'user_to_edit': user_to_edit, # Pass the user object for template title
+        'user_to_edit': user_to_edit,
     }
     return render(request, 'admin/admin_user_edit.html', context)
 
@@ -541,7 +616,6 @@ def location_create_view(request):
         if form.is_valid():
             form.save()
             messages.success(request, _("Location created successfully!"))
-            # Redirect to location list or admin dashboard after creation
             return redirect(reverse('booking_app:admin_location_list'))
         else:
             messages.error(request, _("Error creating location. Please check the form."))
@@ -556,12 +630,7 @@ def location_list_view(request):
     locations = Location.objects.all().order_by('name')
     paginator = Paginator(locations, 10)
     page = request.GET.get('page')
-    try:
-        locations = paginator.page(page)
-    except PageNotAnInteger:
-        locations = paginator.page(1)
-    except EmptyPage:
-        locations = paginator.page(paginator.num_pages)
+    locations = paginator.get_page(page)
 
     context = {
         'locations': locations,
@@ -573,13 +642,12 @@ def location_list_view(request):
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def location_edit_view(request, pk):
     location_to_edit = get_object_or_404(Location, pk=pk)
-
     if request.method == 'POST':
         form = LocationUpdateForm(request.POST, instance=location_to_edit)
         if form.is_valid():
             form.save()
             messages.success(request, _(f"Location '{location_to_edit.name}' updated successfully!"))
-            return redirect(reverse('booking_app:admin_location_list')) # Redirect to location list after edit
+            return redirect(reverse('booking_app:admin_location_list'))
         else:
             messages.error(request, _("Error updating location. Please correct the errors below."))
     else:
@@ -587,27 +655,42 @@ def location_edit_view(request, pk):
 
     context = {
         'form': form,
-        'location_obj': location_to_edit, # Pass the location object to the template
+        'location_obj': location_to_edit,
         'page_title': _(f"Edit Location: {location_to_edit.name}")
     }
     return render(request, 'admin/admin_location_edit.html', context)
+
+@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def location_delete_view(request, pk):
+    location_to_delete = get_object_or_404(Location, pk=pk)
+    is_used = Booking.objects.filter(
+        Q(start_location=location_to_delete) | Q(end_location=location_to_delete)
+    ).exists()
+
+    if is_used:
+        messages.error(request, _(f"Location '{location_to_delete.name}' cannot be deleted because it is used in existing bookings."))
+        return redirect(reverse('booking_app:admin_location_list'))
+
+    if request.method == 'POST':
+        location_to_delete.delete()
+        messages.success(request, _(f"Location '{location_to_delete.name}' deleted successfully!"))
+        return redirect(reverse('booking_app:admin_location_list'))
+    else:
+        context = {
+            'location': location_to_delete,
+            'page_title': _(f"Confirm Delete Location: {location_to_delete.name}")
+        }
+        return render(request, 'admin/admin_location_confirm_delete.html', context)
 
 # --- Admin Group Management Views ---
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def group_list_view(request):
-    """
-    Displays a list of all user groups for admin management.
-    """
     groups = Group.objects.all().order_by('name')
-    paginator = Paginator(groups, 10) # 10 groups per page
+    paginator = Paginator(groups, 10)
     page = request.GET.get('page')
-    try:
-        groups = paginator.page(page)
-    except PageNotAnInteger:
-        groups = paginator.page(1)
-    except EmptyPage:
-        groups = paginator.page(paginator.num_pages)
+    groups = paginator.get_page(page)
 
     context = {
         'groups': groups,
@@ -619,9 +702,6 @@ def group_list_view(request):
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def group_create_view(request):
-    """
-    Handles the creation of new user groups.
-    """
     if request.method == 'POST':
         form = GroupForm(request.POST)
         if form.is_valid():
@@ -643,11 +723,7 @@ def group_create_view(request):
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def group_edit_view(request, pk):
-    """
-    Handles the editing of an existing user group.
-    """
     group_to_edit = get_object_or_404(Group, pk=pk)
-
     if request.method == 'POST':
         form = GroupForm(request.POST, instance=group_to_edit)
         if form.is_valid():
@@ -669,11 +745,7 @@ def group_edit_view(request, pk):
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def group_delete_view(request, pk):
-    """
-    Handles the deletion of an existing user group after confirmation.
-    """
     group_to_delete = get_object_or_404(Group, pk=pk)
-
     if request.method == 'POST':
         group_to_delete.delete()
         messages.success(request, _(f"Group '{group_to_delete.name}' deleted successfully!"))
@@ -684,3 +756,54 @@ def group_delete_view(request, pk):
             'page_title': _(f"Confirm Delete Group: {group_to_delete.name}")
         }
         return render(request, 'admin/admin_group_delete.html', context)
+
+# --- Admin Email Templates ---
+
+@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def admin_email_template_list_view(request):
+    """
+    Displays a list of all email templates for editing.
+    """
+    templates = EmailTemplate.objects.all()
+    context = {
+        'templates': templates,
+        'page_title': _("Manage Email Templates")
+    }
+    return render(request, 'admin/admin_email_template_list.html', context)
+
+
+@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def admin_email_template_form_view(request, pk=None):
+    """
+    Handles both creating a new email template and editing an existing one.
+    """
+    if pk:
+        # This is an edit request for an existing template.
+        template = get_object_or_404(EmailTemplate, pk=pk)
+        page_title = _(f"Edit Email Template: {template.name}")
+    else:
+        # This is a request to create a new template.
+        template = None
+        page_title = _("Create New Email Template")
+
+    if request.method == 'POST':
+        form = EmailTemplateForm(request.POST, instance=template)
+        if form.is_valid():
+            instance = form.save()
+            action = _("created") if template is None else _("updated")
+            messages.success(request, _(f"Email template '{instance.name}' {action} successfully!"))
+            return redirect('booking_app:admin_email_template_list')
+        else:
+            messages.error(request, _("Error processing template. Please check the form."))
+    else:
+        form = EmailTemplateForm(instance=template)
+
+    context = {
+        'form': form,
+        'template': template,
+        'page_title': page_title
+    }
+    # Use the generic form template for both create and edit
+    return render(request, 'admin/admin_email_template_form.html', context)

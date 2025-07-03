@@ -63,14 +63,15 @@ ROOT_URLCONF = 'truck_booking_app.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')], # <--- MODIFY THIS LINE
-        'APP_DIRS': True, # Keep this as True; it tells Django to also look in 'templates' folders inside your apps.
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'booking_app.context_processors.auth_extras'
             ],
         },
     },
@@ -175,16 +176,16 @@ LOGIN_URL = 'login' # Refers to the 'login' URL name we defined in truck_booking
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # You can also set a default 'from' email address for your application
-DEFAULT_FROM_EMAIL = 'no-reply@yourtruckapp.com'
-SERVER_EMAIL = 'error-reporting@yourtruckapp.com' # For error reporting emails
+DEFAULT_FROM_EMAIL = 'geral@nulopes.me'
+SERVER_EMAIL = 'geral@nulopes.me' # For error reporting emails
 
 # If you later switch to a real SMTP server, you would configure it like this:
-# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-# EMAIL_HOST = 'smtp.sendgrid.net' # Example for SendGrid
-# EMAIL_PORT = 587
-# EMAIL_USE_TLS = True
-# EMAIL_HOST_USER = 'your_username' # Your SMTP username
-# EMAIL_HOST_PASSWORD = 'your_password' # Your SMTP password
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_HOST = 'smtp-pt.securemail.pro' # Example for SendGrid
+#EMAIL_PORT = 465
+#EMAIL_USE_TLS = True
+#EMAIL_HOST_USER = 'geral@nulopes.me' # Your SMTP username
+#EMAIL_HOST_PASSWORD = '1990NunoLopes!!' # Your SMTP password
 
 # Media files (for user-uploaded content)
 MEDIA_URL = '/media/'
