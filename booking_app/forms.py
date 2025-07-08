@@ -125,7 +125,6 @@ class UpdateUserForm(forms.ModelForm):
     class Meta:
         model = User
         fields = [
-            'username',  # Re-add username if it was removed, it's essential for a user
             'email',
             'first_name',
             'last_name',
@@ -136,7 +135,6 @@ class UpdateUserForm(forms.ModelForm):
             'requires_password_change',
         ]
         labels = {
-            'username': _('Username'),
             'email': _('Email'),
             'first_name': _('First Name'),
             'last_name': _('Last Name'),
@@ -171,7 +169,6 @@ class UpdateUserForm(forms.ModelForm):
                 if self.instance.groups.filter(pk=admin_group.pk).exists():
                     self.fields['is_admin_member_checkbox'].initial = True
             except Group.DoesNotExist:
-                # If 'Admin' group doesn't exist, hide or disable this checkbox
                 self.fields['is_admin_member_checkbox'].widget = forms.HiddenInput()
                 self.fields['is_admin_member_checkbox'].required = False
                 self.fields['is_admin_member_checkbox'].label = ""
@@ -211,14 +208,6 @@ class UpdateUserForm(forms.ModelForm):
         user.groups.set(list(selected_groups_from_form))
 
         return user
-
-    # Custom clean methods for uniqueness of username and email
-    # These are crucial for update forms to prevent "already exists" errors on the current user's data
-    def clean_username(self):
-        username = self.cleaned_data['username']
-        if User.objects.filter(username=username).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError(_("A user with that username already exists."))
-        return username
 
     def clean_email(self):
         email = self.cleaned_data['email']
