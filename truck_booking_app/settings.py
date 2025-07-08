@@ -22,12 +22,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-8r02^0=@e6w&!z*jec-n#djw=%b*1!qyx!2k^+^_@=uw5cb5wn'
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['192.168.25.30','192.168.25.68','booking.nulopes.me']
 
 
 # Application definition
@@ -86,11 +86,11 @@ WSGI_APPLICATION = 'truck_booking_app.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'truck_booking_db', # The name you gave your database in pgAdmin
-        'USER': 'postgres',         # Your PostgreSQL username (usually 'postgres' for development)
-        'PASSWORD': '1990NunoLopes', # <--- ***REPLACE THIS WITH YOUR ACTUAL PASSWORD***
-        'HOST': 'localhost',        # The address where your PostgreSQL server is running
-        'PORT': '5432',                 # Leave empty for the default PostgreSQL port (5432)
+        'NAME': 'truck_booking_db',
+        'USER': 'postgres',
+        'PASSWORD': os.environ.get('DB_PASSWORD'),
+        'HOST': 'localhost',
+        'PORT': '5432',
     }
 }
 
@@ -173,19 +173,19 @@ LOGIN_URL = 'login' # Refers to the 'login' URL name we defined in truck_booking
 
 # --- Email Configuration ---
 # For development, print emails to the console
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # You can also set a default 'from' email address for your application
 DEFAULT_FROM_EMAIL = 'geral@nulopes.me'
 SERVER_EMAIL = 'geral@nulopes.me' # For error reporting emails
 
 # If you later switch to a real SMTP server, you would configure it like this:
-#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-#EMAIL_HOST = 'smtp-pt.securemail.pro' # Example for SendGrid
-#EMAIL_PORT = 465
-#EMAIL_USE_TLS = True
-#EMAIL_HOST_USER = 'geral@nulopes.me' # Your SMTP username
-#EMAIL_HOST_PASSWORD = '1990NunoLopes!!' # Your SMTP password
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp-pt.securemail.pro' # Example for SendGrid
+EMAIL_PORT = 465
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'geral@nulopes.me' # Your SMTP username
+EMAIL_HOST_PASSWORD = '1990NunoLopes!!' # Your SMTP password
 
 # Media files (for user-uploaded content)
 MEDIA_URL = '/media/'
