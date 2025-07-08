@@ -12,7 +12,7 @@
         {# If the user is logged in, show the link to the vehicle list #}
         <p>{% translate "Here you can find the right truck for you next sale." %}</p>
         <div class="call-to-action">
-            <a href="{% url 'booking_app:vehicle_list' %}" class="btn">{% translate "Browse Available Trucks" %}</a>
+            <a href="{% url 'booking_app:vehicle_list' %}" class="btn">{% translate "Browse Available Vehicles" %}</a>
         </div>
     {% else %}
         {# If the user is not logged in, show the login button #}

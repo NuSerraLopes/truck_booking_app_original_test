@@ -16,15 +16,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <h2>{% translate "TruckApp Booking Cancellation" %}</h2>
+            <h2>{% translate "VehicleApp Booking Cancellation" %}</h2>
         </div>
         <div class="content">
             <p>{% translate "Dear" %} {{ user.username }},</p>
-            <p>{% translate "This email confirms that your booking for Truck ID" %} {{ booking.truck.truck_id }} ({% translate "Booking ID" %} {{ booking.pk }}) {% translate "has been successfully cancelled." %}</p>
+            <p>{% translate "This email confirms that your booking for Vehicle ID" %} {{ booking.truck.truck_id }} ({% translate "Booking ID" %} {{ booking.pk }}) {% translate "has been successfully cancelled." %}</p>
             <p>{% translate "Cancelled Booking Details:" %}</p>
             <ul>
                 <li><strong>{% translate "Booking ID" %}:</strong> {{ booking.pk }}</li>
-                <li><strong>{% translate "Truck ID" %}:</strong> {{ booking.truck.truck_id }}</li>
+                <li><strong>{% translate "Vehicle ID" %}:</strong> {{ booking.truck.truck_id }}</li>
                 <li><strong>{% translate "Customer Name" %}:</strong> {{ booking.customer_name }}</li>
                 <li><strong>{% translate "Origin" %}:</strong> {{ booking.origin }}</li>
                 <li><strong>{% translate "Destination" %}:</strong> {{ booking.destination }}</li>
@@ -40,7 +40,7 @@
                 <li><strong>{% translate "Final Status" %}:</strong> {% translate booking.get_booking_status_display %}</li>
             </ul>
             <p>{% translate "If you believe this cancellation is an error or have any questions, please contact us immediately." %}</p>
-            <p>{% translate "Best regards," %}<br>{% translate "The TruckApp Team" %}</p>
+            <p>{% translate "Best regards," %}<br>{% translate "The VehicleApp Team" %}</p>
         </div>
         <div class="footer">
             <p>{% translate "This is an automated email, please do not reply." %}</p>

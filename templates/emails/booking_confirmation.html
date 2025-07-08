@@ -16,7 +16,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h2>{% translate "TruckApp Booking Confirmation" %}</h2>
+            <h2>{% translate "VehicleApp Booking Confirmation" %}</h2>
         </div>
         <div class="content">
             <p>{% translate "Dear" %} {{ user.username }},</p>
@@ -24,7 +24,7 @@
             <p>{% translate "Here are your booking details:" %}</p>
             <ul>
                 <li><strong>{% translate "Booking ID" %}:</strong> {{ booking.pk }}</li>
-                <li><strong>{% translate "Truck ID" %}:</strong> {{ booking.truck.truck_id }}</li>
+                <li><strong>{% translate "Vehicle ID" %}:</strong> {{ booking.truck.truck_id }}</li>
                 <li><strong>{% translate "Customer Name" %}:</strong> {{ booking.customer_name }}</li>
                 <li><strong>{% translate "Origin" %}:</strong> {{ booking.origin }}</li>
                 <li><strong>{% translate "Destination" %}:</strong> {{ booking.destination }}</li>
@@ -43,8 +43,8 @@
             <p style="text-align: center;">
                 <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'booking_app:my_bookings' %}" class="button">{% translate "View My Bookings" %}</a>
             </p>
-            <p>{% translate "Thank you for choosing TruckApp!" %}</p>
-            <p>{% translate "Best regards," %}<br>{% translate "The TruckApp Team" %}</p>
+            <p>{% translate "Thank you for choosing VehicleApp!" %}</p>
+            <p>{% translate "Best regards," %}<br>{% translate "The VehicleApp Team" %}</p>
         </div>
         <div class="footer">
             <p>{% translate "This is an automated email, please do not reply." %}</p>
