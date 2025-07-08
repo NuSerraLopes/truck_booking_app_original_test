@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">{{ page_title }}</h1>
+            <a href="{% url 'booking_app:admin_dl_create' %}" class="btn btn-primary">{% translate "Create New List" %}</a>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>{% translate "List Name" %}</th>
+                            <th>{% translate "Email Addresses" %}</th>
+                            <th class="text-end">{% translate "Actions" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dl in distribution_lists %}
+                        <tr>
+                            <td>{{ dl.name }}</td>
+                            <td>{{ dl.emails|linebreaksbr }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'booking_app:admin_dl_edit' pk=dl.pk %}" class="btn btn-info btn-sm">{% translate "Edit" %}</a>
+                                <a href="{% url 'booking_app:admin_dl_delete' pk=dl.pk %}" class="btn btn-danger btn-sm">{% translate "Delete" %}</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">{% translate "No distribution lists found." %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

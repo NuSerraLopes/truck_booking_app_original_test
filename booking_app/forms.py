@@ -7,7 +7,7 @@ from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 from datetime import date
-from .models import Vehicle, Booking, Location, User, EmailTemplate
+from .models import Vehicle, Booking, Location, User, EmailTemplate, DistributionList
 from django.contrib.auth.models import Group
 from django.contrib import messages
 
@@ -472,32 +472,48 @@ class GroupForm(forms.ModelForm):
 class EmailTemplateForm(forms.ModelForm):
     class Meta:
         model = EmailTemplate
-        fields = ['name', 'template_key', 'subject', 'body']
+        # --- UPDATED: 'language' field removed ---
+        fields = [
+            'name', 'event_trigger', 'subject', 'body', 'is_active',
+            'send_to_salesperson', 'send_to_groups', 'send_to_users'
+        ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'template_key': forms.TextInput(attrs={'class': 'form-control'}),
+            'event_trigger': forms.Select(attrs={'class': 'form-select'}),
             'subject': forms.TextInput(attrs={'class': 'form-control'}),
             'body': forms.Textarea(attrs={'class': 'form-control', 'rows': 15}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'send_to_salesperson': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'send_to_groups': forms.CheckboxSelectMultiple,
+            'send_to_users': forms.CheckboxSelectMultiple,
         }
         labels = {
-            'name': _('Template Name (for internal reference)'),
-            'template_key': _('Template Key'),
+            'name': _('Template Name'),
+            'event_trigger': _('Event Trigger'),
             'subject': _('Email Subject'),
             'body': _('Email Body (HTML is allowed)'),
-        }
-        help_texts = {
-            'template_key': _("A unique key used by the system (e.g., 'booking_created'). Cannot be changed after creation.")
+            'is_active': _('Is this template active?'),
+            'send_to_salesperson': _('Send to Salesperson'),
+            'send_to_groups': _('Send to Groups'),
+            'send_to_users': _('Send to Specific Users'),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # If we are editing an existing template, make the key read-only
+        # If editing, make the event trigger read-only
         if self.instance and self.instance.pk:
-            self.fields['template_key'].widget.attrs['readonly'] = True
+            self.fields['event_trigger'].widget.attrs['disabled'] = True
+            self.fields['event_trigger'].help_text = _("The event trigger cannot be changed after creation.")
 
-    def clean_template_key(self):
-        # Ensure the template key is not changed on an existing object
-        key = self.cleaned_data.get('template_key')
-        if self.instance and self.instance.pk and self.instance.template_key != key:
-            raise forms.ValidationError(_("The template key cannot be changed."))
-        return key
+class DistributionListForm(forms.ModelForm):
+    class Meta:
+        model = DistributionList
+        fields = ['name', 'emails']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'emails': forms.Textarea(attrs={'class': 'form-control', 'rows': 8}),
+        }
+        labels = {
+            'name': _('List Name'),
+            'emails': _('Email Addresses'),
+        }

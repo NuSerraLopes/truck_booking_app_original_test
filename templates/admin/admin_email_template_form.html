@@ -12,7 +12,7 @@
                     <h1 class="card-title text-center mb-4">{{ page_title }}</h1>
                     
                     {% if template %}
-                    <p class="text-center text-muted">{% translate "Template Key" %}: <code>{{ template.template_key }}</code></p>
+                    <p class="text-center text-muted">{% translate "Template Key" %}: <code>{{ template.event_trigger }}</code></p>
                     {% endif %}
 
                     <form method="post" novalidate>
@@ -24,28 +24,57 @@
                             </div>
                         {% endif %}
 
-                        {% for field in form %}
+                        {# --- Manually render fields in the correct order --- #}
+
+                        <!-- General Template Info -->
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">{% translate form.name.label %}:</label>
+                            {{ form.name }}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.event_trigger.id_for_label }}" class="form-label">{% translate form.event_trigger.label %}:</label>
+                            {{ form.event_trigger }}
+                            {% if form.event_trigger.help_text %}<div class="form-text text-muted small">{{ form.event_trigger.help_text|safe }}</div>{% endif %}
+                        </div>
+                        <div class="mb-3">
+                            <label for="{{ form.subject.id_for_label }}" class="form-label">{% translate form.subject.label %}:</label>
+                            {{ form.subject }}
+                        </div>
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center">
-                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                                {% if field.name == 'body' %}
-                                <!-- Help Button for Email Body -->
+                                <label for="{{ form.body.id_for_label }}" class="form-label">{% translate form.body.label %}:</label>
                                 <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#variablesModal">
                                     {% translate "Show Variables" %}
                                 </button>
-                                {% endif %}
                             </div>
-                            {{ field }}
-                            {% if field.help_text %}<div class="form-text">{{ field.help_text|safe }}</div>{% endif %}
-                            {% if field.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in field.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
+                            {{ form.body }}
                         </div>
-                        {% endfor %}
+
+                        <hr>
+                        <h5 class="mt-4">{% translate "Recipient Settings" %}</h5>
+
+                        <!-- Recipient Fields -->
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.is_active }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{% translate form.is_active.label %}</label>
+                        </div>
+                        <div class="mb-3 form-check form-switch">
+                            {{ form.send_to_salesperson }}
+                            <label class="form-check-label" for="{{ form.send_to_salesperson.id_for_label }}">{% translate form.send_to_salesperson.label %}</label>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{% translate form.send_to_groups.label %}:</label>
+                            <div class="border rounded p-2">
+                                {{ form.send_to_groups }}
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">{% translate form.send_to_users.label %}:</label>
+                            <div class="border rounded p-2">
+                                {{ form.send_to_users }}
+                            </div>
+                        </div>
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <a href="{% url 'booking_app:admin_email_template_list' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
@@ -80,27 +109,27 @@
                 </thead>
                 <tbody>
                     <tr><td colspan="2" class="text-center fw-bold">{% translate "Booking Details" %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.pk }}"%}</code></td><td>{% translate "The unique ID of the booking (e.g., 123)." %}</td></tr>
-                    <tr><td><code>{% translate '{{ booking.start_date|date:"F d, Y" }}'%}</code></td><td>{% translate "The start date of the booking." %}</td></tr>
-                    <tr><td><code>{% translate '{{ booking.end_date|date:"F d, Y" }}'%}</code></td><td>{% translate "The end date of the booking." %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.start_location.name }}"%}</code></td><td>{% translate "The pickup location name." %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.end_location.name }}"%}</code></td><td>{% translate "The drop-off location name." %}</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.pk {% templatetag closevariable %}</code></td><td>The unique ID of the booking (e.g., 123).</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.start_date|date:"F d, Y" {% templatetag closevariable %}</code></td><td>The start date of the booking.</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.end_date|date:"F d, Y" {% templatetag closevariable %}</code></td><td>The end date of the booking.</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.start_location.name {% templatetag closevariable %}</code></td><td>The pickup location name.</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.end_location.name {% templatetag closevariable %}</code></td><td>The drop-off location name.</td></tr>
                     
                     <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Client Information" %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.customer_name }}"%}</code></td><td>{% translate "The client's full name." %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.customer_email }}"%}</code></td><td>{% translate "The client's email address." %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.customer_phone }}"%}</code></td><td>{% translate "The client's phone number." %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.client_tax_number }}"%}</code></td><td>{% translate "The client's tax number (NIF)." %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.client_company_registration }}"%}</code></td><td>{% translate "The client's company registration number." %}</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.customer_name {% templatetag closevariable %}</code></td><td>The client's full name.</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.customer_email {% templatetag closevariable %}</code></td><td>The client's email address.</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.customer_phone {% templatetag closevariable %}</code></td><td>The client's phone number.</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.client_tax_number {% templatetag closevariable %}</code></td><td>The client's tax number (NIF).</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.client_company_registration {% templatetag closevariable %}</code></td><td>The client's company registration number.</td></tr>
 
                     <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Vehicle Information" %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.vehicle.model }}"%}</code></td><td>{% translate "The model name of the vehicle." %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.vehicle.license_plate }}"%}</code></td><td>{% translate "The license plate of the vehicle." %}</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.vehicle.model {% templatetag closevariable %}</code></td><td>The model name of the vehicle.</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.vehicle.license_plate {% templatetag closevariable %}</code></td><td>The license plate of the vehicle.</td></tr>
 
                     <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Salesperson Information" %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.user.first_name }}"%}</code></td><td>{% translate "The first name of the salesperson who made the booking." %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.user.last_name }}"%}</code></td><td>{% translate "The last name of the salesperson." %}</td></tr>
-                    <tr><td><code>{% translate "{{ booking.user.email }}"%}</code></td><td>{% translate "The email of the salesperson." %}</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.user.first_name {% templatetag closevariable %}</code></td><td>The first name of the salesperson who made the booking.</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.user.last_name {% templatetag closevariable %}</code></td><td>The last name of the salesperson.</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.user.email {% templatetag closevariable %}</code></td><td>The email of the salesperson.</td></tr>
                 </tbody>
             </table>
         </div>

@@ -21,7 +21,7 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>{% translate "Template Name" %}</th>
-                                <th>{% translate "Template Key" %}</th>
+                                <th>{% translate "Event Trigger" %}</th>
                                 <th>{% translate "Subject" %}</th>
                                 <th class="text-end">{% translate "Actions" %}</th>
                             </tr>
@@ -30,10 +30,12 @@
                             {% for template in templates %}
                             <tr>
                                 <td>{{ template.name }}</td>
-                                <td><code>{{ template.template_key }}</code></td>
+                                <td><code>{{ template.get_event_trigger_display }}</code></td>
                                 <td>{{ template.subject }}</td>
                                 <td class="text-end">
                                     <a href="{% url 'booking_app:admin_email_template_edit' pk=template.pk %}" class="btn btn-info btn-sm">{% translate "Edit" %}</a>
+                                    {# --- NEW: Test Email Button --- #}
+                                    <a href="{% url 'booking_app:admin_email_template_test' pk=template.pk %}" class="btn btn-warning btn-sm">{% translate "Send Test" %}</a>
                                 </td>
                             </tr>
                             {% endfor %}

@@ -1,7 +1,7 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\models.py
 
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager, Group
 from django.conf import settings
 import uuid
 from django.utils import timezone
@@ -162,10 +162,8 @@ class Booking(models.Model):
     vehicle = models.ForeignKey('Vehicle', on_delete=models.CASCADE, related_name='bookings')
 
     customer_name = models.CharField(max_length=255)
-    # --- UPDATED: Email is now optional to allow phone as an alternative ---
     customer_email = models.EmailField(blank=True, null=True)
     customer_phone = models.CharField(max_length=20, blank=True, null=True)
-    # --- UPDATED: Tax and Registration are now required ---
     client_tax_number = models.CharField(max_length=50, blank=False, verbose_name=_("Client Tax Number"))
     client_company_registration = models.CharField(max_length=100, blank=False,
                                                    verbose_name=_("Client Company Registration"))
@@ -201,29 +199,113 @@ class Booking(models.Model):
         Add custom model-level validation.
         """
         super().clean()
-        # Ensure that either email or phone is provided.
         if not self.customer_email and not self.customer_phone:
             raise ValidationError(
                 _("A booking must have either a customer email or a customer phone number.")
             )
 
+
+# --- NEW: Distribution List Model ---
+class DistributionList(models.Model):
+    name = models.CharField(max_length=100, unique=True, verbose_name=_("List Name"))
+    emails = models.TextField(
+        verbose_name=_("Email Addresses"),
+        help_text=_("Enter one or more email addresses, separated by commas or new lines.")
+    )
+
+    def __str__(self):
+        return self.name
+
+    def get_emails_as_list(self):
+        """
+        Cleans and returns the email addresses as a Python list.
+        """
+        # Replace newlines and semicolons with commas, then split by comma
+        emails_str = self.emails.replace('\n', ',').replace(';', ',')
+        # Split by comma and strip whitespace from each email
+        return [email.strip() for email in emails_str.split(',') if email.strip()]
+
+    class Meta:
+        verbose_name = _("Distribution List")
+        verbose_name_plural = _("Distribution Lists")
+        ordering = ['name']
+
+
 class EmailTemplate(models.Model):
     """
     Stores email templates that can be edited in the Django admin.
     """
-    name = models.CharField(max_length=100, help_text=_("The internal name for this template."))
-    template_key = models.CharField(
+    EVENT_CHOICES = [
+        ('Booking Events', (
+            ('booking_created', _('Booking Created by Salesperson')),
+            ('booking_updated', _('Booking Updated by Salesperson')),
+            ('booking_completed', _('Booking Completed')),
+            ('booking_reminder', _('Booking Reminder (Upcoming)')),
+        )),
+        ('Manager Actions', (
+            ('booking_approved', _('Booking Approved by Manager')),
+            ('booking_canceled_by_manager', _('Booking Canceled by Manager')),
+        )),
+        ('User Actions', (
+            ('booking_canceled_by_user', _('Booking Canceled by User')),
+        )),
+        ('Account Management', (
+            ('user_created', _('New User Account Created')),
+            ('password_reset', _('User Password Was Reset')),
+        )),
+        ('Vehicle Management', (
+            ('vehicle_created', _('Vehicle Created')),
+            ('vehicle_updated', _('Vehicle Updated')),
+            ('vehicle_deleted', _('Vehicle Deleted')),
+        )),
+        ('Location Management', (
+            ('location_created', _('Location Created')),
+            ('location_updated', _('Location Updated')),
+            ('location_deleted', _('Location Deleted')),
+        )),
+    ]
+
+    event_trigger = models.CharField(
         max_length=50,
         unique=True,
-        help_text=_("A unique key to identify this template in the code (e.g., 'booking_created'). Do not change this after creation.")
+        choices=EVENT_CHOICES,
+        help_text=_("Select the specific event that will trigger this email notification.")
     )
-    subject = models.CharField(max_length=255, help_text=_("The email subject line. You can use template variables like {{ booking.pk }}."))
-    body = models.TextField(help_text=_("The email body. Can contain HTML and template variables like {{ booking.customer_name }}."))
+
+    name = models.CharField(max_length=100,
+                            help_text=_("A descriptive name for this template (e.g., 'New Booking Confirmation')."))
+    subject = models.CharField(max_length=255, help_text=_(
+        "The email subject line. You can use template variables like {{ booking.pk }}."))
+    body = models.TextField(
+        help_text=_("The email body. Can contain HTML and template variables like {{ booking.customer_name }}."))
+    is_active = models.BooleanField(default=True, help_text=_("Only active templates will be sent."))
+
+    send_to_salesperson = models.BooleanField(default=True, verbose_name=_("Send to Salesperson"), help_text=_(
+        "Check to send a notification to the salesperson who created the booking."))
+    send_to_groups = models.ManyToManyField(
+        Group,
+        blank=True,
+        verbose_name=_("Send to Groups"),
+        help_text=_("Select groups whose members should receive this notification.")
+    )
+    send_to_users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        verbose_name=_("Send to Specific Users"),
+        help_text=_("Select specific users who should receive this notification.")
+    )
+    # --- NEW: Link to Distribution Lists ---
+    send_to_distribution_lists = models.ManyToManyField(
+        DistributionList,
+        blank=True,
+        verbose_name=_("Send to Distribution Lists"),
+        help_text=_("Select distribution lists that should receive this notification.")
+    )
 
     def __str__(self):
         return self.name
 
     class Meta:
+        ordering = ['name']
         verbose_name = _("Email Template")
         verbose_name_plural = _("Email Templates")
-        ordering = ['name']

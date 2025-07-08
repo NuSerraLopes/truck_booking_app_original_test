@@ -63,6 +63,12 @@ urlpatterns = [
     path('admin-dashboard/email-templates/', views.admin_email_template_list_view, name='admin_email_template_list'),
     path('admin-dashboard/email-templates/edit/<int:pk>/', views.admin_email_template_form_view, name='admin_email_template_edit'),
     path('admin-dashboard/email-templates/create/', views.admin_email_template_form_view, name='admin_email_template_create'),
+    path('admin-dashboard/email-templates/test/<int:pk>/', views.admin_email_template_test_view, name='admin_email_template_test'),
+    # --- NEW: Admin Distribution List Management URLs ---
+    path('admin-dashboard/distribution-lists/', views.admin_dl_list_view, name='admin_dl_list'),
+    path('admin-dashboard/distribution-lists/create/', views.admin_dl_form_view, name='admin_dl_create'),
+    path('admin-dashboard/distribution-lists/edit/<int:pk>/', views.admin_dl_form_view, name='admin_dl_edit'),
+    path('admin-dashboard/distribution-lists/delete/<int:pk>/', views.admin_dl_delete_view, name='admin_dl_delete'),
 ]
 
 # Serve media and static files during development
