@@ -72,9 +72,10 @@
 
                 <!-- Language Selector Dropdown -->
                 <div class="nav-item dropdown ms-3">
-                    <a class="nav-link dropdown-toggle text-white" href="#" id="languageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    {# --- UPDATED: Changed <a> tag to <button> to prevent URL change --- #}
+                    <button class="btn nav-link dropdown-toggle text-white" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" type="button" style="background: transparent; border: none; padding: 0;">
                         <img src="{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'pt' %}{% static 'flags/pt.png' %}{% else %}{% static 'flags/uk.png' %}{% endif %}" alt="Language" class="flag-icon">
-                    </a>
+                    </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
                         <li>
                             <form action="{% url 'set_language' %}" method="post" class="d-inline">
