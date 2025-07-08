@@ -23,9 +23,8 @@
                 <tr>
                     <td>{{ location.name }}</td>
                     <td class="action-buttons">
-                        {# Add links for view/edit/delete location here later if needed #}
                         <a href="{% url 'booking_app:admin_location_edit' pk=location.pk %}" class="btn btn-small btn-secondary">{% translate "Edit" %}</a>
-                        <a href="{% url 'booking_app:admin_location_confirm_delete' pk=location.pk %}" class="btn btn-small btn-danger">{% translate "Delete" %}</a>
+                        <a href="{% url 'booking_app:admin_location_delete' pk=location.pk %}" class="btn btn-small btn-danger">{% translate "Delete" %}</a>
                     </td>
                 </tr>
                 {% endfor %}
