@@ -1,143 +1,124 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load crispy_forms_filters %}
+{% load i18n crispy_forms_tags %}
 
 {% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8">
-            <div class="card shadow-sm">
-                <div class="card-body">
-                    <h1 class="card-title text-center mb-4">{{ page_title }}</h1>
-                    
-                    {% if template %}
-                    <p class="text-center text-muted">{% translate "Template Key" %}: <code>{{ template.event_trigger }}</code></p>
-                    {% endif %}
-
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger" role="alert">
-                                {% for error in form.non_field_errors %}<p class="mb-0">{{ error }}</p>{% endfor %}
-                            </div>
+    <div class="container my-5">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <h1 class="card-title text-center mb-4">{{ page_title }}</h1>
+    
+                        {% if template %}
+                        <p class="text-center text-muted">{% translate "Template Key" %}: <code>{{ template.event_trigger }}</code></p>
                         {% endif %}
-
-                        {# Loop through all form fields using the structure from admin_user_create.html #}
-                        {% for field in form %}
-                            {# --- UPDATED: Special handling for event_trigger when editing --- #}
-                            {% if field.name == 'event_trigger' and template %}
-                                <div class="mb-3">
-                                    <label class="form-label">{% translate field.label %}:</label>
-                                    <p class="form-control-plaintext"><code>{{ template.get_event_trigger_display }}</code></p>
-                                    <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
-                                    <div class="form-text text-muted small">{% translate "The event trigger cannot be changed after creation." %}</div>
-                                </div>
-                            {% elif field.field.widget.input_type == 'checkbox' %}
-                                <div class="mb-3 form-check form-switch">
-                                    {{ field }}
-                                    <label class="form-check-label" for="{{ field.id_for_label }}">
-                                        {% translate field.label %}
-                                    </label>
-                                    {% if field.help_text %}<div class="form-text text-muted small">{{ field.help_text|safe }}</div>{% endif %}
-                                    {% if field.errors %}<div class="text-danger small">{{ field.errors.as_text }}</div>{% endif %}
-                                </div>
-                            {% elif field.field.widget.template_name == 'django/forms/widgets/checkbox_select_multiple.html' %}
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">{% translate field.label %}:</label>
-                                    <div class="border rounded p-2" style="max-height: 150px; overflow-y: auto;">
-                                        {% for choice in field %}
-                                            <div class="form-check">
-                                                {{ choice.tag }}
-                                                <label class="form-check-label" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                    {% if field.help_text %}<div class="form-text text-muted small">{{ field.help_text|safe }}</div>{% endif %}
-                                    {% if field.errors %}<div class="text-danger small">{{ field.errors.as_text }}</div>{% endif %}
-                                </div>
-                            {% else %}
-                                <div class="mb-3">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <label for="{{ field.id_for_label }}" class="form-label">
-                                            {% translate field.label %}{% if field.field.required %}<span class="text-danger">*</span>{% endif %}:
-                                        </label>
-                                        {% if field.name == 'body' %}
-                                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#variablesModal">
-                                            {% translate "Show Variables" %}
-                                        </button>
-                                        {% endif %}
-                                    </div>
-                                    {{ field }}
-                                    {% if field.help_text %}<div class="form-text text-muted small">{{ field.help_text|safe }}</div>{% endif %}
-                                    {% if field.errors %}<div class="text-danger small">{{ field.errors.as_text }}</div>{% endif %}
+    
+                        <form method="post" novalidate>
+                            {% csrf_token %}
+    
+                            {% if form.non_field_errors %}
+                                <div class="alert alert-danger" role="alert">
+                                    {% for error in form.non_field_errors %}
+                                        <p class="mb-0">{{ error }}</p>
+                                    {% endfor %}
                                 </div>
                             {% endif %}
-                        {% endfor %}
-
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                            <a href="{% url 'booking_app:admin_email_template_list' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
-                            <button type="submit" class="btn btn-primary">
-                                {% if template %}{% translate "Save Changes" %}{% else %}{% translate "Create Template" %}{% endif %}
-                            </button>
-                        </div>
-                    </form>
+    
+                            {% for field in form %}
+                                {% if field.name == 'event_trigger' and template %}
+                                    <div class="mb-3">
+                                        <label class="form-label">{% translate field.label %}:</label>
+                                        <p class="form-control-plaintext"><code>{{ template.get_event_trigger_display }}</code></p>
+                                        <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+                                        <div class="form-text text-muted small">{% translate "The event trigger cannot be changed after creation." %}</div>
+                                    </div>
+    
+                                {% elif field.field.widget.input_type == 'checkbox' %}
+                                    <div class="mb-3 form-check form-switch">
+                                        {{ field|as_crispy_field }}
+                                        {% if field.errors %}
+                                            <div class="text-danger small">{{ field.errors.as_text }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    <div class="mb-3">
+                                        {{ field|as_crispy_field }}
+                                        {% if field.errors %}
+                                            <div class="text-danger small">{{ field.errors.as_text }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+    
+                            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                                <a href="{% url 'booking_app:admin_email_template_list' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
+                                <button type="submit" class="btn btn-primary">
+                                    {% if template %}
+                                        {% translate "Save Changes" %}
+                                    {% else %}
+                                        {% translate "Create Template" %}
+                                    {% endif %}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
-
-<!-- Variables Help Modal -->
-<div class="modal fade" id="variablesModal" tabindex="-1" aria-labelledby="variablesModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="variablesModalLabel">{% translate "Available Template Variables" %}</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        <p>{% translate "You can use the following variables in the subject and body of the email. They will be replaced with the actual booking data." %}</p>
-        <div class="table-responsive">
-            <table class="table table-bordered table-sm">
-                <thead class="table-light">
-                    <tr>
-                        <th>{% translate "Variable" %}</th>
-                        <th>{% translate "Description" %}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td colspan="2" class="text-center fw-bold">{% translate "Booking Details" %}</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.pk {% templatetag closevariable %}</code></td><td>The unique ID of the booking (e.g., 123).</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.start_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>The start date of the booking.</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.end_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>The end date of the booking.</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.start_location.name {% templatetag closevariable %}</code></td><td>The pickup location name.</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.end_location.name {% templatetag closevariable %}</code></td><td>The drop-off location name.</td></tr>
-                    
-                    <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Client Information" %}</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.customer_name {% templatetag closevariable %}</code></td><td>The client's full name.</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.customer_email {% templatetag closevariable %}</code></td><td>The client's email address.</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.customer_phone {% templatetag closevariable %}</code></td><td>The client's phone number.</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.client_tax_number {% templatetag closevariable %}</code></td><td>The client's tax number (NIF).</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.client_company_registration {% templatetag closevariable %}</code></td><td>The client's company registration number.</td></tr>
-
-                    <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Vehicle Information" %}</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.vehicle.model {% templatetag closevariable %}</code></td><td>The model name of the vehicle.</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.vehicle.license_plate {% templatetag closevariable %}</code></td><td>The license plate of the vehicle.</td></tr>
-
-                    <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Salesperson Information" %}</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.user.first_name {% templatetag closevariable %}</code></td><td>The first name of the salesperson who made the booking.</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.user.last_name {% templatetag closevariable %}</code></td><td>The last name of the salesperson.</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.user.email {% templatetag closevariable %}</code></td><td>The email of the salesperson.</td></tr>
-                </tbody>
-            </table>
+    
+    <!-- Variables Help Modal -->
+    <div class="modal fade" id="variablesModal" tabindex="-1" aria-labelledby="variablesModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="variablesModalLabel">{% translate "Available Template Variables" %}</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>{% translate "You can use the following variables in the subject and body of the email. They will be replaced with the actual booking data." %}</p>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{% translate "Variable" %}</th>
+                            <th>{% translate "Description" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="2" class="text-center fw-bold">{% translate "Booking Details" %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.pk {% templatetag closevariable %}</code></td><td>The unique ID of the booking (e.g., 123).</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.start_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>The start date of the booking.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.end_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>The end date of the booking.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.start_location.name {% templatetag closevariable %}</code></td><td>The pickup location name.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.end_location.name {% templatetag closevariable %}</code></td><td>The drop-off location name.</td></tr>
+                        
+                        <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Client Information" %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.customer_name {% templatetag closevariable %}</code></td><td>The client's full name.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.customer_email {% templatetag closevariable %}</code></td><td>The client's email address.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.customer_phone {% templatetag closevariable %}</code></td><td>The client's phone number.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.client_tax_number {% templatetag closevariable %}</code></td><td>The client's tax number (NIF).</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.client_company_registration {% templatetag closevariable %}</code></td><td>The client's company registration number.</td></tr>
+    
+                        <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Vehicle Information" %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.vehicle.model {% templatetag closevariable %}</code></td><td>The model name of the vehicle.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.vehicle.license_plate {% templatetag closevariable %}</code></td><td>The license plate of the vehicle.</td></tr>
+    
+                        <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Salesperson Information" %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.user.first_name {% templatetag closevariable %}</code></td><td>The first name of the salesperson who made the booking.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.user.last_name {% templatetag closevariable %}</code></td><td>The last name of the salesperson.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.user.email {% templatetag closevariable %}</code></td><td>The email of the salesperson.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "Close" %}</button>
+          </div>
         </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "Close" %}</button>
-      </div>
     </div>
-  </div>
-</div>
 {% endblock %}
