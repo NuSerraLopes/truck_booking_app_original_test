@@ -49,9 +49,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         _("username"),
         max_length=150,
         unique=True,
-        help_text=_(
-            "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
-        ),
         validators=[username_validator],
         error_messages={
             "unique": _("A user with that username already exists."),
@@ -65,7 +62,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     date_joined = models.DateTimeField(_("date joined"), default=timezone.now)
     is_active = models.BooleanField(_("active"), default=True)
     is_staff = models.BooleanField(_("staff status"), default=False)
-    is_superuser = models.BooleanField(_("superuser status"), default=False)  # Explicitly define for clarity
+    is_superuser = models.BooleanField(_("superuser status"), default=False)
     requires_password_change = models.BooleanField(default=False)
 
     @property
@@ -166,7 +163,7 @@ class Booking(models.Model):
     customer_phone = models.CharField(max_length=20, blank=True, null=True)
     client_tax_number = models.CharField(max_length=50, blank=False, verbose_name=_("Client Tax Number"))
     client_company_registration = models.CharField(max_length=100, blank=False,
-                                                   verbose_name=_("Client Company Registration"))
+                                                   verbose_name=_("Permanent registration certificate code"))
 
     start_date = models.DateField()
     end_date = models.DateField()

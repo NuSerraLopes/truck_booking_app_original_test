@@ -42,7 +42,7 @@ class BookingForm(forms.ModelForm):
         self.fields['customer_email'].label = _("Customer Email")
         self.fields['customer_phone'].label = _("Customer Phone")
         self.fields['client_tax_number'].label = _("Client Tax Number")
-        self.fields['client_company_registration'].label = _("Client Company Registration")
+        self.fields['client_company_registration'].label = _("Permanent registration certificate code")
         self.fields['start_date'].label = _("Start Date")
         self.fields['end_date'].label = _("End Date")
 

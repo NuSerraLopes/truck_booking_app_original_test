@@ -24,57 +24,44 @@
                             </div>
                         {% endif %}
 
-                        {# --- Manually render fields in the correct order --- #}
-
-                        <!-- General Template Info -->
-                        <div class="mb-3">
-                            <label for="{{ form.name.id_for_label }}" class="form-label">{% translate form.name.label %}:</label>
-                            {{ form.name }}
-                        </div>
-                        <div class="mb-3">
-                            <label for="{{ form.event_trigger.id_for_label }}" class="form-label">{% translate form.event_trigger.label %}:</label>
-                            {{ form.event_trigger }}
-                            {% if form.event_trigger.help_text %}<div class="form-text text-muted small">{{ form.event_trigger.help_text|safe }}</div>{% endif %}
-                        </div>
-                        <div class="mb-3">
-                            <label for="{{ form.subject.id_for_label }}" class="form-label">{% translate form.subject.label %}:</label>
-                            {{ form.subject }}
-                        </div>
-                        <div class="mb-3">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <label for="{{ form.body.id_for_label }}" class="form-label">{% translate form.body.label %}:</label>
-                                <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#variablesModal">
-                                    {% translate "Show Variables" %}
-                                </button>
-                            </div>
-                            {{ form.body }}
-                        </div>
-
-                        <hr>
-                        <h5 class="mt-4">{% translate "Recipient Settings" %}</h5>
-
-                        <!-- Recipient Fields -->
-                        <div class="mb-3 form-check form-switch">
-                            {{ form.is_active }}
-                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">{% translate form.is_active.label %}</label>
-                        </div>
-                        <div class="mb-3 form-check form-switch">
-                            {{ form.send_to_salesperson }}
-                            <label class="form-check-label" for="{{ form.send_to_salesperson.id_for_label }}">{% translate form.send_to_salesperson.label %}</label>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">{% translate form.send_to_groups.label %}:</label>
-                            <div class="border rounded p-2">
-                                {{ form.send_to_groups }}
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">{% translate form.send_to_users.label %}:</label>
-                            <div class="border rounded p-2">
-                                {{ form.send_to_users }}
-                            </div>
-                        </div>
+                        {# Loop through all form fields using the structure from admin_user_create.html #}
+                        {% for field in form %}
+                            {% if field.field.widget.input_type == 'checkbox' %}
+                                <div class="mb-3 form-check">
+                                    {{ field }}
+                                    <label class="form-check-label" for="{{ field.id_for_label }}">
+                                        {% translate field.label %}
+                                    </label>
+                                    {% if field.help_text %}<div class="form-text text-muted small">{{ field.help_text|safe }}</div>{% endif %}
+                                    {% if field.errors %}<div class="text-danger small">{{ field.errors.as_text }}</div>{% endif %}
+                                </div>
+                            {% elif field.field.widget.template_name == 'django/forms/widgets/checkbox_select_multiple.html' %}
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">{% translate field.label %}:</label>
+                                    <div class="border rounded p-2">
+                                        {{ field }}
+                                    </div>
+                                    {% if field.help_text %}<div class="form-text text-muted small">{{ field.help_text|safe }}</div>{% endif %}
+                                    {% if field.errors %}<div class="text-danger small">{{ field.errors.as_text }}</div>{% endif %}
+                                </div>
+                            {% else %}
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label for="{{ field.id_for_label }}" class="form-label">
+                                            {% translate field.label %}{% if field.field.required %}<span class="text-danger">*</span>{% endif %}:
+                                        </label>
+                                        {% if field.name == 'body' %}
+                                        <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#variablesModal">
+                                            {% translate "Show Variables" %}
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                    {{ field }}
+                                    {% if field.help_text %}<div class="form-text text-muted small">{{ field.help_text|safe }}</div>{% endif %}
+                                    {% if field.errors %}<div class="text-danger small">{{ field.errors.as_text }}</div>{% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <a href="{% url 'booking_app:admin_email_template_list' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
@@ -110,8 +97,8 @@
                 <tbody>
                     <tr><td colspan="2" class="text-center fw-bold">{% translate "Booking Details" %}</td></tr>
                     <tr><td><code>{% templatetag openvariable %} booking.pk {% templatetag closevariable %}</code></td><td>The unique ID of the booking (e.g., 123).</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.start_date|date:"F d, Y" {% templatetag closevariable %}</code></td><td>The start date of the booking.</td></tr>
-                    <tr><td><code>{% templatetag openvariable %} booking.end_date|date:"F d, Y" {% templatetag closevariable %}</code></td><td>The end date of the booking.</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.start_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>The start date of the booking.</td></tr>
+                    <tr><td><code>{% templatetag openvariable %} booking.end_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>The end date of the booking.</td></tr>
                     <tr><td><code>{% templatetag openvariable %} booking.start_location.name {% templatetag closevariable %}</code></td><td>The pickup location name.</td></tr>
                     <tr><td><code>{% templatetag openvariable %} booking.end_location.name {% templatetag closevariable %}</code></td><td>The drop-off location name.</td></tr>
                     
