@@ -552,3 +552,15 @@ td.action-buttons {
     font-style: italic;
     font-size: 0.9em; /* Slightly smaller for muted text */
 }
+
+/* Custom style to "paint" unavailable dates in the flatpickr calendar */
+.flatpickr-day.unavailable-date {
+    background-color: #1554ff; /* A light blue color */
+    border-color: #bae6fd;
+    color: #0c4a6e;
+    pointer-events: none; /* Makes the date unclickable */
+}
+
+.flatpickr-day.unavailable-date:hover {
+    background-color: #1554ff;
+}

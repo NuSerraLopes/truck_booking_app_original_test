@@ -1,4 +1,6 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\views.py
+import json
+
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import HttpResponseRedirect
 from django.shortcuts import render, redirect, get_object_or_404
@@ -18,7 +20,7 @@ from django.contrib.auth.models import Group
 from .forms import UserCreateForm, VehicleCreateForm, LocationCreateForm, BookingForm, UpdateUserForm, \
     LocationUpdateForm, VehicleEditForm, GroupForm, EmailTemplateForm, DistributionListForm
 from .models import User, Vehicle, Location, Booking, EmailTemplate, DistributionList
-from .utils import add_business_days, send_booking_notification
+from .utils import add_business_days, send_booking_notification, subtract_business_days
 
 
 def is_admin(user):
@@ -218,17 +220,37 @@ def admin_vehicle_detail_view(request, pk):
 @login_required
 def book_vehicle_view(request, vehicle_pk):
     vehicle = get_object_or_404(Vehicle, pk=vehicle_pk)
+
+    # --- Determine the earliest possible start date from the last booking ---
     latest_booking_data = Booking.objects.filter(
         vehicle=vehicle,
         status__in=['pending', 'confirmed']
     ).aggregate(max_end_date=Max('end_date'))
-    latest_end_date = latest_booking_data['max_end_date']
-    if latest_end_date:
-        vehicle.available_after = add_business_days(latest_end_date, 3)
-        if vehicle.available_after <= date.today():
-            vehicle.available_after = None
-    else:
-        vehicle.available_after = None
+
+    vehicle.available_after = None
+    if latest_booking_data.get('max_end_date'):
+        calculated_date = add_business_days(latest_booking_data['max_end_date'], 3)
+        if calculated_date > date.today():
+            vehicle.available_after = calculated_date
+
+    # --- UPDATED: Get ALL current and future bookings ---
+    future_bookings = Booking.objects.filter(
+        vehicle=vehicle,
+        status__in=['pending', 'confirmed'],
+        end_date__gte=date.today()
+    ).values('start_date', 'end_date')
+
+    # Create a list of unavailable date ranges, including the 3-day buffer
+    unavailable_ranges = []
+    for booking in future_bookings:
+        unavailable_start = subtract_business_days(booking['start_date'], 3)
+        unavailable_end = add_business_days(booking['end_date'], 3)
+
+        unavailable_ranges.append({
+            'start': unavailable_start.isoformat(),
+            'end': unavailable_end.isoformat(),
+        })
+
     if request.method == 'POST':
         form = BookingForm(request.POST, vehicle=vehicle)
         if form.is_valid():
@@ -237,16 +259,16 @@ def book_vehicle_view(request, vehicle_pk):
             booking.vehicle = vehicle
             booking.status = 'pending'
             booking.save()
-            send_booking_notification('booking_created', booking_instance=booking)
+            # send_booking_notification('booking_created', booking_instance=booking)
             messages.success(request, _('Your booking request has been submitted successfully!'))
             return redirect('booking_app:my_bookings')
-        else:
-            messages.error(request, _('Please correct the errors below.'))
     else:
         form = BookingForm(vehicle=vehicle)
+
     context = {
         'form': form,
         'vehicle': vehicle,
+        'unavailable_ranges_json': json.dumps(unavailable_ranges),
     }
     return render(request, 'book_vehicle.html', context)
 

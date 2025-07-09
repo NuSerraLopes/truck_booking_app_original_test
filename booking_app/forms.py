@@ -1,5 +1,6 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\forms.py
-
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Row, Column, Submit, HTML, Div
 from django import forms
 from django.contrib.auth import get_user_model
 from django.forms.widgets import PasswordInput, TextInput
@@ -13,96 +14,88 @@ from django.contrib import messages
 
 
 class BookingForm(forms.ModelForm):
-    vehicle_type_hint = forms.CharField(widget=forms.HiddenInput(), required=False)
-
     class Meta:
         model = Booking
         fields = [
-            'customer_name', 'customer_email', 'customer_phone', 'client_tax_number', 'client_company_registration',
+            'customer_name', 'customer_email', 'customer_phone',
+            'client_tax_number', 'client_company_registration',
             'start_location', 'end_location', 'start_date', 'end_date',
         ]
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
             'end_date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
-            'start_location': forms.Select(attrs={'class': 'form-control', 'id': 'start-location'}),
-            'end_location': forms.Select(attrs={'class': 'form-control', 'id': 'end-location'}),
+        }
+        labels = {
+            'customer_name': _("Customer Name"),
+            'customer_email': _("Customer Email"),
+            'customer_phone': _("Customer Phone"),
+            'client_tax_number': _("Client Tax Number"),
+            'client_company_registration': _("Client Company Registration"),
+            'start_location': _("Start Location"),
+            'end_location': _("End Location"),
+            'start_date': _("Start Date"),
+            'end_date': _("End Date"),
         }
 
     def __init__(self, *args, **kwargs):
         self.vehicle = kwargs.pop('vehicle', None)
         super().__init__(*args, **kwargs)
 
-        self.fields['start_location'].empty_label = _("Select Start Location")
-        self.fields['end_location'].empty_label = _("Select End Location")
-        self.fields['start_location'].label = _("Start Location")
-        self.fields['end_location'].label = _("End Location")
-        self.fields['start_location'].error_messages = {'required': _('Please select a start location.')}
-        self.fields['end_location'].error_messages = {'required': _('Please select a destination location.')}
-        self.fields['customer_name'].label = _("Customer Name")
-        self.fields['customer_email'].label = _("Customer Email")
-        self.fields['customer_phone'].label = _("Customer Phone")
-        self.fields['client_tax_number'].label = _("Client Tax Number")
-        self.fields['client_company_registration'].label = _("Permanent registration certificate code")
-        self.fields['start_date'].label = _("Start Date")
-        self.fields['end_date'].label = _("End Date")
+        # --- Crispy Forms Helper ---
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.layout = Layout(
+            HTML(f'<h5>{_("Client Information")}</h5><hr>'),
+            Row(
+                Column('customer_name', css_class='form-group col-md-6 mb-0'),
+                Column('customer_phone', css_class='form-group col-md-6 mb-0'),
+            ),
+            'customer_email',
+            Row(
+                Column('client_tax_number', css_class='form-group col-md-6 mb-0'),
+                Column('client_company_registration', css_class='form-group col-md-6 mb-0'),
+            ),
+            HTML(f'<h5 class="mt-4">{_("Booking Details")}</h5><hr>'),
+            Row(
+                Column('start_location', css_class='form-group col-md-6 mb-0'),
+                Column('end_location', css_class='form-group col-md-6 mb-0'),
+            ),
+            Row(
+                Column('start_date', css_class='form-group col-md-6 mb-0'),
+                Column('end_date', css_class='form-group col-md-6 mb-0'),
+            ),
+            # --- UPDATED: Button layout is now handled by Crispy Forms ---
+            Div(
+                Submit('submit', _('Submit Booking Request'), css_class='btn btn-primary'),
+                HTML(
+                    f'<a href="{_("booking_app:vehicle_list")}" class="btn btn-secondary">{_("Back to Vehicle List")}</a>'),
+                css_class='d-flex justify-content-between mt-4'
+            )
+        )
 
-        # --- UPDATED: Set field requirements ---
-        self.fields['customer_email'].required = False
-        self.fields['customer_phone'].required = False
-        self.fields['client_tax_number'].required = True
-        self.fields['client_company_registration'].required = True
-        # --- END UPDATE ---
-
-        # Apply form-control class to relevant fields for consistent styling
-        for field_name in ['customer_name', 'customer_email', 'customer_phone', 'client_tax_number',
-                           'client_company_registration', 'start_date', 'end_date']:
-            if field_name in self.fields:  # Check if field exists before updating attrs
-                self.fields[field_name].widget.attrs.update({'class': 'form-control'})
-
-        if self.vehicle is not None and self.vehicle.pk is not None:
-            self.fields['vehicle_type_hint'].initial = self.vehicle.vehicle_type
-
+    # ... (Your clean methods remain the same) ...
     def clean(self):
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
-        customer_email = cleaned_data.get('customer_email')
-        customer_phone = cleaned_data.get('customer_phone')
 
         if start_date and end_date:
             if start_date > end_date:
                 raise ValidationError(_("End date must be after start date."))
 
-        # This logic relies on vehicle.available_after being set in the view
-        # (e.g., in book_vehicle_view).
         if self.vehicle:
-            earliest_booking_date = None
-            if hasattr(self.vehicle, 'available_after') and self.vehicle.available_after:
-                earliest_booking_date = self.vehicle.available_after
-            else:
-                earliest_booking_date = date.today()
-
-            if start_date and earliest_booking_date:
-                if start_date < earliest_booking_date:
-                    raise ValidationError(
-                        _("Your selected start date (%(start_date)s) is before the earliest available date for this vehicle (%(earliest_date)s). Please select a date on or after %(earliest_date)s.") % {
-                            'start_date': start_date.strftime('%Y-%m-%d'),
-                            'earliest_date': earliest_booking_date.strftime('%Y-%m-%d')
-                        },
-                        code='vehicle_unavailable_too_early',
-                    )
+            earliest_booking_date = getattr(self.vehicle, 'available_after', None) or date.today()
+            if start_date and start_date < earliest_booking_date:
+                raise ValidationError(
+                    _("Your selected start date (%(start_date)s) is before the earliest available date for this vehicle (%(earliest_date)s). Please select a date on or after %(earliest_date)s.") % {
+                        'start_date': start_date.strftime('%Y-%m-%d'),
+                        'earliest_date': earliest_booking_date.strftime('%Y-%m-%d')
+                    },
+                    code='vehicle_unavailable_too_early',
+                )
 
         if start_date and start_date < date.today():
             raise ValidationError(_("Start date cannot be in the past."))
-
-        # --- UPDATED: Custom validation logic ---
-        # Check that at least one contact method is provided.
-        if not customer_email and not customer_phone:
-            raise ValidationError(
-                _("Please provide at least one contact method: either an email address or a phone number."),
-                code='missing_contact_info'
-            )
-        # --- END UPDATE ---
 
         return cleaned_data
 

@@ -9,10 +9,10 @@
     --border-color: #ddd; /* Light grey for borders */
     --light-grey-bg: #f9f9f9; /* Slightly darker grey for some backgrounds */
     --dark-grey-button: #6c757d; /* For secondary buttons */
-    --hover-blue: #0056b3; /* Darker blue for hover states */
+    --hover-blue: #0045cc; /* Slightly darker brand blue for a more noticeable hover */
     --hover-dark-grey: #5a6268; /* Darker grey for secondary button hover */
 
-    /* Message colors (unchanged from previous) */
+    /* Message colors */
     --success-bg: #d4edda;
     --success-text: #155724;
     --success-border: #c3e6cb;
@@ -27,16 +27,19 @@
     --warning-border: #ffeeba;
 }
 
-/* --- Typeface: Gill Sans MT, Gill Sans, sans-serif --- */
-/* Gill Sans MT is a system font that might be available.
-   Gill Sans is the preferred font but requires commercial licensing/web fonts.
-   sans-serif is a generic fallback. */
+/*
+--- Typeface: Gill Sans MT, Gill Sans, sans-serif ---
+Gill Sans MT is a system font that might be available.
+Gill Sans is the preferred font but requires commercial licensing/web fonts.
+sans-serif is a generic fallback.
+*/
 body {
     font-family: "Gill Sans MT", "Gill Sans", sans-serif;
     margin: 0;
     padding: 0;
     background-color: var(--background-color);
     color: var(--text-color);
+    line-height: 1.6; /* Ensure good readability for body text */
 }
 
 /* Usage Rules: Headlines must always use Light and Semibold weights together */
@@ -46,16 +49,19 @@ h1 {
     font-weight: 300; /* Light for main titles */
     color: var(--text-color);
     margin-bottom: 20px;
+    font-size: 2.5em; /* Adjust font size for prominence */
 }
 h2 {
     font-weight: 600; /* Semibold for section titles */
     color: var(--text-color);
     margin-bottom: 15px;
+    font-size: 1.8em;
 }
 h3 {
     font-weight: 300; /* Light for sub-headings like "Filter Trucks" */
     color: var(--text-color);
     margin-bottom: 10px;
+    font-size: 1.3em;
 }
 
 /* Body Text or Paragraphs must always use the Regular weight */
@@ -83,9 +89,11 @@ em, i {
     text-decoration: none;
     margin: 0 10px;
     font-weight: 600; /* Semibold for navigation links */
+    transition: color 0.3s ease; /* Smooth transition for hover */
 }
 .navbar a:hover {
     text-decoration: underline;
+    color: rgba(255, 255, 255, 0.8); /* Slightly transparent white on hover */
 }
 .navbar .nav-left, .navbar .nav-right {
     display: flex;
@@ -95,13 +103,16 @@ em, i {
     margin-right: 10px;
     font-weight: 400; /* Regular for welcome message */
 }
+.navbar-logo {
+    height: 30px;
+    vertical-align: middle;
+}
 .container {
-    max-width: 960px;
-    margin: 20px auto;
-    padding: 20px;
-    background-color: var(--white);
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    padding-left: 15px;
+    padding-right: 15px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 /* Form Elements */
@@ -117,18 +128,29 @@ form input[type="text"],
 form input[type="email"],
 form input[type="password"],
 form input[type="number"],
+form input[type="date"], /* Added type="date" for consistency with forms.py */
 form input[type="datetime-local"],
-form select {
+form select,
+form textarea { /* Added textarea for comprehensive styling */
     width: 100%;
     padding: 10px;
     margin-top: 5px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    box-sizing: border-box;
+    box-sizing: border-box; /* Ensures padding doesn't increase element width */
     font-weight: 400; /* Regular for input text */
+    font-size: 1em; /* Consistent font size */
 }
+
+/* Checkbox specific styling */
+form input[type="checkbox"] {
+    width: auto; /* Override 100% width for checkboxes */
+    margin-right: 5px; /* Space between checkbox and label */
+}
+
 form input[type="submit"],
-button[type="submit"] {
+button[type="submit"],
+.btn { /* General button styling */
     background-color: var(--brand-blue); /* Apply brand blue */
     color: var(--white);
     padding: 10px 20px;
@@ -137,27 +159,38 @@ button[type="submit"] {
     cursor: pointer;
     font-size: 16px;
     font-weight: 600; /* Semibold for buttons */
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, border-color 0.3s ease; /* Smooth transition */
+    text-decoration: none; /* Ensure no underline for 'a' used as button */
+    display: inline-block; /* Allow padding and margin */
+    text-align: center; /* Center text */
+    white-space: nowrap; /* Prevent text wrap */
 }
 form input[type="submit"]:hover,
-button[type="submit"]:hover {
+button[type="submit"]:hover,
+.btn:hover {
     background-color: var(--hover-blue); /* Darker blue on hover */
 }
 
 /* Tables */
 table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: collapse; /* Ensure borders are merged */
     margin-top: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* Subtle shadow for tables */
+    border-radius: 8px; /* Match container rounding */
+    overflow: hidden; /* Ensures rounded corners apply to content */
 }
 table th, table td {
     border: 1px solid var(--border-color);
-    padding: 10px;
-    text-align: left;
+    padding: 10px; /* Kept 10px for better readability */
+    text-align: center;
+    vertical-align: middle; /* Vertically align cell content */
+    line-height: 1.4; /* Explicitly set a common line-height for cell content */
 }
 table th {
     background-color: var(--light-grey-bg);
     font-weight: 600; /* Semibold for table headers */
+    color: var(--text-color); /* Ensure header text is clear */
 }
 table a {
     color: var(--brand-blue); /* Apply brand blue for table links */
@@ -165,38 +198,81 @@ table a {
 }
 table a:hover {
     text-decoration: underline;
+    color: var(--hover-blue);
 }
 
-/* Action Buttons (Danger and Secondary) */
-.btn-danger {
-    background-color: #dc3545; /* Specific red for danger, you can define a variable if this is also branded */
-    color: var(--white);
-    padding: 8px 12px;
-    border: none;
+.vehicle-thumb {
+    width: 80px;
+    height: 60px;
+    object-fit: cover; /* Ensures image covers area without distortion */
     border-radius: 4px;
-    cursor: pointer;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 600; /* Semibold */
-    transition: background-color 0.3s ease;
+    display: block; /* Centers block elements using margin auto */
+    margin: 0 auto;
+}
+
+/* Specific style for the 'Actions' column cells */
+td.action-buttons {
+    white-space: nowrap; /* Prevents the buttons from wrapping onto multiple lines */
+    text-align: center;  /* Centers the buttons horizontally within the cell */
+    /* Removed fixed width to allow content to dictate width, but min-width could be useful */
+}
+
+/* For side-by-side action buttons */
+.action-buttons {
+    display: flex; /* Use flexbox for horizontal alignment */
+    gap: 5px;      /* Add some space between the buttons */
+    align-items: center; /* Vertically align items in the middle */
+    justify-content: center; /* Center the group of buttons */
+    flex-wrap: wrap; /* Allow buttons to wrap to the next line on very small screens */
+}
+
+/* Button Variations */
+.btn-small {
+    padding: 5px 10px; /* Slightly adjusted padding for small buttons */
+    font-size: 0.85em; /* Slightly larger than 0.8em for readability */
+    line-height: 1.2;
+    height: auto; /* Let content dictate height, padding provides spacing */
+    min-width: unset; /* Remove min-width if applied globally to .btn */
+}
+
+.btn-primary {
+    background-color: var(--brand-blue);
+    color: var(--white);
+    border: 1px solid var(--brand-blue);
+}
+.btn-primary:hover {
+    background-color: var(--hover-blue);
+    border-color: var(--hover-blue);
+}
+
+.btn-info{
+    background-color: var(--info-bg); /* Use info background color */
+    color: var(--info-text); /* Use info text color */
+    border: 1px solid var(--info-border); /* Use info border color */
+}
+.btn-info:hover {
+    background-color: #badce3; /* A slightly darker info background */
+    border-color: #8fd1df; /* A slightly darker info border */
+}
+
+.btn-danger {
+    background-color: #dc3545; /* Red */
+    color: var(--white);
+    border: 1px solid #dc3545;
 }
 .btn-danger:hover {
-    background-color: #c82333;
+    background-color: #c82333; /* Darker red */
+    border-color: #bd2130;
 }
+
 .btn-secondary {
-    background-color: var(--dark-grey-button); /* Apply dark grey */
+    background-color: var(--dark-grey-button);
     color: var(--white);
-    padding: 8px 12px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    text-decoration: none;
-    font-size: 14px;
-    font-weight: 600; /* Semibold */
-    transition: background-color 0.3s ease;
+    border: 1px solid var(--dark-grey-button);
 }
 .btn-secondary:hover {
-    background-color: var(--hover-dark-grey); /* Darker grey on hover */
+    background-color: var(--hover-dark-grey);
+    border-color: var(--hover-dark-grey);
 }
 
 /* Form Validation Errors */
@@ -212,6 +288,11 @@ table a:hover {
 }
 
 /* Pagination */
+.pagination {
+    text-align: center; /* Center the pagination controls */
+    margin-top: 30px; /* More space above pagination */
+    margin-bottom: 20px;
+}
 .pagination a, .pagination span {
     display: inline-block;
     padding: 8px 12px;
@@ -219,16 +300,20 @@ table a:hover {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     text-decoration: none;
-    color: var(--brand-blue); /* Brand blue for pagination links */
+    color: var(--brand-blue);
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 .pagination a:hover {
-    background-color: var(--light-grey-bg);
+    background-color: var(--brand-blue); /* Use brand blue on hover */
+    color: var(--white); /* White text on hover */
+    border-color: var(--brand-blue);
 }
 .pagination .current {
-    background-color: var(--brand-blue); /* Brand blue for current page */
+    background-color: var(--brand-blue);
     color: var(--white);
     border-color: var(--brand-blue);
-    font-weight: 600; /* Semibold for current page number */
+    font-weight: 600;
+    cursor: default; /* Indicate it's not clickable */
 }
 
 /* --- Styles for Django Messages --- */
@@ -241,8 +326,9 @@ table a:hover {
     padding: 10px 15px;
     margin-bottom: 10px;
     border-radius: 5px;
-    font-weight: 600; /* Messages are important, use Semibold */
+    font-weight: 600;
     border: 1px solid transparent;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); /* Add subtle shadow to messages */
 }
 .messages li.success {
     background-color: var(--success-bg);
@@ -275,12 +361,206 @@ table a:hover {
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
 }
 .filter-section h3 {
-    color: var(--brand-blue); /* Make filter heading stand out with brand color */
-    font-weight: 600; /* Use Semibold for this heading */
+    color: var(--brand-blue);
+    font-weight: 600;
+    margin-bottom: 15px; /* More space below heading in filter */
 }
 .filter-section form div {
-    margin-bottom: 10px; /* Space between filter inputs */
+    margin-bottom: 10px;
 }
-.filter-section button, .filter-section a.button {
+.filter-section button, .filter-section a.button, .filter-section .btn { /* Apply to .btn as well */
     margin-top: 10px;
+    margin-right: 5px; /* Space between filter buttons */
+}
+
+/* Language Selector */
+.language-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 15px; /* Give some space from other nav items if placed right */
+}
+.language-selector form {
+    display: inline-flex; /* Use inline-flex for better alignment with gap */
+    align-items: center;
+}
+.language-selector button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out; /* Use ease-in-out for smoother effect */
+}
+.language-selector button:hover {
+    transform: scale(1.1);
+}
+.language-selector img {
+    width: 28px;
+    height: auto;
+    vertical-align: middle;
+    border: 1px solid var(--border-color); /* Use variable */
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* --- Admin Dashboard Specific Styles --- */
+.admin-links {
+    display: flex;          /* Enable Flexbox */
+    flex-wrap: wrap;        /* Allow cards to wrap to the next line if space is limited */
+    gap: 20px;              /* Space between cards (horizontal and vertical) */
+    justify-content: center; /* Center cards horizontally */
+    align-items: stretch;   /* CRUCIAL: Makes all cards in a row have the same height as the tallest one */
+    padding: 20px 0;        /* Add some padding above/below the cards */
+}
+.admin-link-card {
+    /* Flex-grow | Flex-shrink | Flex-basis */
+    /* Allows cards to grow/shrink, with a preferred width of 300px */
+    flex: 1 0 300px;
+    max-width: 350px; /* Optional: Sets a maximum width for cards on very wide screens */
+
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    background-color: #fff;
+
+    /* To make content (h2, p, links) align nicely within the card */
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Distributes space, pushing content towards top/bottom */
+}
+.admin-link-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+.admin-link-card h2 {
+    color: #333;
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+    text-align: center;
+}
+.admin-link-card p {
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.admin-link-card p a {
+    display: inline-block;
+    padding: 8px 15px;
+    border-radius: 5px;
+    text-decoration: none;
+    margin: 5px;
+    width: auto;
+}
+.admin-link-card p a:hover {
+    text-decoration: underline;
+    color: var(--hover-blue);
+}
+
+/* Responsive adjustments for admin dashboard cards */
+@media (max-width: 992px) { /* For screens smaller than 992px (e.g., tablets) */
+    .admin-link-card {
+        flex-basis: calc(50% - 10px); /* Two cards per row (adjusting for the 20px gap) */
+        max-width: calc(50% - 10px);
+    }
+}
+
+@media (max-width: 600px) { /* For screens smaller than 600px (e.g., phones) */
+    .admin-link-card {
+        flex-basis: 100%; /* One card per row */
+        max-width: 100%;
+    }
+}
+
+/* Additional Button Style for logout button to avoid inline style */
+.logout-button {
+    background: none;
+    border: none;
+    color: var(--white);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 0;
+    margin: 0 10px;
+    text-decoration: none;
+    vertical-align: middle;
+    transition: text-decoration 0.3s ease, color 0.3s ease;
+}
+.logout-button:hover {
+    text-decoration: underline;
+    color: rgba(255, 255, 255, 0.8); /* Slightly transparent white on hover */
+}
+
+/* Back link style for creation forms and similar pages */
+.back-link {
+    display: block;
+    text-align: center;
+    margin-top: 20px;
+    margin-bottom: 20px; /* Added margin-bottom for spacing below it */
+    color: var(--brand-blue);
+    text-decoration: none;
+    font-weight: 600;
+}
+.back-link:hover {
+    text-decoration: underline;
+    color: var(--hover-blue);
+}
+
+/* Dashboard section for action buttons (e.g., in user account or admin lists) */
+.dashboard-section {
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid var(--border-color); /* Use variable */
+    border-radius: 8px;
+    background-color: var(--light-grey-bg); /* Use variable */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); /* Subtle shadow */
+}
+.dashboard-section p {
+    margin-bottom: 10px;
+}
+.dashboard-section .btn {
+    margin: 5px;
+    min-width: 180px;
+}
+
+/* Utility classes */
+.inline-form {
+    display: inline;
+}
+.flag-button {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+.flag-button:hover {
+    transform: scale(1.1);
+}
+.flag-icon {
+    width: 28px;
+    height: auto;
+    vertical-align: middle;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+.text-muted {
+    color: #6c757d;
+    font-style: italic;
+    font-size: 0.9em; /* Slightly smaller for muted text */
+}
+
+/* Custom style to "paint" unavailable dates in the flatpickr calendar */
+.flatpickr-day.unavailable-date {
+    background-color: #1554ff; /* A light blue color */
+    border-color: #bae6fd;
+    color: #0c4a6e;
+    pointer-events: none; /* Makes the date unclickable */
+}
+
+.flatpickr-day.unavailable-date:hover {
+    background-color: #1554ff;
 }

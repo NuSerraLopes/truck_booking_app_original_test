@@ -1,9 +1,14 @@
 {% extends 'base.html' %}
 {% load i18n %}
+{% load crispy_forms_tags %}
+{% load static %}
 
 {% block title %}{% translate "Book Vehicle" %}{% endblock %}
 
 {% block content %}
+{# 1. Load Flatpickr CSS from your static files #}
+<link rel="stylesheet" href="{% static 'css/flatpickr.min.css' %}">
+
 <div class="container my-4">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-7">
@@ -11,150 +16,34 @@
                 <div class="card-body">
                     <h1 class="card-title text-center mb-4">{% translate "Book" %} {{ vehicle.model }} ({{ vehicle.license_plate }})</h1>
 
-                    {# Display earliest booking date prominently #}
                     {% if vehicle.available_after %}
                         <div class="alert alert-info" role="alert">
                             <p class="mb-0">
-                                {% translate "This vehicle is available for booking on or after" %}
-                                <strong><span id="earliest-booking-date">{{ vehicle.available_after|date:"Y-m-d" }}</span></strong>.
-                                {% translate "Please select your start date accordingly." %}
+                                {% translate "This vehicle is available for booking on or after" %} <strong>{{ vehicle.available_after|date:"Y-m-d" }}</strong>.
                             </p>
-                        </div>
-                    {% else %}
-                        <div class="alert alert-success" role="alert">
-                             <p class="mb-0">{% translate "This vehicle is currently available for booking." %}</p>
                         </div>
                     {% endif %}
 
-                    <form method="post" id="booking-form" novalidate>
-                        {% csrf_token %}
+                    <div id="date-validation-error" class="alert alert-danger" style="display: none;"></div>
 
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger" role="alert">
-                                {% for error in form.non_field_errors %}
-                                    <p class="mb-0">{{ error }}</p>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-
-                        {% for field in form %}
-                            <div class="mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                                
-                                {# --- FIXED CODE BLOCK --- #}
-                                {# Manually render field to apply Bootstrap classes correctly #}
-                                {% if field.field.widget.input_type == 'select' %}
-                                    <select name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-select {% if field.errors %}is-invalid{% endif %}" {% if field.field.required %}required{% endif %}>
-                                        {% for choice in field %}
-                                            {{ choice }}
-                                        {% endfor %}
-                                    </select>
-                                {% else %}
-                                    <input type="{{ field.field.widget.input_type|default:'text' }}"
-                                           name="{{ field.name }}"
-                                           id="{{ field.id_for_label }}"
-                                           class="form-control {% if field.errors %}is-invalid{% endif %}"
-                                           value="{{ field.value|default:'' }}"
-                                           {% if field.field.required %}required{% endif %}>
-                                {% endif %}
-                                {# --- END FIXED CODE BLOCK --- #}
-                                
-                                {% if field.help_text %}
-                                    <div class="form-text">{{ field.help_text|safe }}</div>
-                                {% endif %}
-                                
-                                {% if field.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in field.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-
-                        {# Message for availability constraint, styled with Bootstrap #}
-                        <div id="availability-error-message" class="alert alert-danger d-none" role="alert">
-                            {% translate "Start date cannot be before the vehicle's earliest availability." %}
-                        </div>
-
-                        <div class="d-grid">
-                            <button type="submit" class="btn btn-primary" id="submit-booking-btn">{% translate "Submit Booking Request" %}</button>
-                        </div>
-                    </form>
+                    {% crispy form %}
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const startDateInput = document.getElementById('id_start_date');
-    const submitButton = document.getElementById('submit-booking-btn');
-    const earliestBookingDateElement = document.getElementById('earliest-booking-date');
-    const errorMessageDiv = document.getElementById('availability-error-message');
+{# 2. Safely pass the date ranges from the view to the template #}
+{{ painted_ranges_json|json_script:"painted-ranges-data" }}
+{{ validation_ranges_json|json_script:"validation-ranges-data" }}
 
-    // Ensure all elements exist before proceeding
-    if (!startDateInput || !submitButton || !errorMessageDiv) {
-        console.error("One or more required form elements are missing from the DOM.");
-        return;
-    }
+{# --- ADDED: This div is required by the JavaScript to get data --- #}
+<div id="calendar-data-container"
+     data-available-after="{{ vehicle.available_after|date:'d-m-Y' }}"
+     data-error-msg-end-date="{% translate 'The end date must be on or after the start date.' %}"
+></div>
 
-    let earliestBookingDate = null;
-    if (earliestBookingDateElement) {
-        const dateString = earliestBookingDateElement.textContent.trim();
-        earliestBookingDate = parseDate(dateString);
-    } else {
-        // If no specific date, vehicle is available from today
-        const today = new Date();
-        today.setHours(0, 0, 0, 0); // Normalize to start of day
-        earliestBookingDate = today;
-    }
-
-    // Helper function to parse YYYY-MM-DD date strings
-    function parseDate(dateString) {
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-            console.error("Invalid date string format:", dateString);
-            return null;
-        }
-        const parts = dateString.split('-');
-        const parsed = new Date(parts[0], parts[1] - 1, parts[2]); // Month is 0-indexed in JS
-        if (isNaN(parsed.getTime())) {
-            console.error("Failed to parse date string:", dateString);
-            return null;
-        }
-        return parsed;
-    }
-
-    function updateSubmitButtonState() {
-        const selectedStartDateStr = startDateInput.value;
-
-        if (selectedStartDateStr && earliestBookingDate) {
-            const selectedDate = parseDate(selectedStartDateStr);
-            if (selectedDate) {
-                selectedDate.setHours(0, 0, 0, 0); // Normalize to start of day
-
-                if (selectedDate >= earliestBookingDate) {
-                    submitButton.removeAttribute('disabled');
-                    errorMessageDiv.classList.add('d-none'); // Hide error using Bootstrap class
-                } else {
-                    submitButton.setAttribute('disabled', 'disabled');
-                    errorMessageDiv.classList.remove('d-none'); // Show error using Bootstrap class
-                }
-            }
-        } else {
-            // Disable if no date is selected or if earliest date is invalid
-            submitButton.setAttribute('disabled', 'disabled');
-            errorMessageDiv.classList.add('d-none');
-        }
-    }
-
-    // Initial check when the page loads
-    updateSubmitButtonState();
-
-    // Attach event listener for changes on the start date input
-    startDateInput.addEventListener('change', updateSubmitButtonState);
-});
-</script>
+{# 3. Load the JS files at the end of the body #}
+<script src="{% static 'js/flatpickr.min.js' %}"></script>
+<script src="{% static 'js/booking_calendar.js' %}"></script>
 {% endblock %}
