@@ -269,6 +269,7 @@ class EmailTemplate(models.Model):
         max_length=50,
         unique=True,
         choices=EVENT_CHOICES,
+        default='booking_created',
         help_text=_("Select the specific event that will trigger this email notification.")
     )
 

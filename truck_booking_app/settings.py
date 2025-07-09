@@ -16,24 +16,17 @@ load_dotenv()
 
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG')
 
 ALLOWED_HOSTS_str = os.environ.get('ALLOWED_HOSTS', '')
 ALLOWED_HOSTS = [host.strip() for host in ALLOWED_HOSTS_str.split(',') if host.strip()]
-
-
-# Application definition
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -43,11 +36,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    # My custom apps:
     'booking_app',
 ]
 
-# Custom User Model
 AUTH_USER_MODEL = 'booking_app.User'
 
 MIDDLEWARE = [
@@ -129,18 +120,14 @@ USE_L10N = True
 
 USE_TZ = True
 
-# Define the languages available in your application
-# The first element of the tuple is the language code,
-# the second is the name that Django displays in its language selection widgets.
 LANGUAGES = [
+    ('pt', 'Português'),
     ('en', 'English'),
-    ('pt', 'Português'), # Portuguese
 ]
 
-# Where Django will look for translation files (.po, .mo)
-# This should be a list of paths to 'locale' directories
+
 LOCALE_PATHS = [
-    BASE_DIR / 'locale', # Django will look for translations in a 'locale' folder at your project root
+    BASE_DIR / 'locale',
 ]
 
 # Static files (CSS, JavaScript, Images)
@@ -164,14 +151,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Default datetime format for templates when using |date:"FORMAT" filter
 # This ensures consistent display of date/time across your application
-DATETIME_FORMAT = "Y-m-d H:i" # Example: 2025-06-30 15:30
+DATETIME_FORMAT = "Y-m-d H:i"
 
 # Authentication Redirect URLs
 # The URL name to redirect to after a user logs in successfully
-LOGIN_REDIRECT_URL = 'booking_app:vehicle_list' # Redirects to the list of trucks
+LOGIN_REDIRECT_URL = 'booking_app:vehicle_list'
 LOGOUT_REDIRECT_URL = '/'
-# The URL name to use when a user is not authenticated but tries to access a @login_required view
-LOGIN_URL = 'login' # Refers to the 'login' URL name we defined in truck_booking_app/urls.py
+LOGIN_URL = 'login'
 
 
 # --- Email Configuration ---
@@ -180,15 +166,15 @@ LOGIN_URL = 'login' # Refers to the 'login' URL name we defined in truck_booking
 
 # You can also set a default 'from' email address for your application
 DEFAULT_FROM_EMAIL = 'geral@nulopes.me'
-SERVER_EMAIL = 'geral@nulopes.me' # For error reporting emails
+SERVER_EMAIL = 'geral@nulopes.me'
 
 # If you later switch to a real SMTP server, you would configure it like this:
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp-pt.securemail.pro' # Example for SendGrid
+EMAIL_HOST = 'smtp-pt.securemail.pro'
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'geral@nulopes.me' # Your SMTP username
-EMAIL_HOST_PASSWORD = '1990NunoLopes!!' # Your SMTP password
+EMAIL_HOST_USER = 'geral@nulopes.me'
+EMAIL_HOST_PASSWORD = '1990NunoLopes!!'
 
 # Media files (for user-uploaded content)
 MEDIA_URL = '/media/'
