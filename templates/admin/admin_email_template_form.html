@@ -26,8 +26,16 @@
 
                         {# Loop through all form fields using the structure from admin_user_create.html #}
                         {% for field in form %}
-                            {% if field.field.widget.input_type == 'checkbox' %}
-                                <div class="mb-3 form-check">
+                            {# --- UPDATED: Special handling for event_trigger when editing --- #}
+                            {% if field.name == 'event_trigger' and template %}
+                                <div class="mb-3">
+                                    <label class="form-label">{% translate field.label %}:</label>
+                                    <p class="form-control-plaintext"><code>{{ template.get_event_trigger_display }}</code></p>
+                                    <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+                                    <div class="form-text text-muted small">{% translate "The event trigger cannot be changed after creation." %}</div>
+                                </div>
+                            {% elif field.field.widget.input_type == 'checkbox' %}
+                                <div class="mb-3 form-check form-switch">
                                     {{ field }}
                                     <label class="form-check-label" for="{{ field.id_for_label }}">
                                         {% translate field.label %}
@@ -38,8 +46,13 @@
                             {% elif field.field.widget.template_name == 'django/forms/widgets/checkbox_select_multiple.html' %}
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">{% translate field.label %}:</label>
-                                    <div class="border rounded p-2">
-                                        {{ field }}
+                                    <div class="border rounded p-2" style="max-height: 150px; overflow-y: auto;">
+                                        {% for choice in field %}
+                                            <div class="form-check">
+                                                {{ choice.tag }}
+                                                <label class="form-check-label" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+                                            </div>
+                                        {% endfor %}
                                     </div>
                                     {% if field.help_text %}<div class="form-text text-muted small">{{ field.help_text|safe }}</div>{% endif %}
                                     {% if field.errors %}<div class="text-danger small">{{ field.errors.as_text }}</div>{% endif %}
@@ -62,7 +75,7 @@
                                 </div>
                             {% endif %}
                         {% endfor %}
-                        
+
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <a href="{% url 'booking_app:admin_email_template_list' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
                             <button type="submit" class="btn btn-primary">

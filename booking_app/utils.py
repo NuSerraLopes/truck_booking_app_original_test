@@ -24,39 +24,44 @@ def add_business_days(start_date, num_business_days):
     return current_date
 
 
-def send_booking_notification(event_trigger, booking_instance=None, context_data=None, test_email_recipient=None):
+def send_booking_notification(event_trigger, booking_instance=None, context_data=None):
     """
-    Finds the active email template, builds the recipient list, and sends the email.
-    If test_email_recipient is provided, it sends only to that address.
+    Finds the active email template for a given event, builds the recipient list,
+    and sends the email.
     """
     try:
         template_obj = EmailTemplate.objects.get(event_trigger=event_trigger, is_active=True)
     except EmailTemplate.DoesNotExist:
-        # ... (error handling remains the same) ...
+        print(f"DEBUG: No active email template found for event '{event_trigger}'. Skipping email.")
+        return
+    except EmailTemplate.MultipleObjectsReturned:
+        print(f"ERROR: Multiple active templates found for event '{event_trigger}'. Please ensure only one is active.")
         return
 
     # --- Build the recipient list ---
     recipient_list = set()
 
-    if test_email_recipient:
-        # If this is a test, only send to the specified recipient
-        recipient_list.add(test_email_recipient)
-    else:
-        # --- Original recipient logic ---
-        if template_obj.send_to_salesperson and booking_instance and booking_instance.user.email:
-            recipient_list.add(booking_instance.user.email)
-        if template_obj.send_to_groups.exists():
-            for group in template_obj.send_to_groups.all():
-                for user in group.user_set.filter(is_active=True, email__isnull=False):
-                    recipient_list.add(user.email)
-        if template_obj.send_to_users.exists():
-            for user in template_obj.send_to_users.filter(is_active=True, email__isnull=False):
-                recipient_list.add(user.email)
-        if template_obj.send_to_distribution_lists.exists():
-            for dl in template_obj.send_to_distribution_lists.all():
-                recipient_list.update(dl.get_emails_as_list())
+    if template_obj.send_to_salesperson and booking_instance and booking_instance.user.email:
+        recipient_list.add(booking_instance.user.email)
 
-    # ... (the rest of the function remains the same) ...
+    if template_obj.send_to_groups.exists():
+        for group in template_obj.send_to_groups.all():
+            for user in group.user_set.filter(is_active=True, email__isnull=False):
+                recipient_list.add(user.email)
+
+    if template_obj.send_to_users.exists():
+        for user in template_obj.send_to_users.filter(is_active=True, email__isnull=False):
+            recipient_list.add(user.email)
+
+    # --- NEW: Add emails from distribution lists ---
+    if template_obj.send_to_distribution_lists.exists():
+        for dl in template_obj.send_to_distribution_lists.all():
+            recipient_list.update(dl.get_emails_as_list())
+
+    if not recipient_list:
+        print(f"DEBUG: No recipients found for event '{event_trigger}'. Skipping email.")
+        return
+
     # --- Render the email content ---
     context_dict = {'booking': booking_instance}
     if context_data:
@@ -72,7 +77,7 @@ def send_booking_notification(event_trigger, booking_instance=None, context_data
         send_mail(
             rendered_subject,
             rendered_body,
-            'no-reply@yourcompany.com',
+            'geral@nulopes.me',
             list(recipient_list),
             html_message=rendered_body,
             fail_silently=False,

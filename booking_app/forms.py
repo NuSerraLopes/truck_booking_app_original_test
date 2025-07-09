@@ -472,10 +472,11 @@ class GroupForm(forms.ModelForm):
 class EmailTemplateForm(forms.ModelForm):
     class Meta:
         model = EmailTemplate
-        # --- UPDATED: 'language' field removed ---
+        # --- UPDATED: Added send_to_distribution_lists ---
         fields = [
             'name', 'event_trigger', 'subject', 'body', 'is_active',
-            'send_to_salesperson', 'send_to_groups', 'send_to_users'
+            'send_to_salesperson', 'send_to_groups', 'send_to_users',
+            'send_to_distribution_lists'
         ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -486,6 +487,7 @@ class EmailTemplateForm(forms.ModelForm):
             'send_to_salesperson': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'send_to_groups': forms.CheckboxSelectMultiple,
             'send_to_users': forms.CheckboxSelectMultiple,
+            'send_to_distribution_lists': forms.CheckboxSelectMultiple,
         }
         labels = {
             'name': _('Template Name'),
@@ -496,6 +498,7 @@ class EmailTemplateForm(forms.ModelForm):
             'send_to_salesperson': _('Send to Salesperson'),
             'send_to_groups': _('Send to Groups'),
             'send_to_users': _('Send to Specific Users'),
+            'send_to_distribution_lists': _('Send to Distribution Lists'),
         }
 
     def __init__(self, *args, **kwargs):
