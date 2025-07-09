@@ -1,13 +1,12 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% load crispy_forms_tags %}
-{% load static %}
 
 {% block title %}{% translate "Book Vehicle" %}{% endblock %}
 
 {% block content %}
-{# 1. Load Flatpickr CSS from your static files #}
-<link rel="stylesheet" href="{% static 'css/flatpickr.min.css' %}">
+{# --- Add Flatpickr CSS --- #}
+<link rel="stylesheet" href="/static/css/flatpickr.min.css">
 
 <div class="container my-4">
     <div class="row justify-content-center">
@@ -33,17 +32,104 @@
     </div>
 </div>
 
-{# 2. Safely pass the date ranges from the view to the template #}
-{{ painted_ranges_json|json_script:"painted-ranges-data" }}
-{{ validation_ranges_json|json_script:"validation-ranges-data" }}
+{# --- Add Flatpickr JS --- #}
+<script src="/static/js/flatpickr.min.js"></script>
 
-{# --- ADDED: This div is required by the JavaScript to get data --- #}
-<div id="calendar-data-container"
-     data-available-after="{{ vehicle.available_after|date:'d-m-Y' }}"
-     data-error-msg-end-date="{% translate 'The end date must be on or after the start date.' %}"
-></div>
+{# --- UPDATED: Final JavaScript Logic --- #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const startDateInput = document.getElementById('id_start_date');
+    const endDateInput = document.getElementById('id_end_date');
+    const submitButton = document.querySelector('button[type="submit"]');
+    const errorMessageDiv = document.getElementById('date-validation-error');
 
-{# 3. Load the JS files at the end of the body #}
-<script src="{% static 'js/flatpickr.min.js' %}"></script>
-<script src="{% static 'js/booking_calendar.js' %}"></script>
+    const unavailableRanges = JSON.parse('{{ unavailable_ranges_json|default:"[]"|safe }}');
+
+    const disabledDates = unavailableRanges.map(range => ({
+        from: range.start,
+        to: range.end
+    }));
+
+    function validateDates() {
+        errorMessageDiv.style.display = 'none';
+        errorMessageDiv.textContent = '';
+        submitButton.disabled = false;
+
+        const start = startDateInput.value;
+        const end = endDateInput.value;
+
+        if (!start || !end) {
+            submitButton.disabled = true;
+            return;
+        }
+
+        const startDate = new Date(start + 'T00:00:00');
+        const endDate = new Date(end + 'T00:00:00');
+
+        if (startDate > endDate) {
+            errorMessageDiv.textContent = "{% translate 'The end date must be on or after the start date.' %}";
+            errorMessageDiv.style.display = 'block';
+            submitButton.disabled = true;
+        }
+    }
+
+    // --- Flatpickr Configuration ---
+    const fpStart = flatpickr(startDateInput, {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        disable: disabledDates,
+        onChange: function(selectedDates, dateStr, instance) {
+            if (selectedDates[0]) {
+                const selectedStartDate = selectedDates[0];
+
+                // Enable the end date picker
+                fpEnd.set('minDate', selectedStartDate);
+                endDateInput.disabled = false;
+
+                // Find the next unavailable period after the selected start date
+                let nextUnavailableStart = null;
+                for (const range of unavailableRanges) {
+                    const rangeStart = new Date(range.start);
+                    if (rangeStart > selectedStartDate) {
+                        if (!nextUnavailableStart || rangeStart < nextUnavailableStart) {
+                            nextUnavailableStart = rangeStart;
+                        }
+                    }
+                }
+
+                // If there is a next booking, set the max date for the end picker
+                if (nextUnavailableStart) {
+                    // This is the start of the buffer for the next booking
+                    const maxDate = new Date(nextUnavailableStart.getTime());
+                    fpEnd.set('maxDate', maxDate);
+                } else {
+                    // If no next booking, clear any previous max date constraint
+                    fpEnd.set('maxDate', null);
+                }
+
+                // If the current end date is now invalid, clear it
+                if (endDateInput.value && (new Date(endDateInput.value) < selectedStartDate || (nextUnavailableStart && new Date(endDateInput.value) > nextUnavailableStart))) {
+                    fpEnd.clear();
+                }
+            }
+            validateDates();
+        }
+    });
+
+    const fpEnd = flatpickr(endDateInput, {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        disable: disabledDates,
+        onChange: function(selectedDates, dateStr, instance) {
+            validateDates();
+        }
+    });
+
+    // Initially disable the end date picker
+    endDateInput.disabled = true;
+
+    // Initial validation check
+    validateDates();
+});
+</script>
 {% endblock %}
