@@ -11,6 +11,7 @@ from datetime import date
 from .models import Vehicle, Booking, Location, User, EmailTemplate, DistributionList
 from django.contrib.auth.models import Group
 from django.contrib import messages
+from django.urls import reverse_lazy
 
 
 class BookingForm(forms.ModelForm):
@@ -64,11 +65,10 @@ class BookingForm(forms.ModelForm):
                 Column('start_date', css_class='form-group col-md-6 mb-0'),
                 Column('end_date', css_class='form-group col-md-6 mb-0'),
             ),
-            # --- UPDATED: Button layout is now handled by Crispy Forms ---
             Div(
                 Submit('submit', _('Submit Booking Request'), css_class='btn btn-primary'),
                 HTML(
-                    f'<a href="{_("booking_app:vehicle_list")}" class="btn btn-secondary">{_("Back to Vehicle List")}</a>'),
+                    f'<a href="{reverse_lazy("booking_app:vehicle_list")}" class="btn btn-secondary">{_("Back to Vehicle List")}</a>'),
                 css_class='d-flex justify-content-between mt-4'
             )
         )
