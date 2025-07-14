@@ -69,16 +69,27 @@ def logout_user(request):
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def vehicle_create_view(request):
     if request.method == 'POST':
+        # --- DEBUGGING: Check if the file is in the request ---
+        print("Request method is POST")
+        print("request.FILES:", request.FILES)
+
         form = VehicleCreateForm(request.POST, request.FILES)
+
         if form.is_valid():
+            print("Form is valid. Saving...")
             vehicle = form.save()
-            send_booking_notification('vehicle_created', context_data={'vehicle': vehicle})
+            # ... your email notification logic ...
             messages.success(request, _("Vehicle created successfully!"))
             return redirect(reverse('booking_app:admin_dashboard'))
         else:
+            # --- DEBUGGING: Print the exact form errors to the console ---
+            print("Form is NOT valid.")
+            print("Form errors:", form.errors.as_json())
+
             messages.error(request, _("Error creating vehicle. Please check the form."))
     else:
         form = VehicleCreateForm()
+
     return render(request, 'admin/admin_vehicle_create.html', {'form': form, 'page_title': _("Create New Vehicle")})
 
 @login_required

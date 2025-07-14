@@ -1,7 +1,6 @@
-{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_vehicle_create.html #}
-
 {% extends 'base.html' %}
 {% load i18n %}
+{% load crispy_forms_tags %}
 
 {% block title %}{% translate "Create New Vehicle" %}{% endblock %}
 
@@ -13,65 +12,18 @@
                 <div class="card-body">
                     <h1 class="card-title text-center mb-4">{% translate "Create New Vehicle" %}</h1>
 
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger" role="alert">
-                            {% for error in form.non_field_errors %}
-                                <p class="mb-0">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-
-                    <form method="post" enctype="multipart/form-data" novalidate>
+                    <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
-
-                        {% for field in form %}
-                            <div class="mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-
-                                {# Special handling for file inputs to use form-control #}
-                                {% if field.name == 'picture' %}
-                                    <input type="file" 
-                                           name="{{ field.name }}" 
-                                           id="{{ field.id_for_label }}"
-                                           class="form-control {% if field.errors %}is-invalid{% endif %}">
-                                {% elif field.field.widget.input_type == 'select' %}
-                                     <select name="{{ field.name }}" 
-                                             id="{{ field.id_for_label }}" 
-                                             class="form-select {% if field.errors %}is-invalid{% endif %}">
-                                        {% for choice in field %}
-                                            {{ choice }}
-                                        {% endfor %}
-                                    </select>
-                                {% else %}
-                                    <input type="{{ field.field.widget.input_type|default:'text' }}" 
-                                           name="{{ field.name }}" 
-                                           id="{{ field.id_for_label }}" 
-                                           class="form-control {% if field.errors %}is-invalid{% endif %}"
-                                           value="{{ field.value|default:'' }}">
-                                {% endif %}
-                                
-                                {% if field.help_text %}
-                                    <div class="form-text">{{ field.help_text|safe }}</div>
-                                {% endif %}
-                                
-                                {% if field.errors %}
-                                    <div class="invalid-feedback d-block">
-                                        {% for error in field.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                        
+                        {% crispy form %}
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
                             <button type="submit" class="btn btn-primary">{% translate "Create Vehicle" %}</button>
                         </div>
                     </form>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock content %}
+{% endblock %}

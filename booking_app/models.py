@@ -133,15 +133,36 @@ class Vehicle(models.Model):
         help_text=_("The current physical location of the vehicle.")
     )
 
+    def save(self, *args, **kwargs):
+        """
+        Override the save method to set a default picture based on vehicle type
+        if no picture is uploaded.
+        """
+        # The `if not self.picture` check ensures we only set the default
+        # if a user has not uploaded their own image.
+        if not self.picture:
+            if self.vehicle_type == 'LIGHT':
+                self.picture = 'Default/light.jpg'
+            elif self.vehicle_type == 'HEAVY':
+                self.picture = 'Default/heavy.jpg'
+            # You can add a default for 'APV' or a general fallback here
+            else:
+                 self.picture = 'Default/no_image.jpg'
+
+        super().save(*args, **kwargs)  # Call the original save method
+
     @property
     def get_picture_url(self):
-        if self.picture and hasattr(self.picture, 'url'):
+        # --- UPDATED: Simplified and more robust check ---
+        # A file field with no file will evaluate to False.
+        if self.picture:
             return self.picture.url
         elif self.vehicle_type == 'LIGHT':
-            return static('default_pics/light.jpg')
+            return static('Default/light.jpg')
         elif self.vehicle_type == 'HEAVY':
-            return static('default_pics/heavy.jpg')
-        return static('static/images/no_image.png')  # Generic Default
+            return static('Default/light.jpg')
+
+        return static('Default/light.jpg')  # Generic Default
 
     def __str__(self):
         return f"{self.vehicle_type} - {self.model} ({self.license_plate})"

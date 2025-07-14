@@ -1,6 +1,6 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\forms.py
 from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Row, Column, Submit, HTML, Div
+from crispy_forms.layout import Layout, Row, Column, Submit, HTML, Div, Field
 from django import forms
 from django.contrib.auth import get_user_model
 from django.forms.widgets import PasswordInput, TextInput
@@ -350,23 +350,30 @@ class UserCreateForm(forms.ModelForm):
 class VehicleCreateForm(forms.ModelForm):
     class Meta:
         model = Vehicle
-        fields = ['license_plate', 'vehicle_type', 'model', 'picture', 'current_location', 'is_available']
+        fields = ['license_plate', 'vehicle_type', 'model', 'picture', 'current_location']
         labels = {
             'license_plate': _('License Plate'),
             'vehicle_type': _('Vehicle Type'),
             'model': _('Model Name'),
             'picture': _('Vehicle Picture'),
             'current_location': _('Current Location'),
-            'is_available': _('Is Available'),
         }
-        widgets = {
-            'vehicle_type': forms.Select(attrs={'class': 'form-control'}),  # Added class
-            'current_location': forms.Select(attrs={'class': 'form-control'}),  # Added class
-            'license_plate': forms.TextInput(attrs={'class': 'form-control'}),  # Added class
-            'model': forms.TextInput(attrs={'class': 'form-control'}),  # Added class
-            'is_available': forms.CheckboxInput(attrs={'class': 'form-check-input'}),  # Added class
-            # No class for picture as it's a FileInput, often styled differently
-        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Row(
+                Column('license_plate', css_class='form-group col-md-6 mb-3'),
+                Column('model', css_class='form-group col-md-6 mb-3'),
+            ),
+            Row(
+                Column('vehicle_type', css_class='form-group col-md-6 mb-3'),
+                Column('current_location', css_class='form-group col-md-6 mb-3'),
+            ),
+            'picture',
+        )
 
 
 class VehicleEditForm(forms.ModelForm):

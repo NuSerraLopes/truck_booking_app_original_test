@@ -37,9 +37,9 @@
                             <tr>
                                 <td>
                                     {% if vehicle.picture %}
-                                        <img src="{{ vehicle.picture.url }}" alt="{{ vehicle.license_plate }}" class="img-thumbnail" style="width: 80px; height: auto;">
+                                        <img src="{{ vehicle.get_picture_url }}" alt="{{ vehicle.license_plate }}" class="img-thumbnail" style="width: 80px; height: auto;">
                                     {% else %}
-                                        <img src="{% static 'images/no_image.png' %}" alt="{% translate 'No Image' %}" class="img-thumbnail" style="width: 80px; height: auto;">
+                                        <img src="{% static 'media/Default/no_image.png' %}" alt="{% translate 'No Image' %}" class="img-thumbnail" style="width: 80px; height: auto;">
                                     {% endif %}
                                 </td>
                                 <td>{{ vehicle.license_plate }}</td>
