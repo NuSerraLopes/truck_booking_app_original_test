@@ -15,113 +15,113 @@
 
     <link rel="icon" href="{% static 'images/favicon.ico' %}" type="image/ico">
 </head>
-<body>
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
-    <div class="container-fluid">
-        <!-- Logo and Brand -->
-        <a class="navbar-brand" href="{% url 'booking_app:home' %}">
-            <img src="{% static 'images/Logo.svg' %}" alt="{% translate 'VehicleApp Logo' %}" style="height: 30px; width: auto;">
-            {% translate "Demo Booking" %}
-        </a>
-
-        <!-- Toggler for mobile view -->
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <!-- Navbar links -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'booking_app:vehicle_list' %}">{% translate "Vehicles" %}</a>
-                </li>
-                {% if user.is_authenticated %}
+<body class="d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'booking_app:home' %}">
+                <img src="{% static 'images/Logo.svg' %}" alt="{% translate 'VehicleApp Logo' %}" style="height: 30px; width: auto;">
+                {% translate "Demo Booking" %}
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'booking_app:my_bookings' %}">{% translate "My Bookings" %}</a>
+                        <a class="nav-link" href="{% url 'booking_app:vehicle_list' %}">{% translate "Vehicles" %}</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{% url 'booking_app:my_account' %}">{% translate "My Account" %}</a>
-                    </li>
-                    {% if can_view_group_bookings %}
+                    {% if user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'booking_app:my_group_bookings' %}">{% translate "Group Bookings" %}</a>
+                            <a class="nav-link" href="{% url 'booking_app:my_bookings' %}">{% translate "My Bookings" %}</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'booking_app:my_account' %}">{% translate "My Account" %}</a>
+                        </li>
+                        {% if can_view_group_bookings %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'booking_app:my_group_bookings' %}">{% translate "Group Bookings" %}</a>
+                            </li>
+                        {% endif %}
+                        {% if user.is_admin_member %}
+                             <li class="nav-item">
+                                <a class="nav-link" href="{% url 'booking_app:admin_dashboard' %}">{% translate "Admin Dashboard" %}</a>
+                            </li>
+                        {% endif %}
                     {% endif %}
-                    {% if user.is_admin_member %}
-                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'booking_app:admin_dashboard' %}">{% translate "Admin Dashboard" %}</a>
-                        </li>
+                </ul>
+
+                <div class="d-flex align-items-center">
+                    {% if user.is_authenticated %}
+                        <span class="navbar-text me-3">
+                            {% translate "Welcome" %}, {{ user.username }}!
+                        </span>
+                        <form action="{% url 'booking_app:logout_user' %}" method="post" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-outline-light btn-sm">{% translate "Logout" %}</button>
+                        </form>
+                    {% else %}
+                        <a href="{% url 'booking_app:login_user' %}" class="btn btn-outline-light btn-sm">{% translate "Login" %}</a>
                     {% endif %}
-                {% endif %}
-            </ul>
-
-            <!-- Right-aligned items -->
-            <div class="d-flex align-items-center">
-                {% if user.is_authenticated %}
-                    <span class="navbar-text me-3">
-                        {% translate "Welcome" %}, {{ user.username }}!
-                    </span>
-                    <form action="{% url 'booking_app:logout_user' %}" method="post" class="d-inline">
-                        {% csrf_token %}
-                        <button type="submit" class="btn btn-outline-light btn-sm">{% translate "Logout" %}</button>
-                    </form>
-                {% else %}
-                    <a href="{% url 'booking_app:login_user' %}" class="btn btn-outline-light btn-sm">{% translate "Login" %}</a>
-                {% endif %}
-
-                <!-- Language Selector Dropdown -->
-                <div class="nav-item dropdown ms-3">
-                    {# --- UPDATED: Changed <a> tag to <button> to prevent URL change --- #}
-                    <button class="btn nav-link dropdown-toggle text-white" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" type="button" style="background: transparent; border: none; padding: 0;">
-                        <img src="{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'pt' %}{% static 'flags/pt.png' %}{% else %}{% static 'flags/uk.png' %}{% endif %}" alt="Language" class="flag-icon">
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
-                        <li>
-                            <form action="{% url 'set_language' %}" method="post" class="d-inline">
-                                {% csrf_token %}
-                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <input type="hidden" name="language" value="en">
-                                <button type="submit" class="dropdown-item">
-                                    <img src="{% static 'flags/uk.png' %}" alt="English" class="flag-icon me-2"> English
-                                </button>
-                            </form>
-                        </li>
-                        <li>
-                            <form action="{% url 'set_language' %}" method="post" class="d-inline">
-                                {% csrf_token %}
-                                <input type="hidden" name="next" value="{{ request.get_full_path }}">
-                                <input type="hidden" name="language" value="pt">
-                                <button type="submit" class="dropdown-item">
-                                    <img src="{% static 'flags/pt.png' %}" alt="Português" class="flag-icon me-2"> Português
-                                </button>
-                            </form>
-                        </li>
-                    </ul>
+                    <div class="nav-item dropdown ms-3">
+                        <button class="btn nav-link dropdown-toggle text-white" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" type="button" style="background: transparent; border: none; padding: 0;">
+                            <img src="{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'pt' %}{% static 'flags/pt.png' %}{% else %}{% static 'flags/uk.png' %}{% endif %}" alt="Language" class="flag-icon">
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
+                            <li>
+                                <form action="{% url 'set_language' %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <input type="hidden" name="language" value="en">
+                                    <button type="submit" class="dropdown-item">
+                                        <img src="{% static 'flags/uk.png' %}" alt="English" class="flag-icon me-2"> English
+                                    </button>
+                                </form>
+                            </li>
+                            <li>
+                                <form action="{% url 'set_language' %}" method="post" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                                    <input type="hidden" name="language" value="pt">
+                                    <button type="submit" class="dropdown-item">
+                                        <img src="{% static 'flags/pt.png' %}" alt="Português" class="flag-icon me-2"> Português
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
-<main class="container mt-4">
-    {# --- Django Messages Display --- #}
-    {% if messages %}
-        <div class="messages-container">
-            {% for message in messages %}
-                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endfor %}
+    <main class="container mt-4">
+        {# --- Django Messages Display --- #}
+        {% if messages %}
+            <div class="messages-container">
+                {% for message in messages %}
+                    <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="bg-dark text-white text-center py-4 mt-auto">
+        <div class="container">
+            <p class="mb-1">
+                &copy; {% now "Y" %} NuLopes.me. All Rights Reserved.
+            </p>
+            <p class="mb-1">
+                Found a bug? <a href="https://github.com/NLopesivg/truck_booking_app/issues" target="_blank" class="text-white">Report it on GitHub</a>.
+            </p>
+            <p class="mb-0 text-white-50">
+                Version {{ APP_VERSION }} (Last Updated: {{ APP_UPDATE_DATE|date:"d/m/Y" }})
+            </p>
         </div>
-    {% endif %}
-
-    {% block content %}{% endblock %}
-</main>
-
-<!-- Bootstrap JS Bundle (includes Popper) -->
+    </footer>
 <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
-
 </body>
 </html>

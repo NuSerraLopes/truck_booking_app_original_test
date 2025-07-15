@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+from datetime import date
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -67,7 +68,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'booking_app.context_processors.auth_extras'
+                'booking_app.context_processors.auth_extras',
+                'booking_app.context_processors.site_info',
             ],
         },
     },
@@ -184,3 +186,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+
+APP_VERSION = 'v0.8.0'
+APP_UPDATE_DATE = date(2025, 7, 15)

@@ -1,4 +1,6 @@
 # In booking_app/context_processors.py
+from truck_booking_app import settings
+
 
 def auth_extras(request):
     """
@@ -23,4 +25,13 @@ def auth_extras(request):
 
     return {
         'can_view_group_bookings': can_view_group_bookings
+    }
+
+def site_info(request):
+    """
+    Makes site-wide variables from settings.py available to all templates.
+    """
+    return {
+        'APP_VERSION': settings.APP_VERSION,
+        'APP_UPDATE_DATE': settings.APP_UPDATE_DATE,
     }
