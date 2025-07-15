@@ -8,7 +8,7 @@
     <title>{% block title %}{% translate "Demo Booking App" %}{% endblock %}</title>
 
     <!-- Bootstrap CSS from local static file -->
-    <link rel="stylesheet" href="{% static 'css/bootstrap.css' %}">
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
 
     <!-- Your Custom CSS (loads after Bootstrap to allow overrides) -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
@@ -121,7 +121,7 @@
 </main>
 
 <!-- Bootstrap JS Bundle (includes Popper) -->
-<script src="{% static 'js/bootstrap.bundle.js' %}"></script>
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
 
 </body>
 </html>

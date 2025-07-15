@@ -35,7 +35,7 @@ def home(request):
 
 def login_user(request):
     """
-    Handles user login.
+    Handles user login and checks if a password change is required.
     """
     if request.method == "POST":
         form = AuthenticationForm(request, data=request.POST)
@@ -45,12 +45,25 @@ def login_user(request):
             user = authenticate(username=username, password=password)
             if user is not None:
                 login(request, user)
+
+                # --- ADD THIS LOGIC ---
+                # Check if a password change is required for this user.
+                if user.requires_password_change:
+                    # Set the flag back to False to prevent a loop
+                    user.requires_password_change = False
+                    user.save(update_fields=['requires_password_change'])
+
+                    messages.info(request, _("For your security, you must change your password before proceeding."))
+                    return redirect("booking_app:change_password")
+                # --- END OF LOGIC ---
+
                 messages.success(request, _(f"You are now logged in as {username}."))
                 return redirect("booking_app:home")
             else:
                 messages.error(request, _("Invalid username or password."))
         else:
             messages.error(request, _("Invalid username or password."))
+
     form = AuthenticationForm()
     return render(request, 'registration/login.html', {'form': form})
 
@@ -507,13 +520,22 @@ def admin_user_reset_password_view(request, pk):
         form = SetPasswordForm(user_to_reset, request.POST)
         if form.is_valid():
             form.save()
+
+            # --- ADD THIS LOGIC ---
+            # Automatically set the requires_password_change flag to True
+            user_to_reset.requires_password_change = True
+            user_to_reset.save(update_fields=['requires_password_change'])
+
+            # --- Your existing notification and message ---
             send_booking_notification('password_reset', context_data={'user': user_to_reset})
             messages.success(request, _(f"Password for user '{user_to_reset.username}' has been reset successfully!"))
+
             return redirect('booking_app:admin_user_edit', pk=user_to_reset.pk)
         else:
             messages.error(request, _("Error resetting password. Please check the form."))
     else:
         form = SetPasswordForm(user_to_reset)
+
     context = {
         'form': form,
         'user_to_reset': user_to_reset,
@@ -530,19 +552,23 @@ def admin_dashboard_view(request):
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def user_create_view(request):
     if request.method == 'POST':
+        # This line correctly passes the request to your form's __init__
         form = UserCreateForm(request.POST, request=request)
         if form.is_valid():
+            # This line correctly passes the request to your form's save() method
             user = form.save(request=request)
             send_booking_notification('user_created', context_data={'user': user})
             return redirect(reverse('booking_app:admin_user_list'))
         else:
             messages.error(request, _("Error creating user. Please check the form for errors."))
     else:
+        # This line is also correct for GET requests
         form = UserCreateForm(request=request)
     context = {
-        'form': form,
+        'form': form,  # You are correctly passing the form instance here
         'page_title': _("Create New User")
     }
+    # The magic will happen in this template file
     return render(request, 'admin/admin_user_create.html', context)
 
 @login_required
@@ -558,20 +584,24 @@ def user_list_view(request):
     }
     return render(request, 'admin/admin_user_list.html', context)
 
+
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def admin_user_edit_view(request, pk):
     user_to_edit = get_object_or_404(User, pk=pk)
     if request.method == 'POST':
-        form = UpdateUserForm(request.POST, instance=user_to_edit, request=request)
+        # The 'request=request' argument has been removed here
+        form = UpdateUserForm(request.POST, instance=user_to_edit)
         if form.is_valid():
-            form.save(commit=True)
+            form.save()  # The save method no longer needs the request
             messages.success(request, _(f"User '{user_to_edit.username}' updated successfully!"))
             return redirect(reverse('booking_app:admin_user_list'))
         else:
             messages.error(request, _("Error updating user. Please check the form."))
     else:
-        form = UpdateUserForm(instance=user_to_edit, request=request)
+        # The 'request=request' argument has been removed here as well
+        form = UpdateUserForm(instance=user_to_edit)
+
     context = {
         'form': form,
         'page_title': _("Edit User"),

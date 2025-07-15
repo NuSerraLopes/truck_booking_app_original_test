@@ -143,10 +143,10 @@ form textarea { /* Added textarea for comprehensive styling */
 }
 
 /* Checkbox specific styling */
-form input[type="checkbox"] {
-    width: auto; /* Override 100% width for checkboxes */
-    margin-right: 5px; /* Space between checkbox and label */
-}
+/*form input[type="checkbox"] {
+    width: auto;
+    margin-right: 5px;
+}*/
 
 form input[type="submit"],
 button[type="submit"],

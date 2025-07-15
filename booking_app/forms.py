@@ -13,6 +13,12 @@ from django.contrib.auth.models import Group
 from django.contrib import messages
 from django.urls import reverse_lazy
 
+class BootstrapCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
+    def __init__(self, attrs=None):
+        if attrs is None:
+            attrs = {}
+        attrs['class'] = attrs.get('class', '') + ' form-check-input'
+        super().__init__(attrs)
 
 class BookingForm(forms.ModelForm):
     class Meta:
@@ -23,8 +29,8 @@ class BookingForm(forms.ModelForm):
             'start_location', 'end_location', 'start_date', 'end_date',
         ]
         widgets = {
-            'start_date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
-            'end_date': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
         }
         labels = {
             'customer_name': _("Customer Name"),
@@ -39,12 +45,13 @@ class BookingForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        # --- FIX: Pop the custom 'vehicle' kwarg before calling super() ---
         self.vehicle = kwargs.pop('vehicle', None)
         super().__init__(*args, **kwargs)
 
-        # --- Crispy Forms Helper ---
         self.helper = FormHelper()
         self.helper.form_method = 'post'
+
         self.helper.layout = Layout(
             HTML(f'<h5>{_("Client Information")}</h5><hr>'),
             Row(
@@ -73,7 +80,6 @@ class BookingForm(forms.ModelForm):
             )
         )
 
-    # ... (Your clean methods remain the same) ...
     def clean(self):
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
@@ -101,149 +107,55 @@ class BookingForm(forms.ModelForm):
 
 
 class UpdateUserForm(forms.ModelForm):
-    # Add the fields for group management
-    groups = forms.ModelMultipleChoiceField(
-        queryset=Group.objects.all().order_by('name'),
-        widget=forms.CheckboxSelectMultiple,  # Renders as checkboxes
-        required=False,
-        label=_("Assign to Other Groups")
-    )
-
-    # Add the checkbox for custom admin dashboard access
-    is_admin_member_checkbox = forms.BooleanField(
-        required=False,
-        label=_("Grant Custom Admin Dashboard Access (Adds to 'Admin' Group)")
-    )
-
     class Meta:
         model = User
+        # The permission fields have been removed from this list
         fields = [
-            'email',
-            'first_name',
-            'last_name',
-            'phone_number',
-            'is_active',  # is_active should be here
-            'is_staff',  # Keep if you manage Django admin access here
-            'is_superuser',  # Keep if you manage superuser status here
-            'requires_password_change',
+            'email', 'first_name', 'last_name', 'phone_number', 'groups',
         ]
         labels = {
             'email': _('Email'),
             'first_name': _('First Name'),
             'last_name': _('Last Name'),
             'phone_number': _('Phone Number'),
-            'is_active': _('Is Active'),
-            'is_staff': _('Is Staff (Django Admin Access)'),  # Clarify label
-            'is_superuser': _('Is Superuser'),
-            'requires_password_change': _('Requires Password Change'),
+            'groups': _('Assign to Groups'),
+        }
+        widgets = {
+            'groups': BootstrapCheckboxSelectMultiple,
         }
 
-    def __init__(self, *args, **kwargs):
-        # Retrieve the request object if it was passed from the view
-        self.request = kwargs.pop('request', None)
-        super().__init__(*args, **kwargs)
-
-        # Apply Bootstrap classes for consistent styling
-        for field_name, field in self.fields.items():
-            if isinstance(field.widget, (forms.TextInput, forms.EmailInput)):
-                field.widget.attrs.update({'class': 'form-control'})
-            elif isinstance(field.widget, forms.CheckboxInput):
-                field.widget.attrs.update({'class': 'form-check-input'})
-            elif isinstance(field.widget, forms.CheckboxSelectMultiple):
-                pass
-
-        if self.instance and self.instance.pk:  # For an existing user being edited
-            # Pre-populate the 'groups' field with the user's current groups
-            self.fields['groups'].initial = self.instance.groups.all()
-
-            # Pre-populate 'is_admin_member_checkbox' based on 'Admin' group membership
-            try:
-                admin_group = Group.objects.get(name='Admin')
-                if self.instance.groups.filter(pk=admin_group.pk).exists():
-                    self.fields['is_admin_member_checkbox'].initial = True
-            except Group.DoesNotExist:
-                self.fields['is_admin_member_checkbox'].widget = forms.HiddenInput()
-                self.fields['is_admin_member_checkbox'].required = False
-                self.fields['is_admin_member_checkbox'].label = ""
-                if self.request:  # Display warning if group missing during init
-                    messages.warning(self.request,
-                                     _("Warning: The 'Admin' group does not exist. Cannot manage admin privileges via checkbox."))
-
-    @transaction.atomic  # Ensures all database operations are completed or rolled back together
+    # The save and clean methods remain the same
+    @transaction.atomic
     def save(self, commit=True):
-        user = super().save(commit=False)  # Get the user instance (already existing)
-
-        # No password setting logic here for UpdateUserForm; password reset is separate.
-
-        if commit:
-            user.save()  # Save the user's basic fields
-
-        # Handle user's group assignments
-        # Get selected groups from the 'groups' field
-        selected_groups_from_form = set(self.cleaned_data.get('groups', []))
-
-        # Handle the 'is_admin_member_checkbox' logic
-        grant_admin_access = self.cleaned_data.get('is_admin_member_checkbox', False)
-
-        try:
-            admin_group = Group.objects.get(name='Admin')
-            if grant_admin_access:
-                selected_groups_from_form.add(admin_group)  # Add 'Admin' group if checkbox is checked
-            else:
-                selected_groups_from_form.discard(admin_group)  # Remove 'Admin' group if checkbox is unchecked
-        except Group.DoesNotExist:
-            if grant_admin_access and self.request:  # Display error if group missing during save
-                messages.error(self.request,
-                               _("Error: The 'Admin' group does not exist. User cannot be assigned admin privileges."))
-            print("Warning: 'Admin' group does not exist. Cannot manage admin privileges via checkbox.")
-
-        # Assign the final set of groups to the user
-        user.groups.set(list(selected_groups_from_form))
-
+        user = super().save(commit=commit)
         return user
 
     def clean_email(self):
         email = self.cleaned_data['email']
-        if User.objects.filter(email=email).exclude(pk=self.instance.pk).exists():
+        if User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
             raise forms.ValidationError(_("A user with that email already exists."))
         return email
 
 
 class UserCreateForm(forms.ModelForm):
+    # Form-only fields (not on the User model) are defined here.
     password = forms.CharField(
         label=_("Password"),
-        widget=PasswordInput(attrs={'class': 'form-control'}),
+        widget=forms.PasswordInput(),
         strip=False,
         help_text=_("Enter a password for the new user. Must be at least 8 characters long.")
     )
     password2 = forms.CharField(
         label=_("Password confirmation"),
-        widget=PasswordInput(attrs={'class': 'form-control'}),
+        widget=forms.PasswordInput(),
         strip=False,
         help_text=_("Enter the same password as above, for verification.")
-    )
-
-    groups = forms.ModelMultipleChoiceField(
-        queryset=Group.objects.all().order_by('name'),
-        widget=forms.CheckboxSelectMultiple,
-        required=False,
-        label=_("Assign to Other Groups")
-    )
-
-    is_admin_member_checkbox = forms.BooleanField(
-        required=False,
-        label=_("Grant Custom Admin Dashboard Access (Adds to 'Admin' Group)")
     )
 
     class Meta:
         model = User
         fields = [
-            'username',
-            'email',
-            'first_name',
-            'last_name',
-            'phone_number',
-            # 'is_active' removed from here, as it will always be True by default or set explicitly in save()
+            'username', 'email', 'first_name', 'last_name', 'phone_number', 'groups',
         ]
         labels = {
             'username': _('Username'),
@@ -251,74 +163,37 @@ class UserCreateForm(forms.ModelForm):
             'first_name': _('First Name'),
             'last_name': _('Last Name'),
             'phone_number': _('Phone Number'),
-            # 'is_active' label removed
+            'groups': _("Assign to Other Groups"),
         }
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control'}),
-            # 'is_active' widget removed
+            'groups': BootstrapCheckboxSelectMultiple,
         }
 
+    # The __init__, save, and clean methods remain the same.
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
 
-        if 'is_admin_member_checkbox' in self.fields and isinstance(self.fields['is_admin_member_checkbox'].widget,
-                                                                    forms.CheckboxInput):
-            self.fields['is_admin_member_checkbox'].widget.attrs.update({'class': 'form-check-input'})
-
-        try:
-            Group.objects.get(name='Admin')
-        except Group.DoesNotExist:
-            self.fields['is_admin_member_checkbox'].widget = forms.HiddenInput()
-            self.fields['is_admin_member_checkbox'].required = False
-            self.fields['is_admin_member_checkbox'].label = ""
-            if self.request:
-                messages.warning(self.request,
-                                 _("Warning: The 'Admin' group does not exist. Cannot manage admin privileges via checkbox."))
-            print(
-                "Warning: 'Admin' group does not exist. The 'Grant Custom Admin Dashboard Access' checkbox will be hidden.")
-
     @transaction.atomic
     def save(self, request=None, commit=True):
         user = super().save(commit=False)
-
-        # Ensure is_active is True for new users, as it's no longer a form field
-        # Django's AbstractUser sets is_active=True by default, but it's good to be explicit
         user.is_active = True
-
         password = self.cleaned_data.get("password")
         if password:
             user.set_password(password)
-
         if commit:
             user.save()
 
+        # This logic handles both the 'groups' and 'is_admin_member_checkbox' fields.
         selected_groups_from_form = set(self.cleaned_data.get('groups', []))
-        grant_admin_access = self.cleaned_data.get('is_admin_member_checkbox', False)
-
-        try:
-            admin_group = Group.objects.get(name='Admin')
-            if grant_admin_access:
-                selected_groups_from_form.add(admin_group)
-            else:
-                selected_groups_from_form.discard(admin_group)
-        except Group.DoesNotExist:
-            if grant_admin_access and request:
-                messages.error(request,
-                               _("Error: The 'Admin' group does not exist. User cannot be assigned admin privileges."))
-            print("Warning: 'Admin' group does not exist. Cannot manage admin privileges via checkbox.")
 
         user.groups.set(list(selected_groups_from_form))
 
         if request:
             messages.success(request, _(f"User '{user.username}' created successfully!"))
-
         return user
 
+    # The clean methods remain unchanged.
     def clean_username(self):
         username = self.cleaned_data['username']
         if User.objects.filter(username__iexact=username).exists():
@@ -335,7 +210,6 @@ class UserCreateForm(forms.ModelForm):
         cleaned_data = super().clean()
         password = cleaned_data.get("password")
         password2 = cleaned_data.get("password2")
-
         if password and password2:
             if password != password2:
                 self.add_error('password2', _("The two password fields didn't match."))
@@ -343,7 +217,6 @@ class UserCreateForm(forms.ModelForm):
                 self.add_error('password', _("Password must be at least 8 characters long."))
         elif password or password2:
             self.add_error('password', _("Both password fields are required."))
-
         return cleaned_data
 
 

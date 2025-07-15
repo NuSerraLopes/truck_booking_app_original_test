@@ -1,58 +1,71 @@
-{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_location_form.html #}
-
 {% extends 'base.html' %}
-{% load i18n %}
+{% load crispy_forms_filters %}
+{% load i18n crispy_forms_tags %}
 
-{% block title %}{% translate "Create New Location" %}{% endblock %}
+{% block title %}{% translate "Create New User" %}{% endblock %}
 
 {% block content %}
 <div class="container my-5">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
+        <div class="col-lg-8">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h1 class="card-title text-center mb-4">{% translate "Create New Location" %}</h1>
-
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-danger" role="alert">
-                            {% for error in form.non_field_errors %}
-                                <p class="mb-0">{{ error }}</p>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                    <h1 class="card-title text-center mb-4">{% translate "Create New User" %}</h1>
 
                     <form method="post" novalidate>
                         {% csrf_token %}
 
-                        {% for field in form %}
-                            <div class="mb-3">
-                                <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                                <input type="{{ field.field.widget.input_type|default:'text' }}" 
-                                       name="{{ field.name }}" 
-                                       id="{{ field.id_for_label }}" 
-                                       class="form-control {% if field.errors %}is-invalid{% endif %}"
-                                       value="{{ field.value|default:'' }}"
-                                       {% if field.field.required %}required{% endif %}>
-                                
-                                {% if field.help_text %}
-                                    <div class="form-text">{{ field.help_text|safe }}</div>
-                                {% endif %}
-                                
-                                {% if field.errors %}
-                                    <div class="invalid-feedback">
-                                        {% for error in field.errors %}
-                                            <span>{{ error }}</span>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                {% for error in form.non_field_errors %}
+                                    <p class="mb-0">{{ error }}</p>
+                                {% endfor %}
                             </div>
-                        {% endfor %}
-                        
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                            <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
-                            <button type="submit" class="btn btn-primary">{% translate "Create Location" %}</button>
+                        {% endif %}
+
+                        {# User Account Details #}
+                        <h5 class="mt-4">{% translate "User Account Details" %}</h5>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">{{ form.username|as_crispy_field }}</div>
+                            <div class="col-md-6 mb-3">{{ form.email|as_crispy_field }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">{{ form.first_name|as_crispy_field }}</div>
+                            <div class="col-md-6 mb-3">{{ form.last_name|as_crispy_field }}</div>
+                        </div>
+                        <div class="mb-3">{{ form.phone_number|as_crispy_field }}</div>
+
+                        {# Set Password #}
+                        <h5 class="mt-4">{% translate "Set Password" %}</h5>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">{{ form.password|as_crispy_field }}</div>
+                            <div class="col-md-6 mb-3">{{ form.password2|as_crispy_field }}</div>
+                        </div>
+
+                        {# Permissions and Groups - APPLYING THE FIX HERE #}
+                        <h5 class="mt-4">{% translate "Permissions and Groups" %}</h5>
+                        <hr>
+
+                        {# Fix for the single checkbox #}
+                        <div class="mb-3 form-check">
+                            {{ form.is_admin_member_checkbox|as_crispy_field }}
+                        </div>
+
+                        {# Fix for the multiple checkboxes ('groups') #}
+                        <div class="mb-3">
+                            {{ form.groups|as_crispy_field }}
+                        </div>
+
+                        <div class="d-grid gap-2 mt-4">
+                             <button type="submit" class="btn btn-primary">{% translate "Create User" %}</button>
                         </div>
                     </form>
+
+                    <p class="text-center mt-4">
+                        <a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-outline-secondary btn-sm">{% translate "Back to User List" %}</a>
+                    </p>
                 </div>
             </div>
         </div>
