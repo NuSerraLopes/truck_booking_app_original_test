@@ -8,9 +8,7 @@
     <h1 class="mb-4">{% translate "My Account" %}</h1>
 
     <div class="row">
-        <!-- Left Column for User Details and Actions -->
         <div class="col-lg-4 mb-4">
-            <!-- User Details Card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header">
                     <h2 class="h5 mb-0">{% translate "Personal Information" %}</h2>
@@ -28,25 +26,25 @@
                         {% if user.phone_number %}
                             <li class="list-group-item d-flex justify-content-between"><strong>{% translate "Phone Number" %}:</strong> <span>{{ user.phone_number }}</span></li>
                         {% endif %}
+                        {# --- ADDED LANGUAGE DISPLAY --- #}
+                        <li class="list-group-item d-flex justify-content-between"><strong>{% translate "Language" %}:</strong> <span>{{ user.get_language_display }}</span></li>
                     </ul>
                 </div>
             </div>
 
-            <!-- Account Actions Card -->
             <div class="card shadow-sm">
                  <div class="card-header">
                     <h2 class="h5 mb-0">{% translate "Account Actions" %}</h2>
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="{% url 'booking_app:update_user_data' %}" class="btn btn-primary">{% translate "Update Personal Data" %}</a>
+                        <a href="{% url 'booking_app:update_user_data' %}" class="btn btn-primary">{% translate "Update Personal Data & Language" %}</a>
                         <a href="{% url 'booking_app:change_password' %}" class="btn btn-secondary">{% translate "Change Password" %}</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Right Column for Bookings -->
         <div class="col-lg-8">
             <div class="card shadow-sm">
                  <div class="card-header">
@@ -55,7 +53,7 @@
                 <div class="card-body">
                     {% if bookings %}
                         <div class="table-responsive">
-                            <table class="table table-striped table-hover">
+                            <table class="table table-striped table-hover align-middle">
                                 <thead class="table-dark">
                                     <tr>
                                         <th>{% translate "ID" %}</th>
@@ -71,25 +69,25 @@
                                         <tr>
                                             <td>{{ booking.id }}</td>
                                             <td>{{ booking.vehicle.model }}</td>
-                                            <td>{{ booking.start_date|date:"Y-m-d" }}</td>
-                                            <td>{{ booking.end_date|date:"Y-m-d" }}</td>
+                                            <td>{{ booking.start_date|date:"d/m/Y" }}</td>
+                                            <td>{{ booking.end_date|date:"d/m/Y" }}</td>
                                             <td>
-                                                <span class="badge 
-                                                    {% if booking.status == 'pending' %}bg-warning text-dark
+                                                {# --- UPDATED STATUS LOGIC --- #}
+                                                <span class="badge
+                                                    {% if booking.current_status_display == 'On Going' %}bg-primary
                                                     {% elif booking.status == 'confirmed' %}bg-success
+                                                    {% elif booking.status == 'pending' %}bg-warning text-dark
                                                     {% elif booking.status == 'cancelled' %}bg-danger
                                                     {% elif booking.status == 'completed' %}bg-secondary
-                                                    {% else %}bg-info
                                                     {% endif %}">
-                                                    {% translate booking.get_status_display %}
+                                                    {{ booking.current_status_display }}
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td class="text-nowrap">
                                                 {% if booking.status == 'pending' or booking.status == 'confirmed' %}
-                                                    <a href="{% url 'booking_app:update_booking' booking.id %}" class="btn btn-sm btn-primary">{% translate "Update" %}</a>
-                                                    <a href="{% url 'booking_app:cancel_booking' booking.id %}" class="btn btn-sm btn-danger">{% translate "Cancel" %}</a>
+                                                    <a href="{% url 'booking_app:update_booking' booking.id %}" class="btn btn-sm btn-primary">{% translate "Manage" %}</a>
                                                 {% else %}
-                                                    <span class="text-muted small">{% translate "No Actions" %}</span>
+                                                    <a href="{% url 'booking_app:bookings_detail' booking.id %}" class="btn btn-sm btn-info">{% translate "Details" %}</a>
                                                 {% endif %}
                                             </td>
                                         </tr>

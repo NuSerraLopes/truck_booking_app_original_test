@@ -32,7 +32,7 @@
                         <th>{% translate 'End Location' %}</th>
                         <th>{% translate 'Start Date' %}</th>
                         <th>{% translate 'End Date' %}</th>
-                        <th>{% translate 'Status' %}</th> {# This is the header #}
+                        <th>{% translate 'Status' %}</th>
                         <th>{% translate 'Actions' %}</th>
                     </tr>
                 </thead>
@@ -64,7 +64,7 @@
                                     <a href="{% url 'booking_app:bookings_detail' booking.pk %}" class="btn btn-small btn-primary">{% translate 'Details' %}</a>
                                     <a href="{% url 'booking_app:cancel_booking' booking.pk %}" class="btn btn-small btn-danger">{% translate 'Cancel' %}</a>
                                 {% else %}
-                                    <span class="text-muted">{% translate 'No Actions' %}</span>
+                                    <a href="{% url 'booking_app:bookings_detail' booking.pk %}" class="btn btn-small btn-primary">{% translate 'Details' %}</a>
                                 {% endif %}
                             </div>
                         </td>

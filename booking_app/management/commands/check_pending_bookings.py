@@ -2,6 +2,8 @@ from django.core.management.base import BaseCommand
 from datetime import date, timedelta
 from booking_app.models import Booking, AutomationSettings
 from booking_app.utils import send_booking_notification
+from django.utils import timezone
+from django.utils.translation import gettext as _
 
 
 class Command(BaseCommand):
@@ -31,6 +33,9 @@ class Command(BaseCommand):
         for booking in bookings_to_cancel:
             send_booking_notification('booking_auto_cancelled', booking_instance=booking)
             booking.status = 'cancelled'
+            booking.cancellation_time = timezone.now()
+            booking.cancellation_reason = _(
+                "Automatically cancelled due to non-approval before start date.")  # Set a reason
             booking.save()
             self.stdout.write(self.style.WARNING(f'Auto-cancelled Booking ID: {booking.pk}'))
 

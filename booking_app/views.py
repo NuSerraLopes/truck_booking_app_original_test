@@ -385,9 +385,13 @@ def update_booking_view(request, booking_pk):
             return redirect('booking_app:my_group_bookings')
         elif action == 'cancel_by_manager' and can_cancel_by_manager:
             booking.status = 'cancelled'
+            booking.cancelled_by = request.user  # Record who cancelled it
+            booking.cancellation_time = timezone.now()  # Record when
+            booking.cancellation_reason = _("Cancelled by management.")  # Set a reason
             booking.save()
             send_booking_notification('booking_canceled_by_manager', booking_instance=booking)
-            messages.success(request, _(f"Booking {booking.pk} for {booking.vehicle.license_plate} has been cancelled by management."))
+            messages.success(request,
+                             _(f"Booking {booking.pk} for {booking.vehicle.license_plate} has been cancelled by management."))
             return redirect('booking_app:my_group_bookings')
         elif action == 'complete' and can_complete_booking:
             booking.status = 'completed'
@@ -433,6 +437,9 @@ def cancel_booking_view(request, booking_pk):
         return redirect('booking_app:my_bookings')
     if request.method == 'POST':
         booking.status = 'cancelled'
+        booking.cancelled_by = request.user
+        booking.cancellation_time = timezone.now()
+        booking.cancellation_reason = _("Cancelled by user.")
         booking.save()
         send_booking_notification('booking_canceled_by_user', booking_instance=booking)
         messages.success(request, _("Booking cancelled successfully."))

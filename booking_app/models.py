@@ -64,6 +64,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_staff = models.BooleanField(_("staff status"), default=False)
     is_superuser = models.BooleanField(_("superuser status"), default=False)
     requires_password_change = models.BooleanField(default=False)
+    language = models.CharField(
+        max_length=5,
+        choices=settings.LANGUAGES,
+        default=settings.LANGUAGE_CODE,
+        verbose_name=_("Preferred Language")
+    )
 
     @property
     def is_admin_member(self):
@@ -199,6 +205,22 @@ class Booking(models.Model):
         choices=BOOKING_STATUS_CHOICES,
         default='pending',
         verbose_name=_("Booking Status")
+    )
+
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='cancelled_bookings',
+        verbose_name=_("Cancelled By")
+    )
+    cancellation_reason = models.TextField(
+        blank=True, null=True,
+        verbose_name=_("Cancellation Reason")
+    )
+    cancellation_time = models.DateTimeField(
+        null=True, blank=True,
+        verbose_name=_("Cancellation Time")
     )
 
     @property

@@ -63,9 +63,9 @@
                         <a href="{% url 'booking_app:login_user' %}" class="btn btn-outline-light btn-sm">{% translate "Login" %}</a>
                     {% endif %}
                     <div class="nav-item dropdown ms-3">
-                        <button class="btn nav-link dropdown-toggle text-white" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" type="button" style="background: transparent; border: none; padding: 0;">
+                        <!--<button class="btn nav-link dropdown-toggle text-white" id="languageDropdown" data-bs-toggle="dropdown" aria-expanded="false" type="button" style="background: transparent; border: none; padding: 0;">
                             <img src="{% get_current_language as LANGUAGE_CODE %}{% if LANGUAGE_CODE == 'pt' %}{% static 'flags/pt.png' %}{% else %}{% static 'flags/uk.png' %}{% endif %}" alt="Language" class="flag-icon">
-                        </button>
+                        </button>-->
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="languageDropdown">
                             <li>
                                 <form action="{% url 'set_language' %}" method="post" class="d-inline">
@@ -112,13 +112,13 @@
     <footer class="bg-dark text-white text-center py-4 mt-auto">
         <div class="container">
             <p class="mb-1">
-                &copy; {% now "Y" %} NuLopes.me. All Rights Reserved.
+                &copy; {% now "Y" %} {% translate "NuLopes.me. All Rights Reserved."%}
             </p>
             <p class="mb-1">
-                Found a bug? <a href="https://github.com/NuSerraLopes/truck_booking_app/issues" target="_blank" class="text-white">Report it on GitHub</a>.
+                {% translate "Found a bug?" %} <a href="https://github.com/NuSerraLopes/truck_booking_app/issues" target="_blank" class="text-white"> {% translate "Report it on GitHub" %}</a>.
             </p>
             <p class="mb-0 text-white-50">
-                Version {{ APP_VERSION }} (Last Updated: {{ APP_UPDATE_DATE|date:"d/m/Y" }})
+                {% translate "Version" %} {{ APP_VERSION }} ({% translate "Last Updated:" %} {{ APP_UPDATE_DATE|date:"d/m/Y" }})
             </p>
         </div>
     </footer>

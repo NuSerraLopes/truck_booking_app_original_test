@@ -37,7 +37,7 @@ class BookingForm(forms.ModelForm):
             'customer_email': _("Customer Email"),
             'customer_phone': _("Customer Phone"),
             'client_tax_number': _("Client Tax Number"),
-            'client_company_registration': _("Client Company Registration"),
+            'client_company_registration': _("Client Company Registration Code"),
             'start_location': _("Start Location"),
             'end_location': _("End Location"),
             'start_date': _("Start Date"),
@@ -115,7 +115,7 @@ class UpdateUserForm(forms.ModelForm):
         model = User
         # The permission fields have been removed from this list
         fields = [
-            'email', 'first_name', 'last_name', 'phone_number', 'groups',
+            'email', 'first_name', 'last_name', 'phone_number', 'groups','language',
         ]
         labels = {
             'email': _('Email'),
