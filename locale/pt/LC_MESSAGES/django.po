@@ -6,17 +6,18 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-07-15 12:48+0100\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2025-07-15 13:06+0100\n"
+"Last-Translator: \n"
+"Language-Team: \n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.6\n"
 
 #: booking_app/admin.py:60 booking_app/forms.py:136 booking_app/forms.py:206
 msgid "A user with that email already exists."
@@ -142,10 +143,8 @@ msgid "Phone Number"
 msgstr "Número de Telefone"
 
 #: booking_app/forms.py:121
-#, fuzzy
-#| msgid "Assign to Other Groups"
 msgid "Assign to Groups"
-msgstr "Atribuir a Outros Grupos"
+msgstr "Atribuir a Grupos"
 
 #: booking_app/forms.py:143
 msgid "Password"
@@ -247,7 +246,7 @@ msgstr "Nome do Template"
 
 #: booking_app/forms.py:367 templates/admin/admin_email_template_list.html:24
 msgid "Event Trigger"
-msgstr ""
+msgstr "Acionador de Evento"
 
 #: booking_app/forms.py:368
 msgid "Email Subject"
@@ -259,47 +258,37 @@ msgstr "Corpo do Email (HTML é permitido)"
 
 #: booking_app/forms.py:370
 msgid "Is this template active?"
-msgstr ""
+msgstr "Esse modelo está ativo?"
 
 #: booking_app/forms.py:371 booking_app/models.py:302
-#, fuzzy
-#| msgid "Salesperson"
 msgid "Send to Salesperson"
-msgstr "Vendedor"
+msgstr "Enviar a Vendedor"
 
 #: booking_app/forms.py:372 booking_app/models.py:307
-#, fuzzy
-#| msgid "Update Group"
 msgid "Send to Groups"
-msgstr "Atualizar Grupo"
+msgstr "Enviar a Grupo"
 
 #: booking_app/forms.py:373 booking_app/models.py:313
 msgid "Send to Specific Users"
-msgstr ""
+msgstr "Enviar para utikizadores específicos"
 
 #: booking_app/forms.py:374 booking_app/models.py:320
 msgid "Send to Distribution Lists"
-msgstr ""
+msgstr "Enviar para listas de distribuição"
 
 #: booking_app/forms.py:382 templates/admin/admin_email_template_form.html:36
-#, fuzzy
-#| msgid "The template key cannot be changed."
 msgid "The event trigger cannot be changed after creation."
-msgstr "A chave do template não pode ser alterada."
+msgstr "O acionador de eventos não pode ser alterado após a criação."
 
 #: booking_app/forms.py:393 booking_app/models.py:228
 #: templates/admin/admin_dl_list.html:18
-#, fuzzy
-#| msgid "Last Name"
 msgid "List Name"
-msgstr "Último Nome"
+msgstr "Nome da Lista"
 
 #: booking_app/forms.py:394 booking_app/models.py:230
 #: templates/admin/admin_dl_list.html:19
-#, fuzzy
-#| msgid "email address"
 msgid "Email Addresses"
-msgstr "endereço de email"
+msgstr "endereço de email:"
 
 #: booking_app/models.py:20
 msgid "The Username field must be set"
@@ -401,7 +390,7 @@ msgstr "Cancelado"
 
 #: booking_app/models.py:187
 msgid "Permanent registration certificate code"
-msgstr ""
+msgstr "Certidão permanente de cliente"
 
 #: booking_app/models.py:201
 msgid "Booking Status"
@@ -424,143 +413,125 @@ msgstr ""
 #: booking_app/models.py:231
 msgid "Enter one or more email addresses, separated by commas or new lines."
 msgstr ""
+"Digite um ou mais endereços de e-mail, separados por vírgulas ou novas "
+"linhas."
 
 #: booking_app/models.py:247
 msgid "Distribution List"
-msgstr ""
+msgstr "Lista de distribuição"
 
 #: booking_app/models.py:248 templates/admin/admin_dashboard.html:94
 msgid "Distribution Lists"
-msgstr ""
+msgstr "Listas de distribuição"
 
 #: booking_app/models.py:258
 msgid "Booking Created by Salesperson"
-msgstr ""
+msgstr "Marcação criada por vendedor"
 
 #: booking_app/models.py:259
-#, fuzzy
-#| msgid "Booking Update Notification"
 msgid "Booking Updated by Salesperson"
-msgstr "Notificação de Atualização de Reserva"
+msgstr "Reserva actualizada pelo vendedor"
 
 #: booking_app/models.py:260
-#, fuzzy
-#| msgid "Completed"
 msgid "Booking Completed"
-msgstr "Concluído"
+msgstr "Reserva Concluída"
 
 #: booking_app/models.py:261
 msgid "Booking Reminder (Upcoming)"
-msgstr ""
+msgstr "Lembrente de reserva (Futura)"
 
 #: booking_app/models.py:264
 msgid "Booking Approved by Manager"
-msgstr ""
+msgstr "Reserva aprovado pelo Manager"
 
 #: booking_app/models.py:265
-#, fuzzy
-#| msgid "Cancel as Manager"
 msgid "Booking Canceled by Manager"
-msgstr "Cancelar como Gestor"
+msgstr "Reserva cancelada pelo Manager"
 
 #: booking_app/models.py:268
-#, fuzzy
-#| msgid "Booking cancelled successfully."
 msgid "Booking Canceled by User"
-msgstr "Reserva cancelada com sucesso."
+msgstr "Reserva cancelada pelo utilizador"
 
 #: booking_app/models.py:271
 msgid "New User Account Created"
-msgstr ""
+msgstr "No conta de utilizador criada"
 
 #: booking_app/models.py:272
-#, fuzzy
-#| msgid "Reset User Password"
 msgid "User Password Was Reset"
-msgstr "Redefinir Password do Utilizador"
+msgstr "A palavra-passe do utilizador foi redefinida"
 
 #: booking_app/models.py:275
-#, fuzzy
-#| msgid "Vehicle Type"
 msgid "Vehicle Created"
-msgstr "Tipo de Veículo"
+msgstr "Veículo Criado"
 
 #: booking_app/models.py:276
-#, fuzzy
-#| msgid "Vehicle Type"
 msgid "Vehicle Updated"
-msgstr "Tipo de Veículo"
+msgstr "Veículo Actualizado"
 
 #: booking_app/models.py:277
-#, fuzzy
-#| msgid "Vehicle Details"
 msgid "Vehicle Deleted"
-msgstr "Detalhes do Veículo"
+msgstr "Veículo Removido"
 
 #: booking_app/models.py:280
-#, fuzzy
-#| msgid "Location Name"
 msgid "Location Created"
-msgstr "Nome da Localização"
+msgstr "Localização Criada"
 
 #: booking_app/models.py:281
-#, fuzzy
-#| msgid "Location Name"
 msgid "Location Updated"
-msgstr "Nome da Localização"
+msgstr "Localização Actualizada"
 
 #: booking_app/models.py:282
-#, fuzzy
-#| msgid "Location Name"
 msgid "Location Deleted"
-msgstr "Nome da Localização"
+msgstr "Localização Removida"
 
 #: booking_app/models.py:291
 msgid "Select the specific event that will trigger this email notification."
-msgstr ""
+msgstr "Selecione o evento que irá acionar esta notificação de email."
 
 #: booking_app/models.py:295
 msgid ""
 "A descriptive name for this template (e.g., 'New Booking Confirmation')."
 msgstr ""
+"Um nome descritivo para este modelo (por exemplo, “Confirmação de nova "
+"reserva”)."
 
 #: booking_app/models.py:297
 msgid ""
 "The email subject line. You can use template variables like {{ booking.pk }}."
 msgstr ""
-"A linha de assunto do email. Pode usar variáveis de template como {{ booking."
-"pk }}."
+"A linha de assunto do email. Pode usar variáveis de template como "
+"{{ booking.pk }}."
 
 #: booking_app/models.py:299
 msgid ""
-"The email body. Can contain HTML and template variables like {{ booking."
-"customer_name }}."
+"The email body. Can contain HTML and template variables like "
+"{{ booking.customer_name }}."
 msgstr ""
-"O corpo do email. Pode conter HTML e variáveis de template como {{ booking."
-"customer_name }}."
+"O corpo do email. Pode conter HTML e variáveis de template como "
+"{{ booking.customer_name }}."
 
 #: booking_app/models.py:300
 msgid "Only active templates will be sent."
-msgstr ""
+msgstr "Apenas os modelos activos serão enviados."
 
 #: booking_app/models.py:303
-#, fuzzy
-#| msgid "The first name of the salesperson who made the booking."
 msgid ""
 "Check to send a notification to the salesperson who created the booking."
-msgstr "O primeiro nome do vendedor que fez a reserva."
+msgstr "Marque para enviar uma notificação ao vendedor que criou a reserva."
 
 #: booking_app/models.py:308
 msgid "Select groups whose members should receive this notification."
-msgstr ""
+msgstr "Selecione os grupos cujos membros devem receber esta notificação."
 
 #: booking_app/models.py:314
 msgid "Select specific users who should receive this notification."
 msgstr ""
+"Selecione os utilizadores específicos que devem receber esta notificação."
 
 #: booking_app/models.py:321
 msgid "Select distribution lists that should receive this notification."
 msgstr ""
+"Selecione as listas de distribuição que devem receber esta notificação."
 
 #: booking_app/models.py:329
 msgid "Email Template"
@@ -573,6 +544,7 @@ msgstr "Templates de Email"
 #: booking_app/views.py:56
 msgid "For your security, you must change your password before proceeding."
 msgstr ""
+"Para sua segurança, deve alterar a sua palavra-passe antes de prosseguir."
 
 #: booking_app/views.py:60
 #, python-brace-format
@@ -669,7 +641,7 @@ msgstr ""
 #: booking_app/views.py:357
 #, python-brace-format
 msgid "Booking {booking.pk} has been marked as completed."
-msgstr ""
+msgstr "A reserva {booking.pk} foi marcada como concluída."
 
 #: booking_app/views.py:365
 msgid "Your booking has been updated successfully."
@@ -903,41 +875,37 @@ msgstr "Erro ao processar o template. Por favor, verifique o formulário."
 #, python-brace-format
 msgid "Test email for '{template.name}' sent to {request.user.email}."
 msgstr ""
+"E-mail de teste para ‘{template.name}’ enviado para {request.user.email}."
 
 #: booking_app/views.py:844
 #, python-brace-format
 msgid "Failed to send test email. Error: {e}"
-msgstr ""
+msgstr "Falha no envio da mensagem de correio eletrónico de teste. Erro: {e}"
 
 #: booking_app/views.py:857 templates/admin/admin_dashboard.html:98
 msgid "Manage Distribution Lists"
-msgstr ""
+msgstr "Gerir listas de distribuição"
 
 #: booking_app/views.py:869
 msgid "Edit Distribution List"
-msgstr ""
+msgstr "Editar lista de distribuição"
 
 #: booking_app/views.py:872
 msgid "Create Distribution List"
-msgstr ""
+msgstr "Criar lista de distribuição"
 
 #: booking_app/views.py:879
-#, fuzzy, python-brace-format
-#| msgid "Email template '{instance.name}' {action} successfully!"
+#, python-brace-format
 msgid "Distribution list has been {action} successfully!"
-msgstr "Template de email '{instance.name}' {action} com sucesso!"
+msgstr "A lista de distribuição foi {action} com êxito!"
 
 #: booking_app/views.py:901
-#, fuzzy
-#| msgid "Location created successfully!"
 msgid "Distribution list deleted successfully!"
-msgstr "Localização criada com sucesso!"
+msgstr "Lista de distribuição eliminada com êxito!"
 
 #: booking_app/views.py:906
-#, fuzzy
-#| msgid "Confirm Delete Location"
 msgid "Confirm Delete Distribution List"
-msgstr "Confirmar Eliminação de Localização"
+msgstr "Confirmar Eliminar lista de distribuição"
 
 #: templates/admin/admin_dashboard.html:15
 msgid "User Management"
@@ -1002,19 +970,16 @@ msgstr "Editar o conteúdo dos emails de notificação."
 
 #: templates/admin/admin_dashboard.html:95
 msgid "Manage email lists for notifications."
-msgstr ""
+msgstr "Gerir listas de correio eletrónico para notificações."
 
 #: templates/admin/admin_dl_confirm_delete.html:15
-#, fuzzy, python-format
-#| msgid ""
-#| "Are you sure you want to delete the group \"<strong>%(group_obj.name)s</"
-#| "strong>\"?"
+#, python-format
 msgid ""
 "Are you sure you want to delete the distribution list "
 "\"<strong>%(distribution_list.name)s</strong>\"?"
 msgstr ""
-"Tem a certeza que quer eliminar o grupo \"<strong>%(group_obj.name)s</"
-"strong>\"?"
+"Tem a certeza de que pretende eliminar a lista de distribuição "
+"“<strong>%(distribution_list.name)s</strong>”?"
 
 #: templates/admin/admin_dl_confirm_delete.html:16
 #: templates/admin/admin_group_delete.html:19
@@ -1049,13 +1014,11 @@ msgstr "Sim, Confirmar Eliminação"
 
 #: templates/admin/admin_dl_form.html:18
 msgid "Save"
-msgstr ""
+msgstr "Guardar"
 
 #: templates/admin/admin_dl_list.html:11
-#, fuzzy
-#| msgid "Create New User"
 msgid "Create New List"
-msgstr "Criar Novo Utilizador"
+msgstr "Criar nova lista"
 
 #: templates/admin/admin_dl_list.html:20
 #: templates/admin/admin_email_template_list.html:26
@@ -1089,10 +1052,8 @@ msgid "Delete"
 msgstr "Eliminar"
 
 #: templates/admin/admin_dl_list.html:35
-#, fuzzy
-#| msgid "No locations found."
 msgid "No distribution lists found."
-msgstr "Nenhuma localização encontrada."
+msgstr "Não foram encontradas listas de distribuição."
 
 #: templates/admin/admin_email_template_form.html:16
 msgid "Template Key"
@@ -1164,7 +1125,7 @@ msgstr "Assunto"
 
 #: templates/admin/admin_email_template_list.html:38
 msgid "Send Test"
-msgstr ""
+msgstr "Enviar teste"
 
 #: templates/admin/admin_email_template_list.html:47
 msgid "No email templates found. Please click the button above to create one."
@@ -1285,22 +1246,16 @@ msgid "Deleting a location may affect existing bookings."
 msgstr "Eliminar uma localização pode afetar reservas existentes."
 
 #: templates/admin/admin_location_create.html:27
-#, fuzzy
-#| msgid "Account Actions"
 msgid "User Account Details"
-msgstr "Ações da Conta"
+msgstr "Detalhes da conta de utilizador"
 
 #: templates/admin/admin_location_create.html:40
-#, fuzzy
-#| msgid "Set New Password"
 msgid "Set Password"
-msgstr "Definir Nova Password"
+msgstr "Definir Password"
 
 #: templates/admin/admin_location_create.html:48
-#, fuzzy
-#| msgid "Permissions & Status"
 msgid "Permissions and Groups"
-msgstr "Permissões e Estado"
+msgstr "Permissões e Grupos"
 
 #: templates/admin/admin_location_create.html:62
 msgid "Create User"
@@ -1555,10 +1510,8 @@ msgid "This vehicle is available for booking on or after"
 msgstr "Este veículo está disponível para reserva a partir de"
 
 #: templates/book_vehicle.html:70
-#, fuzzy
-#| msgid "End date must be after start date."
 msgid "The end date must be on or after the start date."
-msgstr "A data de fim deve ser posterior à data de início."
+msgstr "A data final deve ser igual ou posterior à data de início."
 
 #: templates/booking_detail.html:13 templates/update_booking.html:76
 msgid "Back to My Bookings"
@@ -1654,10 +1607,10 @@ msgid "Dear"
 msgstr "Caro(a)"
 
 #: templates/emails/booking_cancellation_notification.html:23
-#, fuzzy
-#| msgid "This email confirms that your booking for Truck ID"
 msgid "This email confirms that your booking for Vehicle ID"
-msgstr "Este email confirma que a sua reserva para o Veiculo com ID"
+msgstr ""
+"Esta mensagem de correio eletrónico confirma que a sua reserva para o "
+"Vehicle ID"
 
 #: templates/emails/booking_cancellation_notification.html:23
 msgid "has been successfully cancelled."
@@ -1670,8 +1623,6 @@ msgstr "Detalhes da Reserva Cancelada:"
 #: templates/emails/booking_cancellation_notification.html:27
 #: templates/emails/booking_confirmation.html:27
 #: templates/emails/booking_update_notification.html:27
-#, fuzzy
-#| msgid "Vehicle"
 msgid "Vehicle ID"
 msgstr "Veículo"
 
@@ -1726,8 +1677,6 @@ msgstr "Com os melhores cumprimentos,"
 #: templates/emails/booking_cancellation_notification.html:43
 #: templates/emails/booking_confirmation.html:47
 #: templates/emails/booking_update_notification.html:47
-#, fuzzy
-#| msgid "The TruckApp Team"
 msgid "The VehicleApp Team"
 msgstr "A Equipa TruckApp"
 
@@ -1742,10 +1691,8 @@ msgid "Booking Confirmation"
 msgstr "Confirmação de Reserva"
 
 #: templates/emails/booking_confirmation.html:19
-#, fuzzy
-#| msgid "VehicleApp Booking Cancellation"
 msgid "VehicleApp Booking Confirmation"
-msgstr "Cancelamento de Reserva VehicleApp"
+msgstr "Confirmação de reserva de veículoApp"
 
 #: templates/emails/booking_confirmation.html:23
 msgid "Your booking has been successfully confirmed!"
@@ -1765,8 +1712,6 @@ msgid "View My Bookings"
 msgstr "Ver as Minhas Reservas"
 
 #: templates/emails/booking_confirmation.html:46
-#, fuzzy
-#| msgid "Thank you for choosing TruckApp!"
 msgid "Thank you for choosing VehicleApp!"
 msgstr "Obrigado por escolher a TruckApp!"
 
@@ -1775,16 +1720,12 @@ msgid "Booking Update Notification"
 msgstr "Notificação de Atualização de Reserva"
 
 #: templates/emails/booking_update_notification.html:19
-#, fuzzy
-#| msgid "TruckApp Booking Update"
 msgid "VehicleApp Booking Update"
 msgstr "Atualização de Reserva TruckApp"
 
 #: templates/emails/booking_update_notification.html:23
-#, fuzzy
-#| msgid "Your booking for Truck ID"
 msgid "Your booking for Vehicle ID"
-msgstr "A sua reserva para o Veiculo com ID"
+msgstr "A sua reserva para o Vehicle ID"
 
 #: templates/emails/booking_update_notification.html:23
 msgid "has been updated."
@@ -1840,8 +1781,6 @@ msgid "Here you can find the right truck for you next sale."
 msgstr "Aqui pode encontrar o veiculo certo para a sua próxima venda."
 
 #: templates/home.html:15 templates/my_account.html:105
-#, fuzzy
-#| msgid "Browse Available Trucks"
 msgid "Browse Available Vehicles"
 msgstr "Procurar Veiculos Disponíveis"
 
@@ -1982,7 +1921,7 @@ msgstr "Disponível Agora"
 #: templates/vehicle_detail.html:50
 #, python-format
 msgid "Next Available: %(next_available_date|date:\"F d, Y\")s"
-msgstr "Próximo Disponível: %(next_available_date|date:\"d 'de' F 'de' Y\")s"
+msgstr "Próximo Disponível: %(next_available_date|date:\"F d, Y\")s"
 
 #: templates/vehicle_detail.html:61
 msgid "Not Set"
