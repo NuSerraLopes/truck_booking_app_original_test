@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-15 15:57+0100\n"
-"PO-Revision-Date: 2025-07-15 16:02+0100\n"
+"POT-Creation-Date: 2025-07-15 17:16+0100\n"
+"PO-Revision-Date: 2025-07-15 17:17+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: pt\n"
@@ -241,11 +241,11 @@ msgstr "Nome do Grupo"
 msgid "A group with this name already exists."
 msgstr "Já existe um grupo com este nome."
 
-#: booking_app/forms.py:370 templates/admin/admin_email_template_list.html:23
+#: booking_app/forms.py:370 templates/admin/admin_email_template_list.html:22
 msgid "Template Name"
 msgstr "Nome do Template"
 
-#: booking_app/forms.py:371 templates/admin/admin_email_template_list.html:24
+#: booking_app/forms.py:371 templates/admin/admin_email_template_list.html:23
 msgid "Event Trigger"
 msgstr "Acionador de Evento"
 
@@ -277,7 +277,7 @@ msgstr "Enviar para utikizadores específicos"
 msgid "Send to Distribution Lists"
 msgstr "Enviar para listas de distribuição"
 
-#: booking_app/forms.py:386 templates/admin/admin_email_template_form.html:36
+#: booking_app/forms.py:386 templates/admin/admin_email_template_form.html:42
 msgid "The event trigger cannot be changed after creation."
 msgstr "O acionador de eventos não pode ser alterado após a criação."
 
@@ -734,7 +734,7 @@ msgstr "Visão Geral das Reservas de Grupo"
 msgid "You do not have permission to view this booking."
 msgstr "Não tem permissão para ver esta reserva."
 
-#: booking_app/views.py:484 templates/admin/admin_email_template_form.html:92
+#: booking_app/views.py:484 templates/admin/admin_email_template_form.html:98
 #: templates/booking_detail.html:4 templates/booking_detail.html:12
 #: templates/group_booking_detail.html:12
 msgid "Booking Details"
@@ -1056,7 +1056,7 @@ msgstr "Esta ação não pode ser desfeita."
 
 #: templates/admin/admin_dl_confirm_delete.html:20
 #: templates/admin/admin_dl_form.html:17
-#: templates/admin/admin_email_template_form.html:57
+#: templates/admin/admin_email_template_form.html:63
 #: templates/admin/admin_group_delete.html:26
 #: templates/admin/admin_group_form.html:50
 #: templates/admin/admin_location_confirm_delete.html:25
@@ -1089,7 +1089,7 @@ msgid "Create New List"
 msgstr "Criar nova lista"
 
 #: templates/admin/admin_dl_list.html:20
-#: templates/admin/admin_email_template_list.html:26
+#: templates/admin/admin_email_template_list.html:25
 #: templates/admin/admin_group_list.html:23
 #: templates/admin/admin_location_list.html:23
 #: templates/admin/admin_user_list.html:28
@@ -1100,7 +1100,7 @@ msgid "Actions"
 msgstr "Ações"
 
 #: templates/admin/admin_dl_list.html:29
-#: templates/admin/admin_email_template_list.html:36
+#: templates/admin/admin_email_template_list.html:35
 #: templates/admin/admin_group_list.html:31
 #: templates/admin/admin_location_list.html:31
 #: templates/admin/admin_user_list.html:45
@@ -1121,7 +1121,7 @@ msgid "No distribution lists found."
 msgstr "Não foram encontradas listas de distribuição."
 
 #: templates/admin/admin_dl_list.html:43
-#: templates/admin/admin_email_template_list.html:52
+#: templates/admin/admin_email_template_list.html:51
 #: templates/admin/admin_group_list.html:72
 #: templates/admin/admin_location_list.html:72
 #: templates/admin/admin_user_list.html:86
@@ -1133,21 +1133,25 @@ msgstr "Voltar ao Painel de Administração"
 msgid "Template Key"
 msgstr "Chave do Template"
 
-#: templates/admin/admin_email_template_form.html:60
+#: templates/admin/admin_email_template_form.html:21
+msgid "Show Variables"
+msgstr "Mostrar Variáveis"
+
+#: templates/admin/admin_email_template_form.html:66
 #: templates/admin/admin_vehicle_edit.html:84
 #: templates/update_user_data.html:60
 msgid "Save Changes"
 msgstr "Guardar Alterações"
 
-#: templates/admin/admin_email_template_form.html:62
+#: templates/admin/admin_email_template_form.html:68
 msgid "Create Template"
 msgstr "Criar Template"
 
-#: templates/admin/admin_email_template_form.html:78
+#: templates/admin/admin_email_template_form.html:84
 msgid "Available Template Variables"
 msgstr "Variáveis de Template Disponíveis"
 
-#: templates/admin/admin_email_template_form.html:82
+#: templates/admin/admin_email_template_form.html:88
 msgid ""
 "You can use the following variables in the subject and body of the email. "
 "They will be replaced with the actual booking data."
@@ -1155,36 +1159,36 @@ msgstr ""
 "Pode usar as seguintes variáveis no assunto e corpo do email. Elas serão "
 "substituídas pelos dados reais da reserva."
 
-#: templates/admin/admin_email_template_form.html:87
+#: templates/admin/admin_email_template_form.html:93
 msgid "Variable"
 msgstr "Variável"
 
-#: templates/admin/admin_email_template_form.html:88
+#: templates/admin/admin_email_template_form.html:94
 msgid "Description"
 msgstr "Descrição"
 
-#: templates/admin/admin_email_template_form.html:99
+#: templates/admin/admin_email_template_form.html:105
 #: templates/booking_detail.html:45 templates/group_booking_detail.html:48
 msgid "Client Information"
 msgstr "Informação do Cliente"
 
-#: templates/admin/admin_email_template_form.html:106
+#: templates/admin/admin_email_template_form.html:112
 msgid "Vehicle Information"
 msgstr "Informação do Veículo"
 
-#: templates/admin/admin_email_template_form.html:110
+#: templates/admin/admin_email_template_form.html:116
 msgid "Salesperson Information"
 msgstr "Informação do Vendedor"
 
-#: templates/admin/admin_email_template_form.html:119
+#: templates/admin/admin_email_template_form.html:125
 msgid "Close"
 msgstr "Fechar"
 
-#: templates/admin/admin_email_template_list.html:13
+#: templates/admin/admin_email_template_list.html:12
 msgid "Create New Template"
 msgstr "Criar Novo Template"
 
-#: templates/admin/admin_email_template_list.html:17
+#: templates/admin/admin_email_template_list.html:16
 msgid ""
 "Here you can edit the content of the automated notification emails sent to "
 "users. The 'Template Key' is used by the system and cannot be changed."
@@ -1193,15 +1197,15 @@ msgstr ""
 "aos utilizadores. A 'Chave do Template' é usada pelo sistema e não pode ser "
 "alterada."
 
-#: templates/admin/admin_email_template_list.html:25
+#: templates/admin/admin_email_template_list.html:24
 msgid "Subject"
 msgstr "Assunto"
 
-#: templates/admin/admin_email_template_list.html:38
+#: templates/admin/admin_email_template_list.html:37
 msgid "Send Test"
 msgstr "Enviar teste"
 
-#: templates/admin/admin_email_template_list.html:47
+#: templates/admin/admin_email_template_list.html:46
 msgid "No email templates found. Please click the button above to create one."
 msgstr ""
 "Nenhum template de email encontrado. Por favor, clique no botão acima para "
@@ -2201,9 +2205,6 @@ msgstr "Nenhum veículo encontrado que corresponda aos critérios."
 #~ msgstr ""
 #~ "Uma chave única para identificar este template no código (ex: "
 #~ "'booking_created'). Não altere após a criação."
-
-#~ msgid "Show Variables"
-#~ msgstr "Mostrar Variáveis"
 
 #~ msgid "{{ booking.pk }}"
 #~ msgstr "{{ booking.pk }}"
