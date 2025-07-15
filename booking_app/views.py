@@ -18,8 +18,8 @@ from datetime import date, timedelta
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
 from .forms import UserCreateForm, VehicleCreateForm, LocationCreateForm, BookingForm, UpdateUserForm, \
-    LocationUpdateForm, VehicleEditForm, GroupForm, EmailTemplateForm, DistributionListForm
-from .models import User, Vehicle, Location, Booking, EmailTemplate, DistributionList
+    LocationUpdateForm, VehicleEditForm, GroupForm, EmailTemplateForm, DistributionListForm, AutomationSettingsForm
+from .models import User, Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings
 from .utils import add_business_days, send_booking_notification, subtract_business_days
 
 
@@ -146,6 +146,7 @@ def vehicle_delete_view(request, pk):
 
 @login_required
 def vehicle_list_view(request, group_name=None):
+    # This initial section for filtering by group remains the same
     vehicles_qs = Vehicle.objects.all()
     all_groups = Group.objects.all().order_by('name')
     effective_group_for_filter = None
@@ -163,25 +164,63 @@ def vehicle_list_view(request, group_name=None):
             vehicles_qs = vehicles_qs.filter(vehicle_type='LIGHT')
         elif effective_group_for_filter in ['heavy', 'tlheavy']:
             vehicles_qs = vehicles_qs.filter(vehicle_type='HEAVY')
-    vehicles_with_dates = []
+
+    vehicles_with_availability = []
+    today = date.today()
+    tomorrow = today + timedelta(days=1)
+
     for vehicle in vehicles_qs.order_by('vehicle_type', 'model', 'license_plate'):
-        latest_booking_data = Booking.objects.filter(
-            vehicle=vehicle,
-            status__in=['pending', 'confirmed']
-        ).aggregate(max_end_date=Max('end_date'))
-        latest_end_date = latest_booking_data['max_end_date']
-        calculated_date = None
-        if latest_end_date:
-            possible_next_date = add_business_days(latest_end_date, 3)
-            if possible_next_date > date.today():
-                calculated_date = possible_next_date
-        vehicle.next_available_date = calculated_date
-        vehicles_with_dates.append(vehicle)
+        # Get all bookings that are not yet finished (includes ongoing and future)
+        relevant_bookings = vehicle.bookings.filter(
+            status__in=['pending', 'confirmed'],
+            end_date__gte=today
+        ).order_by('start_date')
+
+        slots = []
+        # Start by assuming the next availability begins tomorrow
+        next_start = tomorrow
+
+        if not relevant_bookings:
+            # If no relevant bookings, it's available from tomorrow
+            slots.append({'start': tomorrow, 'end': None})
+        else:
+            # Check if the first booking is already ongoing
+            first_booking = relevant_bookings[0]
+            if first_booking.start_date <= today:
+                # If it's ongoing, the next availability is after it ends
+                next_start = add_business_days(first_booking.end_date, 3)
+
+            # Loop through all future bookings to find gaps
+            for booking in relevant_bookings:
+                gap_end = subtract_business_days(booking.start_date, 3)
+
+                # If a valid gap exists between our last known start and this booking
+                if next_start <= gap_end:
+                    slots.append({'start': next_start, 'end': gap_end})
+
+                # The next potential start is after this booking's buffer
+                potential_next_start = add_business_days(booking.end_date, 3)
+                if potential_next_start > next_start:
+                    next_start = potential_next_start
+
+            # Add the final, open-ended slot
+            slots.append({'start': next_start, 'end': None})
+
+        # To determine "Available Now" status, we check if the first slot can be booked tomorrow
+        # The user defined "Available Now" as "can be booked for tomorrow"
+        if slots and slots[0]['start'] <= tomorrow:
+            vehicle.is_available_now = True
+        else:
+            vehicle.is_available_now = False
+
+        vehicle.availability_slots = slots
+        vehicles_with_availability.append(vehicle)
+
     context = {
-        'vehicles': vehicles_with_dates,
-        'all_groups': all_groups,
+        'vehicles': vehicles_with_availability,
+        'all_groups': Group.objects.all().order_by('name'),
         'selected_group': group_name,
-        'page_title': _("Vehicle List") + (f" ({group_name})" if group_name else "")
+        'page_title': _("Vehicle List"),
     }
     return render(request, 'vehicle_list.html', context)
 
@@ -906,3 +945,23 @@ def admin_dl_delete_view(request, pk):
         'page_title': _("Confirm Delete Distribution List")
     }
     return render(request, 'admin/admin_dl_confirm_delete.html', context)
+
+
+@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def automation_settings_view(request):
+    settings_instance = AutomationSettings.load()
+    if request.method == 'POST':
+        form = AutomationSettingsForm(request.POST, instance=settings_instance)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Automation settings updated successfully."))
+            return redirect('booking_app:automation_settings')
+    else:
+        form = AutomationSettingsForm(instance=settings_instance)
+
+    context = {
+        'form': form,
+        'page_title': _("Automation Settings")
+    }
+    return render(request, 'admin/admin_automation_settings.html', context)

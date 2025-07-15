@@ -201,6 +201,17 @@ class Booking(models.Model):
         verbose_name=_("Booking Status")
     )
 
+    @property
+    def current_status_display(self):
+        """
+        Returns the dynamic status of the booking, showing 'On Going'
+        for confirmed bookings that are currently active.
+        """
+        today = timezone.now().date()
+        if self.status == 'confirmed' and self.start_date <= today <= self.end_date:
+            return _('On Going')
+        return self.get_status_display()
+
     class Meta:
         ordering = ['-booking_time']
         verbose_name = _("Booking")
@@ -267,6 +278,10 @@ class EmailTemplate(models.Model):
         ('User Actions', (
             ('booking_canceled_by_user', _('Booking Canceled by User')),
         )),
+        ('Automated Notifications', (
+            ('booking_reminder_7_days', _('Booking Reminder (7 Days Away)')),
+            ('booking_auto_cancelled', _('Booking Auto-Cancelled (Unapproved)')),
+        )),
         ('Account Management', (
             ('user_created', _('New User Account Created')),
             ('password_reset', _('User Password Was Reset')),
@@ -313,7 +328,6 @@ class EmailTemplate(models.Model):
         verbose_name=_("Send to Specific Users"),
         help_text=_("Select specific users who should receive this notification.")
     )
-    # --- NEW: Link to Distribution Lists ---
     send_to_distribution_lists = models.ManyToManyField(
         DistributionList,
         blank=True,
@@ -328,3 +342,32 @@ class EmailTemplate(models.Model):
         ordering = ['name']
         verbose_name = _("Email Template")
         verbose_name_plural = _("Email Templates")
+
+class AutomationSettings(models.Model):
+    """A singleton model to hold site-wide automation settings."""
+    pending_booking_automation_active = models.BooleanField(
+        default=False,
+        verbose_name=_("Activate Pending Booking Automation"),
+        help_text=_("If checked, the system will automatically send reminders and cancel unapproved bookings.")
+    )
+
+    def save(self, *args, **kwargs):
+        """Ensure there is only one instance of this model."""
+        self.pk = 1
+        super(AutomationSettings, self).save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """Prevent deletion of the singleton instance."""
+        pass
+
+    @classmethod
+    def load(cls):
+        """Load the singleton instance, creating it if it doesn't exist."""
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return _("Automation Settings")
+
+    class Meta:
+        verbose_name_plural = _("Automation Settings")

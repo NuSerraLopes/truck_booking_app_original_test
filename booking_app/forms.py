@@ -7,8 +7,8 @@ from django.forms.widgets import PasswordInput, TextInput
 from django.db import transaction
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
-from datetime import date
-from .models import Vehicle, Booking, Location, User, EmailTemplate, DistributionList
+from datetime import date, timedelta
+from .models import Vehicle, Booking, Location, User, EmailTemplate, DistributionList, AutomationSettings
 from django.contrib.auth.models import Group
 from django.contrib import messages
 from django.urls import reverse_lazy
@@ -45,13 +45,11 @@ class BookingForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # --- FIX: Pop the custom 'vehicle' kwarg before calling super() ---
         self.vehicle = kwargs.pop('vehicle', None)
         super().__init__(*args, **kwargs)
 
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-
         self.helper.layout = Layout(
             HTML(f'<h5>{_("Client Information")}</h5><hr>'),
             Row(
@@ -80,6 +78,17 @@ class BookingForm(forms.ModelForm):
             )
         )
 
+    def clean_start_date(self):
+        start_date = self.cleaned_data.get('start_date')
+        tomorrow = date.today() + timedelta(days=1)
+
+        if start_date and start_date < tomorrow:
+            raise ValidationError(
+                _("Booking date cannot be today or in the past. Please select tomorrow or a future date."),
+                code='invalid_start_date'
+            )
+        return start_date
+
     def clean(self):
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
@@ -90,18 +99,13 @@ class BookingForm(forms.ModelForm):
                 raise ValidationError(_("End date must be after start date."))
 
         if self.vehicle:
-            earliest_booking_date = getattr(self.vehicle, 'available_after', None) or date.today()
-            if start_date and start_date < earliest_booking_date:
+            earliest_booking_date = getattr(self.vehicle, 'available_after', None)
+            if earliest_booking_date and start_date and start_date < earliest_booking_date:
                 raise ValidationError(
-                    _("Your selected start date (%(start_date)s) is before the earliest available date for this vehicle (%(earliest_date)s). Please select a date on or after %(earliest_date)s.") % {
-                        'start_date': start_date.strftime('%Y-%m-%d'),
-                        'earliest_date': earliest_booking_date.strftime('%Y-%m-%d')
-                    },
-                    code='vehicle_unavailable_too_early',
+                    _("This vehicle is only available after %(earliest_date)s. Please select a later date.") % {
+                        'earliest_date': earliest_booking_date.strftime('%d/%m/%Y')
+                    }
                 )
-
-        if start_date and start_date < date.today():
-            raise ValidationError(_("Start date cannot be in the past."))
 
         return cleaned_data
 
@@ -392,4 +396,12 @@ class DistributionListForm(forms.ModelForm):
         labels = {
             'name': _('List Name'),
             'emails': _('Email Addresses'),
+        }
+
+class AutomationSettingsForm(forms.ModelForm):
+    class Meta:
+        model = AutomationSettings
+        fields = ['pending_booking_automation_active']
+        widgets = {
+            'pending_booking_automation_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

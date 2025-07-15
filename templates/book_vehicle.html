@@ -43,6 +43,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitButton = document.querySelector('button[type="submit"]');
     const errorMessageDiv = document.getElementById('date-validation-error');
 
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
     const unavailableRanges = JSON.parse('{{ unavailable_ranges_json|default:"[]"|safe }}');
 
     const disabledDates = unavailableRanges.map(range => ({
@@ -76,7 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- Flatpickr Configuration ---
     const fpStart = flatpickr(startDateInput, {
         dateFormat: "Y-m-d",
-        minDate: "today",
+        minDate: tomorrow,
         disable: disabledDates,
         onChange: function(selectedDates, dateStr, instance) {
             if (selectedDates[0]) {
@@ -118,7 +121,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const fpEnd = flatpickr(endDateInput, {
         dateFormat: "Y-m-d",
-        minDate: "today",
+        minDate: tomorrow,
         disable: disabledDates,
         onChange: function(selectedDates, dateStr, instance) {
             validateDates();

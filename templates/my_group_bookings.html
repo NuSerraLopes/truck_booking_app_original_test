@@ -39,18 +39,15 @@
                         <td>{{ booking.start_date|date:"Y-m-d" }}</td>
                         <td>{{ booking.end_date|date:"Y-m-d" }}</td>
                         <td>
-                            {# Matched status badges with my_bookings.html #}
-                            {% if booking.status == 'pending' %}
-                                <span class="badge bg-warning text-dark">{% translate booking.get_status_display %}</span>
-                            {% elif booking.status == 'confirmed' %}
-                                <span class="badge bg-success">{% translate booking.get_status_display %}</span>
-                            {% elif booking.status == 'completed' %}
-                                <span class="badge bg-secondary">{% translate booking.get_status_display %}</span>
-                            {% elif booking.status == 'cancelled' %}
-                                <span class="badge bg-danger">{% translate booking.get_status_display %}</span>
-                            {% else %}
-                                <span class="text-muted">{% translate booking.get_status_display %}</span>
-                            {% endif %}
+                            <span class="badge
+                                {% if booking.current_status_display == 'On Going' %}bg-primary
+                                {% elif booking.status == 'confirmed' %}bg-success
+                                {% elif booking.status == 'pending' %}bg-warning text-dark
+                                {% elif booking.status == 'cancelled' %}bg-danger
+                                {% elif booking.status == 'completed' %}bg-secondary
+                                {% endif %}">
+                                {{ booking.current_status_display }}
+                            </span>
                         </td>
                         <td>
                             <div class="action-buttons">

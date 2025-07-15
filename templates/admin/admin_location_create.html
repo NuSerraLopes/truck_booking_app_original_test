@@ -2,7 +2,7 @@
 {% load crispy_forms_filters %}
 {% load i18n crispy_forms_tags %}
 
-{% block title %}{% translate "Create New User" %}{% endblock %}
+{% block title %}{% translate "Create New Location" %}{% endblock %}
 
 {% block content %}
 <div class="container my-5">
@@ -10,7 +10,7 @@
         <div class="col-lg-8">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h1 class="card-title text-center mb-4">{% translate "Create New User" %}</h1>
+                    <h1 class="card-title text-center mb-4">{% translate "Create New Location" %}</h1>
 
                     <form method="post" novalidate>
                         {% csrf_token %}
@@ -23,52 +23,16 @@
                             </div>
                         {% endif %}
 
-                        {# User Account Details #}
-                        <h5 class="mt-4">{% translate "User Account Details" %}</h5>
-                        <hr>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">{{ form.username|as_crispy_field }}</div>
-                            <div class="col-md-6 mb-3">{{ form.email|as_crispy_field }}</div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">{{ form.first_name|as_crispy_field }}</div>
-                            <div class="col-md-6 mb-3">{{ form.last_name|as_crispy_field }}</div>
-                        </div>
-                        <div class="mb-3">{{ form.phone_number|as_crispy_field }}</div>
+                        {{ form|crispy }}
 
-                        {# Set Password #}
-                        <h5 class="mt-4">{% translate "Set Password" %}</h5>
-                        <hr>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">{{ form.password|as_crispy_field }}</div>
-                            <div class="col-md-6 mb-3">{{ form.password2|as_crispy_field }}</div>
-                        </div>
-
-                        {# Permissions and Groups - APPLYING THE FIX HERE #}
-                        <h5 class="mt-4">{% translate "Permissions and Groups" %}</h5>
-                        <hr>
-
-                        {# Fix for the single checkbox #}
-                        <div class="mb-3 form-check">
-                            {{ form.is_admin_member_checkbox|as_crispy_field }}
-                        </div>
-
-                        {# Fix for the multiple checkboxes ('groups') #}
-                        <div class="mb-3">
-                            {{ form.groups|as_crispy_field }}
-                        </div>
-
-                        <div class="d-grid gap-2 mt-4">
-                             <button type="submit" class="btn btn-primary">{% translate "Create User" %}</button>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">{% translate "Create Location" %}</button>
+                            <a href="{% url 'booking_app:admin_location_list' %}" class="btn btn-secondary">{% translate "Cancel" %}</a>
                         </div>
                     </form>
-
-                    <p class="text-center mt-4">
-                        <a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-outline-secondary btn-sm">{% translate "Back to User List" %}</a>
-                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock content %}
+{% endblock %}

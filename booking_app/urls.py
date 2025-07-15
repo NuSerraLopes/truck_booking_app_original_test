@@ -69,6 +69,7 @@ urlpatterns = [
     path('admin-dashboard/distribution-lists/create/', views.admin_dl_form_view, name='admin_dl_create'),
     path('admin-dashboard/distribution-lists/edit/<int:pk>/', views.admin_dl_form_view, name='admin_dl_edit'),
     path('admin-dashboard/distribution-lists/delete/<int:pk>/', views.admin_dl_delete_view, name='admin_dl_delete'),
+    path('admin-dashboard/settings/', views.automation_settings_view, name='automation_settings'),
 ]
 
 # Serve media and static files during development

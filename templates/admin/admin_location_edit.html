@@ -1,78 +1,40 @@
-{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_location_list.html #}
-
 {% extends 'base.html' %}
-{% load i18n %}
+{% load crispy_forms_filters %}
+{% load i18n crispy_forms_tags %}
 
-{% block title %}{% translate "Manage Locations" %}{% endblock %}
+{% block title %}{% translate "Edit Location" %}{% endblock %}
 
 {% block content %}
 <div class="container my-5">
-    <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h1 class="h3 mb-0">{% translate "Manage Locations" %}</h1>
-            <a href="{% url 'booking_app:admin_location_create' %}" class="btn btn-primary">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-plus-circle-fill me-1" viewBox="0 0 16 16"><path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8.5 4.5a.5.5 0 0 0-1 0v3h-3a.5.5 0 0 0 0 1h3v3a.5.5 0 0 0 1 0v-3h3a.5.5 0 0 0 0-1h-3v-3z"/></svg>
-                {% translate "Create New Location" %}
-            </a>
-        </div>
-        <div class="card-body">
-            {% if locations %}
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>{% translate "Location Name" %}</th>
-                                <th class="text-end">{% translate "Actions" %}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for location in locations %}
-                            <tr>
-                                <td>{{ location.name }}</td>
-                                <td class="text-end">
-                                    <a href="{% url 'booking_app:admin_location_edit' pk=location.pk %}" class="btn btn-info btn-sm">{% translate "Edit" %}</a>
-                                    <a href="{% url 'booking_app:admin_location_delete' pk=location.pk %}" class="btn btn-danger btn-sm">{% translate "Delete" %}</a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h1 class="card-title text-center mb-4">
+                        {% translate "Edit Location" %}: <strong>{{ location_obj.name }}</strong>
+                    </h1>
 
-                {% if locations.has_other_pages %}
-                <nav aria-label="Location list navigation">
-                    <ul class="pagination justify-content-center">
-                        {% if locations.has_previous %}
-                            <li class="page-item"><a class="page-link" href="?page=1">&laquo; {% trans "first" %}</a></li>
-                            <li class="page-item"><a class="page-link" href="?page={{ locations.previous_page_number }}">{% trans "previous" %}</a></li>
-                        {% else %}
-                            <li class="page-item disabled"><span class="page-link">&laquo; {% trans "first" %}</span></li>
-                            <li class="page-item disabled"><span class="page-link">{% trans "previous" %}</span></li>
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger" role="alert">
+                                {% for error in form.non_field_errors %}
+                                    <p class="mb-0">{{ error }}</p>
+                                {% endfor %}
+                            </div>
                         {% endif %}
 
-                        <li class="page-item active" aria-current="page">
-                            <span class="page-link">{% trans "Page" %} {{ locations.number }} {% trans "of" %} {{ locations.paginator.num_pages }}</span>
-                        </li>
+                        {{ form|crispy }}
 
-                        {% if locations.has_next %}
-                            <li class="page-item"><a class="page-link" href="?page={{ locations.next_page_number }}">{% trans "next" %}</a></li>
-                            <li class="page-item"><a class="page-link" href="?page={{ locations.paginator.num_pages }}">{% trans "last" %} &raquo;</a></li>
-                        {% else %}
-                             <li class="page-item disabled"><span class="page-link">{% trans "next" %}</span></li>
-                             <li class="page-item disabled"><span class="page-link">{% trans "last" %} &raquo;</span></li>
-                        {% endif %}
-                    </ul>
-                </nav>
-                {% endif %}
-            {% else %}
-                <div class="alert alert-info" role="alert">
-                    {% translate "No locations found." %}
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">{% translate "Update Location" %}</button>
+                            <a href="{% url 'booking_app:admin_location_list' %}" class="btn btn-secondary">{% translate "Cancel" %}</a>
+                        </div>
+                    </form>
                 </div>
-            {% endif %}
-        </div>
-        <div class="card-footer text-end">
-             <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary">{% translate "Back to Admin Dashboard" %}</a>
+            </div>
         </div>
     </div>
 </div>
-{% endblock content %}
+{% endblock %}
