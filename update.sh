@@ -13,7 +13,7 @@ echo "Gunicorn server stopped."
 # 3. Pull latest code, update environment, and run Django commands
 # (Activate virtual environment if not already active in the script's context)
 source /var/www/booking_app/.venv/bin/activate
-git pull origin main
+git pull origin master
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py collectstatic --noinput
