@@ -2,7 +2,7 @@
 import json
 
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
@@ -279,6 +279,16 @@ def admin_vehicle_detail_view(request, pk):
     }
     return render(request, 'admin/admin_vehicle_detail.html', context)
 
+@login_required
+def vehicle_api_view(request):
+    """Provides vehicle data as JSON for DayPilot resources."""
+    vehicles = Vehicle.objects.all()
+
+    resource_list = [
+        {"name": f"{v.license_plate} ({v.model})", "id": v.pk}
+        for v in vehicles
+    ]
+    return JsonResponse(resource_list, safe=False)
 
 @login_required
 def book_vehicle_view(request, vehicle_pk):
@@ -510,6 +520,35 @@ def group_booking_detail_view(request, booking_pk):
         'page_title': _("Group Booking Details")
     }
     return render(request, 'group_booking_detail.html', context)
+
+
+@login_required
+def booking_api_view(request):
+    """Provides booking data as JSON for the DayPilot Month view."""
+
+    # --- ADD THIS: Create a color map for vehicles ---
+    vehicles = Vehicle.objects.all()
+    colors = ["#6aa84f", "#3c78d8", "#f1c232", "#cc0000", "#674ea7", "#e69138", "#3d85c6"]
+    vehicle_color_map = {
+        vehicle.pk: colors[i % len(colors)] for i, vehicle in enumerate(vehicles)
+    }
+
+    all_bookings = Booking.objects.filter(status__in=['pending', 'confirmed'])
+    event_list = []
+    for booking in all_bookings:
+        event_list.append({
+            "id": booking.pk,
+            "text": f"{booking.vehicle.license_plate} - {booking.customer_name}",
+            "start": booking.start_date.isoformat(),
+            "end": (booking.end_date + timedelta(days=1)).isoformat(),  # End date is exclusive
+            "backColor": vehicle_color_map.get(booking.vehicle.pk)  # Assign color based on vehicle
+        })
+    return JsonResponse(event_list, safe=False)
+
+@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def admin_calendar_view(request):
+    return render(request, 'admin/admin_calendar.html', {'page_title': _("Bookings Calendar")})
 
 @login_required
 def my_account_view(request):

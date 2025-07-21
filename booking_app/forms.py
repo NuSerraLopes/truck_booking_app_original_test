@@ -227,13 +227,15 @@ class UserCreateForm(forms.ModelForm):
 class VehicleCreateForm(forms.ModelForm):
     class Meta:
         model = Vehicle
-        fields = ['license_plate', 'vehicle_type', 'model', 'picture', 'current_location']
+        fields = ['license_plate', 'vehicle_type', 'model', 'picture', 'current_location','insurance_document','registration_document',]
         labels = {
             'license_plate': _('License Plate'),
             'vehicle_type': _('Vehicle Type'),
             'model': _('Model Name'),
             'picture': _('Vehicle Picture'),
             'current_location': _('Current Location'),
+            'insurance_document': _('Insurance Document'),
+            'registration_document': _('Registration Document'),
         }
 
     def __init__(self, *args, **kwargs):
@@ -256,7 +258,7 @@ class VehicleCreateForm(forms.ModelForm):
 class VehicleEditForm(forms.ModelForm):
     class Meta:
         model = Vehicle
-        fields = ['license_plate', 'vehicle_type', 'model', 'picture', 'current_location', 'is_available']
+        fields = ['license_plate', 'vehicle_type', 'model', 'picture', 'current_location', 'is_available','insurance_document','registration_document',]
         labels = {  # Added labels for consistency
             'license_plate': _('License Plate'),
             'vehicle_type': _('Vehicle Type'),
@@ -264,6 +266,8 @@ class VehicleEditForm(forms.ModelForm):
             'picture': _('Vehicle Picture'),
             'current_location': _('Current Location'),
             'is_available': _('Is Available'),
+            'insurance_document': _('Insurance Document'),
+            'registration_document': _('Registration Document'),
         }
 
     def __init__(self, *args, **kwargs):

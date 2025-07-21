@@ -70,6 +70,11 @@ urlpatterns = [
     path('admin-dashboard/distribution-lists/edit/<int:pk>/', views.admin_dl_form_view, name='admin_dl_edit'),
     path('admin-dashboard/distribution-lists/delete/<int:pk>/', views.admin_dl_delete_view, name='admin_dl_delete'),
     path('admin-dashboard/settings/', views.automation_settings_view, name='automation_settings'),
+    path('admin-dashboard/calendar/', views.admin_calendar_view, name='admin_calendar'),
+
+    # --- Full Calendar API ---
+    path('api/vehicles/', views.vehicle_api_view, name='vehicle_api'),
+    path('api/bookings/', views.booking_api_view, name='booking_api'),
 ]
 
 # Serve media and static files during development

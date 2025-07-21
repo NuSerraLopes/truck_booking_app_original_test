@@ -16,8 +16,8 @@
                         {% csrf_token %}
                         {% crispy form %}
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                            <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
                             <button type="submit" class="btn btn-primary">{% translate "Create Vehicle" %}</button>
+                            <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
                         </div>
                     </form>
 
