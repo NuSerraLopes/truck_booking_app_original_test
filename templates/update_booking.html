@@ -1,80 +1,93 @@
-{% extends 'base.html' %}
-{% load i18n %}
-
-{% block title %}{% translate "Manage Booking" %}{% endblock %}
+{% extends "base.html" %}
+{% load i18n crispy_forms_tags %}
 
 {% block content %}
-    <h1>{% translate "Manage Booking" %}: {{ booking.vehicle.license_plate }}</h1>
+<div class="container mt-4">
+    <h2>{% translate "Update Booking" %} #{{ booking.pk }}</h2>
+    <p><strong>{% translate "Status:" %}</strong> <span class="badge bg-info">{{ booking.get_status_display }}</span></p>
+    <hr>
 
-    <div class="booking-details card mb-4">
-        <div class="card-header">
-            <h2 class="h5 mb-0">{% translate "Current Booking Details" %}</h2>
-        </div>
-        <div class="card-body">
-            <p><strong>{% translate "Vehicle" %}:</strong> {{ booking.vehicle.model }} ({{ booking.vehicle.license_plate }})</p>
-            <p><strong>{% translate "Booked By" %}:</strong> {{ booking.user.username }}</p>
-            <p><strong>{% translate "Start Date" %}:</strong> {{ booking.start_date|date:"Y-m-d" }}</p>
-            <p><strong>{% translate "End Date" %}:</strong> {{ booking.end_date|date:"Y-m-d" }}</p>
-            <p><strong>{% translate "Requested Location" %}:</strong> {{ booking.location.name }}</p>
-            <p><strong>{% translate "Current Status" %}:</strong> 
-                <span class="badge 
-                    {% if booking.status == 'pending' %}bg-warning text-dark
-                    {% elif booking.status == 'confirmed' %}bg-success
-                    {% elif booking.status == 'cancelled' %}bg-danger
-                    {% elif booking.status == 'completed' %}bg-secondary
-                    {% endif %}">
-                    {% translate booking.get_status_display %}
-                </span>
-            </p>
-        </div>
-    </div>
-    <div class="booking-actions card mb-4">
-        <div class="card-header">
-            <h2 class="h5 mb-0">{% translate "Management Actions" %}</h2>
-        </div>
-        <div class="card-body">
-            {% if can_approve %}
-                <form method="post" class="d-inline me-2">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="approve">
-                    <button type="submit" class="btn btn-success" 
-                            onclick="return confirm('{% translate 'Are you sure you want to approve this booking?' %}');">
-                        {% translate "Approve Booking" %}
-                    </button>
-                </form>
-            {% endif %}
-
-            {% if can_cancel_by_manager %}
-                <form method="post" class="d-inline">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="cancel_by_manager">
-                    <button type="submit" class="btn btn-danger" 
-                            onclick="return confirm('{% translate 'Are you sure you want to cancel this booking as a manager?' %}');">
-                        {% translate "Cancel Booking (Manager)" %}
-                    </button>
-                </form>
-            {% endif %}
-            {% if not can_approve and not can_cancel_by_manager %}
-                <p class="text-muted">{% translate "No management actions available for this booking or your current permissions." %}</p>
-            {% endif %}
-        </div>
-    </div>
-    <div class="booking-form card mb-4">
-        <div class="card-header">
-            <h2 class="h5 mb-0">{% translate "Modify Booking Information" %}</h2>
-        </div>
-        <div class="card-body">
-            <form method="post">
+    <div class="row">
+        <div class="col-md-8">
+            <form id="booking-update-form" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
-                {{ form.as_p }}
-                {% if can_update_form_fields %}
-                    <button type="submit" class="btn btn-primary me-2">{% translate "Update Booking" %}</button>
-                {% else %}
-                    <p class="text-muted">{% translate "This booking cannot be updated or you do not have permission to modify its details." %}</p>
+
+                {% if booking.contract_document %}
+                <div class="alert alert-info">
+                    <strong>{% translate "Contract on file:" %}</strong>
+                    <a href="{{ booking.contract_document.url }}" target="_blank">{% translate "View Uploaded Contract" %}</a>
+                </div>
                 {% endif %}
-                
-                <a href="{% url 'booking_app:my_bookings' %}" class="btn btn-secondary">{% translate "Back to My Bookings" %}</a>
+
+                {% if can_update_form_fields %}
+                    {{ form|crispy }}
+                    <button type="submit" class="btn btn-primary">{% translate "Save Changes" %}</button>
+                {% else %}
+                    {% for field in form %}
+                        <div class="mb-3">
+                            <label class="form-label">{{ field.label }}</label>
+                            <div class="form-control-plaintext">
+                                {% if field.value %}{{ field.value }}{% else %}---{% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
             </form>
         </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <strong>{% translate "Actions" %}</strong>
+                </div>
+                <div class="card-body">
+                    <form id="booking-action-form" method="post" class="d-grid gap-2">
+                         {% csrf_token %}
+                         <input type="hidden" name="confirmed_by_user" id="confirmed_by_user_input" value="false">
+
+                        {% if can_approve %}
+                            <button type="submit" name="action" value="approve" class="btn btn-success">{% translate "Approve (Send to Pending Contract)" %}</button>
+                        {% endif %}
+
+                        {% if can_confirm_contract %}
+                            <button type="submit" name="action" value="confirm_with_contract" class="btn btn-primary" id="confirm-contract-btn">{% translate "Finalize & Confirm Booking" %}</button>
+                        {% else %}
+                            {% if booking.status == 'pending_contract' %}
+                            <div class="alert alert-warning p-2">
+                                <small>{% translate "A contract must be uploaded before you can confirm this booking." %}</small>
+                            </div>
+                            {% endif %}
+                        {% endif %}
+
+                        {% if can_cancel_by_manager %}
+                            <button type="submit" name="action" value="cancel_by_manager" class="btn btn-danger">{% translate "Cancel Booking (Manager)" %}</button>
+                        {% endif %}
+                        {% if can_complete_booking %}
+                            <button type="submit" name="action" value="complete" class="btn btn-secondary">{% translate "Mark as Completed" %}</button>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmBtn = document.getElementById('confirm-contract-btn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', function(event) {
+            event.preventDefault();
+
+            const userConfirmed = confirm("{% translate 'Are you sure you want to change the status to CONFIRMED? This action cannot be undone.' %}");
+
+            if (userConfirmed) {
+                document.getElementById('confirmed_by_user_input').value = 'true';
+                document.getElementById('booking-action-form').submit();
+            }
+        });
+    }
+});
+</script>
+
 {% endblock %}

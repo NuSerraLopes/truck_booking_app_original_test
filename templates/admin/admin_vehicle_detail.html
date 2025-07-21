@@ -1,5 +1,3 @@
-{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_vehicle_detail.html #}
-
 {% extends 'base.html' %}
 {% load i18n %}
 {% load static %}
@@ -15,7 +13,6 @@
         </div>
         <div class="card-body">
             <div class="row">
-                <!-- Left Column: Picture -->
                 <div class="col-lg-4 mb-4 mb-lg-0">
                     {% if vehicle.picture %}
                         <img src="{{ vehicle.picture.url }}" class="img-fluid rounded border" alt="{{ vehicle.model }}">
@@ -29,13 +26,12 @@
                     {% endif %}
                 </div>
 
-                <!-- Right Column: Details -->
                 <div class="col-lg-8">
                     <h2>{{ vehicle.model }}</h2>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "License Plate" %}:</strong> <span>{{ vehicle.license_plate }}</span></li>
                         <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Type" %}:</strong> <span>{{ vehicle.get_vehicle_type_display }}</span></li>
-                        <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Is Available" %}:</strong> 
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center"><strong>{% translate "Is Available" %}:</strong>
                             <span>
                                 {% if vehicle.is_available %}
                                     <span class="badge bg-success">{% translate "Yes" %}</span>
@@ -45,14 +41,34 @@
                             </span>
                         </li>
                         <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Current Location" %}:</strong> <span>{{ vehicle.current_location.name|default:_("N/A") }}</span></li>
-                    </ul>
+
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <strong>{% translate "Insurance Document" %}:</strong>
+                            <span>
+                                {% if vehicle.insurance_document %}
+                                    <a href="{{ vehicle.insurance_document.url }}" class="btn btn-sm btn-outline-info" target="_blank">{% translate "View/Download" %}</a>
+                                {% else %}
+                                    <span class="badge bg-secondary">{% translate "Not Uploaded" %}</span>
+                                {% endif %}
+                            </span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                            <strong>{% translate "Registration Document" %}:</strong>
+                            <span>
+                                {% if vehicle.registration_document %}
+                                    <a href="{{ vehicle.registration_document.url }}" class="btn btn-sm btn-outline-info" target="_blank">{% translate "View/Download" %}</a>
+                                {% else %}
+                                    <span class="badge bg-secondary">{% translate "Not Uploaded" %}</span>
+                                {% endif %}
+                            </span>
+                        </li>
+                        </ul>
                     <div class="mt-4">
                         <a href="{% url 'booking_app:admin_vehicle_edit' pk=vehicle.pk %}" class="btn btn-primary">{% translate "Edit Vehicle" %}</a>
                     </div>
                 </div>
             </div>
 
-            <!-- Booking History Section -->
             <div class="mt-5">
                 <h3 class="mb-3">{% translate "Booking History" %}</h3>
                 {% if upcoming_bookings %}
@@ -75,14 +91,15 @@
                                         <td>{{ booking.start_date|date:"Y-m-d" }}</td>
                                         <td>{{ booking.end_date|date:"Y-m-d" }}</td>
                                         <td>
-                                            <span class="badge 
+                                            <span class="badge
                                                 {% if booking.status == 'pending' %}bg-warning text-dark
+                                                {% elif booking.status == 'pending_contract' %}bg-info text-dark
                                                 {% elif booking.status == 'confirmed' %}bg-success
                                                 {% elif booking.status == 'cancelled' %}bg-danger
                                                 {% elif booking.status == 'completed' %}bg-secondary
                                                 {% else %}bg-info
                                                 {% endif %}">
-                                                {% translate booking.get_status_display %}
+                                                {{ booking.get_status_display }}
                                             </span>
                                         </td>
                                     </tr>

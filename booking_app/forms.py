@@ -1,4 +1,6 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\forms.py
+import os
+
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Row, Column, Submit, HTML, Div, Field
 from django import forms
@@ -27,6 +29,7 @@ class BookingForm(forms.ModelForm):
             'customer_name', 'customer_email', 'customer_phone',
             'client_tax_number', 'client_company_registration',
             'start_location', 'end_location', 'start_date', 'end_date',
+            'contract_document',
         ]
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
@@ -42,11 +45,17 @@ class BookingForm(forms.ModelForm):
             'end_location': _("End Location"),
             'start_date': _("Start Date"),
             'end_date': _("End Date"),
+            'contract_document': _("Contract Document"),
         }
 
     def __init__(self, *args, **kwargs):
         self.vehicle = kwargs.pop('vehicle', None)
         super().__init__(*args, **kwargs)
+
+        if self.instance and self.instance.pk:
+            self.initial_contract_document = self.instance.contract_document
+        else:
+            self.initial_contract_document = None
 
         self.helper = FormHelper()
         self.helper.form_method = 'post'
@@ -70,13 +79,27 @@ class BookingForm(forms.ModelForm):
                 Column('start_date', css_class='form-group col-md-6 mb-0'),
                 Column('end_date', css_class='form-group col-md-6 mb-0'),
             ),
+            'contract_document',
             Div(
-                Submit('submit', _('Submit Booking Request'), css_class='btn btn-primary'),
+                Submit('submit', _('Save Changes'), css_class='btn btn-primary'),
                 HTML(
-                    f'<a href="{reverse_lazy("booking_app:vehicle_list")}" class="btn btn-secondary">{_("Back to Vehicle List")}</a>'),
+                    f'<a href="{self.instance.get_absolute_url() if self.instance and self.instance.pk else reverse_lazy("booking_app:vehicle_list")}" class="btn btn-secondary">{_("Cancel")}</a>'),
                 css_class='d-flex justify-content-between mt-4'
             )
         )
+
+    def has_changed(self):
+        has_changed = super().has_changed()
+        if has_changed:
+            return True
+        if 'contract_document-clear' in self.data:
+            return True
+        return False
+
+    def save(self, commit=True):
+        if self.data.get("contract_document-clear") and self.initial_contract_document:
+            self.initial_contract_document.delete(save=False)
+        return super().save(commit)
 
     def clean_start_date(self):
         start_date = self.cleaned_data.get('start_date')
@@ -258,27 +281,57 @@ class VehicleCreateForm(forms.ModelForm):
 class VehicleEditForm(forms.ModelForm):
     class Meta:
         model = Vehicle
-        fields = ['license_plate', 'vehicle_type', 'model', 'picture', 'current_location', 'is_available','insurance_document','registration_document',]
-        labels = {  # Added labels for consistency
-            'license_plate': _('License Plate'),
-            'vehicle_type': _('Vehicle Type'),
-            'model': _('Model Name'),
-            'picture': _('Vehicle Picture'),
-            'current_location': _('Current Location'),
-            'is_available': _('Is Available'),
-            'insurance_document': _('Insurance Document'),
-            'registration_document': _('Registration Document'),
+        fields = [
+            'license_plate',
+            'vehicle_type',
+            'model',
+            'picture',
+            'current_location',
+            'is_available',
+            'insurance_document',
+            'registration_document',
+        ]
+        widgets = {
+            'picture': forms.FileInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Apply Bootstrap classes for consistent styling
+
+        # --- Store the initial file info BEFORE anything happens ---
+        if self.instance and self.instance.pk:
+            self.initial_insurance = self.instance.insurance_document
+            self.initial_registration = self.instance.registration_document
+        else:
+            self.initial_insurance = None
+            self.initial_registration = None
+
+        # Your styling loop
         for field_name, field in self.fields.items():
-            if isinstance(field.widget, (forms.TextInput, forms.Select)):
+            if isinstance(field.widget, (forms.TextInput, forms.Select, forms.ClearableFileInput, forms.FileInput)):
                 field.widget.attrs.update({'class': 'form-control'})
             elif isinstance(field.widget, forms.CheckboxInput):
                 field.widget.attrs.update({'class': 'form-check-input'})
-            # FileInput (for 'picture') usually doesn't get 'form-control' directly
+
+    def has_changed(self):
+        """Checks if the form has changed, including 'clear' checkboxes."""
+        has_changed = super().has_changed()
+        if has_changed:
+            return True
+        if 'insurance_document-clear' in self.data or 'registration_document-clear' in self.data:
+            return True
+        return False
+
+    def save(self, commit=True):
+        # Use the initial file information we stored in __init__
+        if self.data.get("insurance_document-clear") and self.initial_insurance:
+            self.initial_insurance.delete(save=False)
+
+        if self.data.get("registration_document-clear") and self.initial_registration:
+            self.initial_registration.delete(save=False)
+
+        # Let the parent save method handle updating the database
+        return super().save(commit)
 
 
 class LocationCreateForm(forms.ModelForm):

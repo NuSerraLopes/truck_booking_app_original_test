@@ -38,7 +38,7 @@
                             {% endif %}
                         </div>
 
-                        {% crispy form %}
+                        {{ form.as_p }}
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <button type="submit" class="btn btn-success">{% translate "Save Changes" %}</button>

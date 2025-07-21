@@ -20,13 +20,14 @@
                                 <h6 class="text-muted mb-0">{% translate "Status" %}</h6>
                                 <p class="fs-5">
                                     <span class="badge
-                                        {% if booking.current_status_display == 'On Going' %}bg-primary
+                                        {% if booking.status == 'pending' %}bg-warning text-dark
+                                        {% elif booking.status == 'pending_contract' %}bg-info text-dark
                                         {% elif booking.status == 'confirmed' %}bg-success
-                                        {% elif booking.status == 'pending' %}bg-warning text-dark
                                         {% elif booking.status == 'cancelled' %}bg-danger
                                         {% elif booking.status == 'completed' %}bg-secondary
+                                        {% else %}bg-primary
                                         {% endif %}">
-                                        {{ booking.current_status_display }}
+                                        {{ booking.get_status_display }}
                                     </span>
                                 </p>
                             </div>
@@ -50,30 +51,70 @@
                             <div class="mb-3"><h6 class="text-muted mb-0">{% translate "Company Registration" %}</h6><p>{{ booking.client_company_registration }}</p></div>
                         </div>
                     </div>
+
+                    <div class="row mt-4 pt-3 border-top">
+                        <div class="col-12">
+                            <h2 class="h4 mb-3">{% translate "Documents & Files" %}</h2>
+
+                            <h3 class="h5">{% translate "Booking Document" %}</h3>
+                            <ul class="list-group mb-4">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    {% translate "Contract Document" %}
+                                    <span>
+                                        {% if booking.contract_document %}
+                                            <a href="{{ booking.contract_document.url }}" class="btn btn-primary btn-sm" target="_blank">{% translate "View Contract" %}</a>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{% translate "Not Uploaded" %}</span>
+                                        {% endif %}
+                                    </span>
+                                </li>
+                            </ul>
+
+                            <h3 class="h5">{% translate "Associated Vehicle Files" %}</h3>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    {% if booking.vehicle.picture %}
+                                        <img src="{{ booking.vehicle.picture.url }}" alt="{% translate 'Vehicle Picture' %}" class="img-fluid rounded border">
+                                    {% else %}
+                                        <div class="d-flex align-items-center justify-content-center bg-light rounded border text-muted" style="height: 150px;">
+                                           <span>{% translate "No Image" %}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-8">
+                                    <ul class="list-group">
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            {% translate "Insurance Document" %}
+                                            <span>
+                                                {% if booking.vehicle.insurance_document %}
+                                                    <a href="{{ booking.vehicle.insurance_document.url }}" class="btn btn-outline-primary btn-sm" target="_blank">{% translate "View" %}</a>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{% translate "Not Available" %}</span>
+                                                {% endif %}
+                                            </span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            {% translate "Registration Document" %}
+                                            <span>
+                                                {% if booking.vehicle.registration_document %}
+                                                    <a href="{{ booking.vehicle.registration_document.url }}" class="btn btn-outline-primary btn-sm" target="_blank">{% translate "View" %}</a>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{% translate "Not Available" %}</span>
+                                                {% endif %}
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {% if booking.status == 'cancelled' %}
                         <div class="alert alert-danger mt-4">
-                            <h4 class="alert-heading">{% translate "Cancellation Details" %}</h4>
-                            <p>
-                                <strong>{% translate "Reason" %}:</strong>
-                                {{ booking.cancellation_reason|default:_("No reason provided.") }}
-                            </p>
-                            <hr>
-                            <p class="mb-0">
-                                {% if booking.cancelled_by %}
-                                    {% blocktrans with canceller=booking.cancelled_by.get_full_name time=booking.cancellation_time|date:"d/m/Y H:i" %}
-                                    Cancelled by <strong>{{ canceller }}</strong> on {{ time }}.
-                                    {% endblocktrans %}
-                                {% else %}
-                                    {% blocktrans with time=booking.cancellation_time|date:"d/m/Y H:i" %}
-                                    Cancelled automatically by the system on {{ time }}.
-                                    {% endblocktrans %}
-                                {% endif %}
-                            </p>
-                        </div>
+                            </div>
                     {% endif %}
                 </div>
                 <div class="card-footer text-end">
-                    {% if booking.status == 'pending' or booking.status == 'confirmed' %}
+                    {% if booking.status == 'pending' or booking.status == 'pending_contract' or booking.status == 'confirmed' %}
                         <a href="{% url 'booking_app:update_booking' booking.pk %}" class="btn btn-primary">{% translate "Manage Booking" %}</a>
                     {% else %}
                         <p class="text-muted mb-0">{% translate "This booking is finalized and cannot be modified." %}</p>

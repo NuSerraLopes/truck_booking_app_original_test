@@ -4,14 +4,38 @@ from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager, Group
 from django.conf import settings
 import uuid
+
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.validators import UnicodeUsernameValidator
 import os
 from django.core.exceptions import ValidationError
+from django.utils.text import slugify
 
 from django.templatetags.static import static
 
+
+def get_contract_upload_path(instance, filename):
+    """
+    Creates a unique path for each contract:
+    contracts/<license_plate>/<client_name>/<booking_id>/<original_filename>
+    """
+    license_plate = slugify(instance.vehicle.license_plate)
+    client_name = slugify(instance.customer_name)
+    booking_id = instance.pk
+
+    return f'contracts/{license_plate}/{client_name}/{booking_id}/{filename}'
+
+def get_insurance_upload_path(instance, filename):
+    """Generates upload path for insurance: documents/insurance/<license_plate>/<filename>"""
+    license_plate_slug = slugify(instance.license_plate)
+    return f'documents/insurance/{license_plate_slug}/{filename}'
+
+def get_registration_upload_path(instance, filename):
+    """Generates upload path for registration: documents/registration/<license_plate>/<filename>"""
+    license_plate_slug = slugify(instance.license_plate)
+    return f'documents/registration/{license_plate_slug}/{filename}'
 
 # --- Custom User Manager ---
 class CustomUserManager(BaseUserManager):
@@ -127,22 +151,20 @@ class Vehicle(models.Model):
         null=True,
         help_text=_("Upload a picture of the vehicle.")
     )
-    # --- ADDED FIELDS ---
     insurance_document = models.FileField(
         _("Insurance Document"),
-        upload_to='documents/insurance/',
+        upload_to=get_insurance_upload_path,
         blank=True,
         null=True,
         help_text=_("Upload the vehicle's insurance document (PDF, DOCX, etc.).")
     )
     registration_document = models.FileField(
         _("Registration Document"),
-        upload_to='documents/registration/',
+        upload_to=get_registration_upload_path,
         blank=True,
         null=True,
         help_text=_("Upload the vehicle's registration document (PDF, DOCX, etc.).")
     )
-    # --- END ADDED FIELDS ---
     current_location = models.ForeignKey(
         'Location',
         on_delete=models.SET_NULL,
@@ -178,12 +200,11 @@ class Vehicle(models.Model):
     def __str__(self):
         return f"{self.vehicle_type} - {self.model} ({self.license_plate})"
 
-#TODO Adding Pending Contract Status
-
 # --- Booking Model ---
 class Booking(models.Model):
     BOOKING_STATUS_CHOICES = (
         ('pending', _('Pending')),
+        ('pending_contract', _('Pending Contract')),
         ('confirmed', _('Confirmed')),
         ('completed', _('Completed')),
         ('cancelled', _('Cancelled')),
@@ -228,6 +249,22 @@ class Booking(models.Model):
         null=True, blank=True,
         verbose_name=_("Cancellation Time")
     )
+
+    contract_document = models.FileField(
+        _("Contract Document"),
+        upload_to=get_contract_upload_path,
+        blank=True,
+        null=True,
+        help_text=_("Upload the signed contract to confirm the booking.")
+    )
+
+    def get_absolute_url(self):
+        """
+        Returns the canonical URL for a booking instance.
+        """
+        # NOTE: This assumes the name of your booking detail URL pattern
+        # is 'booking_detail'. Adjust if it is named differently.
+        return reverse('booking_app:bookings_detail', kwargs={'booking_pk': self.pk})
 
     @property
     def current_status_display(self):
@@ -298,6 +335,7 @@ class EmailTemplate(models.Model):
             ('booking_updated', _('Booking Updated by Salesperson')),
             ('booking_completed', _('Booking Completed')),
             ('booking_reminder', _('Booking Reminder (Upcoming)')),
+            ('booking_awaiting_contract', _('Booking Awaiting Contract')),
         )),
         ('Manager Actions', (
             ('booking_approved', _('Booking Approved by Manager')),
