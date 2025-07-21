@@ -80,12 +80,6 @@ class BookingForm(forms.ModelForm):
                 Column('end_date', css_class='form-group col-md-6 mb-0'),
             ),
             'contract_document',
-            Div(
-                Submit('submit', _('Save Changes'), css_class='btn btn-primary'),
-                HTML(
-                    f'<a href="{self.instance.get_absolute_url() if self.instance and self.instance.pk else reverse_lazy("booking_app:vehicle_list")}" class="btn btn-secondary">{_("Cancel")}</a>'),
-                css_class='d-flex justify-content-between mt-4'
-            )
         )
 
     def has_changed(self):

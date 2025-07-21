@@ -1,73 +1,84 @@
 {% extends "base.html" %}
-{% load crispy_forms_filters %}
 {% load i18n crispy_forms_tags %}
 
+{% block title %}{% translate "Update Booking" %}{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <h2>{% translate "Update Booking" %} #{{ booking.pk }}</h2>
-    <p><strong>{% translate "Status:" %}</strong> <span class="badge bg-info">{{ booking.get_status_display }}</span></p>
-    <hr>
-
-    <div class="row">
-        <div class="col-md-8">
-            <form id="booking-update-form" method="post" enctype="multipart/form-data">
-                {% csrf_token %}
-
-                {% if booking.contract_document %}
-                <div class="alert alert-info">
-                    <strong>{% translate "Contract on file:" %}</strong>
-                    <a href="{{ booking.contract_document.url }}" target="_blank">{% translate "View Uploaded Contract" %}</a>
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h1 class="h3 mb-0">{% translate "Manage Booking" %} #{{ booking.pk }}</h1>
+                    <a href="{{ booking.get_absolute_url }}" class="btn btn-secondary btn-sm">{% translate "Back to Details" %}</a>
                 </div>
-                {% endif %}
 
-                {% if can_update_form_fields %}
-                    {{ form|crispy }}
-                    <button type="submit" class="btn btn-primary">{% translate "Save Changes" %}</button>
-                {% else %}
-                    {% for field in form %}
+                <form id="booking-update-form" method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" name="confirmed_by_user" id="confirmed_by_user_input" value="false">
+
+                    <div class="card-body">
                         <div class="mb-3">
-                            <label class="form-label">{{ field.label }}</label>
-                            <div class="form-control-plaintext">
-                                {% if field.value %}{{ field.value }}{% else %}---{% endif %}
-                            </div>
+                            <h6 class="text-muted mb-0">{% translate "Current Status" %}</h6>
+                            <p class="fs-5">
+                                <span class="badge
+                                    {% if booking.status == 'pending' %}bg-warning text-dark
+                                    {% elif booking.status == 'pending_contract' %}bg-info text-dark
+                                    {% elif booking.status == 'confirmed' %}bg-success
+                                    {% elif booking.status == 'cancelled' %}bg-danger
+                                    {% elif booking.status == 'completed' %}bg-secondary
+                                    {% else %}bg-primary
+                                    {% endif %}">
+                                    {{ booking.get_status_display }}
+                                </span>
+                            </p>
+                            <p>
+                                {% if can_approve %}
+                                    <button type="submit" name="action" value="approve" class="btn btn-success">{% translate "Approve" %}</button>
+                                {% endif %}
+
+                                {% if can_confirm_contract %}
+                                    <button type="submit" name="action" value="confirm_with_contract" class="btn btn-success" id="confirm-contract-btn">{% translate "Finalize & Confirm" %}</button>
+                                {% else %}
+                                    {% if booking.status == 'pending_contract' %}
+                                    <div class="alert alert-warning p-2 mb-0">
+                                        <small>{% translate "Upload contract before confirming." %}</small>
+                                    </div>
+                                    {% endif %}
+                                {% endif %}
+
+                                {% if can_cancel_by_manager %}
+                                    <button type="submit" name="action" value="cancel_by_manager" class="btn btn-danger">{% translate "Cancel Booking" %}</button>
+                                {% endif %}
+                            </p>
                         </div>
-                    {% endfor %}
-                {% endif %}
-            </form>
-        </div>
 
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header">
-                    <strong>{% translate "Actions" %}</strong>
-                </div>
-                <div class="card-body">
-                    <form id="booking-action-form" method="post" class="d-grid gap-2">
-                         {% csrf_token %}
-                         <input type="hidden" name="confirmed_by_user" id="confirmed_by_user_input" value="false">
-
-                        {% if can_approve %}
-                            <button type="submit" name="action" value="approve" class="btn btn-success">{% translate "Approve (Send to Pending Contract)" %}</button>
+                        {% if booking.contract_document %}
+                        <div class="alert alert-info">
+                            <strong>{% translate "Contract on file:" %}</strong>
+                            <a href="{{ booking.contract_document.url }}" target="_blank">{% translate "View Uploaded Contract" %}</a>
+                        </div>
                         {% endif %}
 
-                        {% if can_confirm_contract %}
-                            <button type="submit" name="action" value="confirm_with_contract" class="btn btn-primary" id="confirm-contract-btn">{% translate "Finalize & Confirm Booking" %}</button>
+                        {% if can_update_form_fields %}
+                            {% crispy form %}
                         {% else %}
-                            {% if booking.status == 'pending_contract' %}
-                            <div class="alert alert-warning p-2">
-                                <small>{% translate "A contract must be uploaded before you can confirm this booking." %}</small>
-                            </div>
+                            <h2 class="h5">{% translate "Booking Details (Read-Only)" %}</h2>
+                             {% for field in form %}
+                                <div class="row mb-2">
+                                    <dt class="col-sm-4 text-muted">{{ field.label }}</dt>
+                                    <dd class="col-sm-8">{% if field.value %}{{ field.value }}{% else %}---{% endif %}</dd>
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            {% if can_update_form_fields %}
+                                <button type="submit" class="btn btn-primary">{% translate "Save Changes" %}</button>
                             {% endif %}
-                        {% endif %}
-
-                        {% if can_cancel_by_manager %}
-                            <button type="submit" name="action" value="cancel_by_manager" class="btn btn-danger">{% translate "Cancel Booking (Manager)" %}</button>
-                        {% endif %}
-                        {% if can_complete_booking %}
-                            <button type="submit" name="action" value="complete" class="btn btn-secondary">{% translate "Mark as Completed" %}</button>
-                        {% endif %}
-                    </form>
-                </div>
+                            <a href="{{ booking.get_absolute_url }}" class="btn btn-secondary me-auto">{% translate "Cancel" %}</a>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -78,13 +89,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const confirmBtn = document.getElementById('confirm-contract-btn');
     if (confirmBtn) {
         confirmBtn.addEventListener('click', function(event) {
+            // Prevent the form from submitting immediately
             event.preventDefault();
 
             const userConfirmed = confirm("{% translate 'Are you sure you want to change the status to CONFIRMED? This action cannot be undone.' %}");
 
             if (userConfirmed) {
+                // If user clicks "OK", set the hidden input and submit the main form
                 document.getElementById('confirmed_by_user_input').value = 'true';
-                document.getElementById('booking-action-form').submit();
+                document.getElementById('booking-update-form').submit();
             }
         });
     }
