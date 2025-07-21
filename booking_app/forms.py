@@ -45,7 +45,7 @@ class BookingForm(forms.ModelForm):
             'end_location': _("End Location"),
             'start_date': _("Start Date"),
             'end_date': _("End Date"),
-            'contract_document': _("Contract Document"),
+            'contract_document': _("Contract"),
         }
 
     def __init__(self, *args, **kwargs):
@@ -257,8 +257,8 @@ class VehicleCreateForm(forms.ModelForm):
             'model': _('Model Name'),
             'picture': _('Vehicle Picture'),
             'current_location': _('Current Location'),
-            'insurance_document': _('Insurance Document'),
-            'registration_document': _('Registration Document'),
+            'insurance_document': _('Insurance'),
+            'registration_document': _('Registration'),
         }
 
     def __init__(self, *args, **kwargs):

@@ -152,14 +152,14 @@ class Vehicle(models.Model):
         help_text=_("Upload a picture of the vehicle.")
     )
     insurance_document = models.FileField(
-        _("Insurance Document"),
+        _("Insurance"),
         upload_to=get_insurance_upload_path,
         blank=True,
         null=True,
         help_text=_("Upload the vehicle's insurance document (PDF, DOCX, etc.).")
     )
     registration_document = models.FileField(
-        _("Registration Document"),
+        _("Registration"),
         upload_to=get_registration_upload_path,
         blank=True,
         null=True,
@@ -251,7 +251,7 @@ class Booking(models.Model):
     )
 
     contract_document = models.FileField(
-        _("Contract Document"),
+        _("Contract"),
         upload_to=get_contract_upload_path,
         blank=True,
         null=True,
