@@ -366,7 +366,6 @@ def my_bookings_view(request):
 @login_required
 def update_booking_view(request, booking_pk):
     booking = get_object_or_404(Booking, pk=booking_pk)
-    # --- Permission checks from your original code ---
     is_admin = getattr(request.user, 'is_admin_member', False)
     is_sd_group = request.user.groups.filter(name='sd').exists()
     is_tl_heavy_group = request.user.groups.filter(name='tlheavy').exists()
@@ -377,22 +376,17 @@ def update_booking_view(request, booking_pk):
         (is_tl_light_group and booking.vehicle.vehicle_type == 'LIGHT')
     )
 
-    # --- 1. UPDATED PERMISSION VARIABLES ---
-    # Can approve a 'pending' booking to move it to 'Pending Contract'
     can_approve = booking.status == 'pending' and can_manage_booking_status
 
-    # NEW: Can confirm a booking only if it's 'Pending Contract' and a document exists
     can_confirm_contract = (
         booking.status == 'pending_contract' and
         booking.contract_document and
         can_manage_booking_status
     )
 
-    # Can cancel a booking if it's not yet completed or already cancelled
     can_cancel_by_manager = booking.status in ['pending', 'pending_contract', 'confirmed'] and can_manage_booking_status
     can_complete_booking = booking.status == 'confirmed' and can_manage_booking_status
 
-    # A user can update form fields if the booking isn't finalized
     can_update_form_fields = (
         request.user == booking.user or can_manage_booking_status
     ) and booking.status not in ['confirmed', 'cancelled', 'completed']
