@@ -29,7 +29,7 @@ class BookingForm(forms.ModelForm):
             'customer_name', 'customer_email', 'customer_phone',
             'client_tax_number', 'client_company_registration',
             'start_location', 'end_location', 'start_date', 'end_date',
-            'contract_document',
+            'contract_document','final_km',
         ]
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
@@ -46,10 +46,12 @@ class BookingForm(forms.ModelForm):
             'start_date': _("Start Date"),
             'end_date': _("End Date"),
             'contract_document': _("Contract"),
+            'final_km': _("Final Kilometers"),
         }
 
     def __init__(self, *args, **kwargs):
         self.vehicle = kwargs.pop('vehicle', None)
+        is_create_page = kwargs.pop('is_create_page', False)
         super().__init__(*args, **kwargs)
 
         if self.instance and self.instance.pk:
@@ -82,6 +84,16 @@ class BookingForm(forms.ModelForm):
             'contract_document',
         )
 
+        if is_create_page:
+            self.helper.layout.append(
+                Div(
+                    Submit('submit', _('Submit Booking Request'), css_class='btn btn-primary'),
+                    HTML(
+                        f'<a href="{reverse_lazy("booking_app:vehicle_list")}" class="btn btn-secondary">{_("Back to Vehicle List")}</a>'),
+                    css_class='d-flex justify-content-between mt-4'
+                )
+            )
+
     def has_changed(self):
         has_changed = super().has_changed()
         if has_changed:
@@ -110,6 +122,14 @@ class BookingForm(forms.ModelForm):
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
+        final_km = cleaned_data.get('final_km')
+
+        if self.instance and self.instance.initial_km is not None and final_km is not None:
+            if final_km <= self.instance.initial_km:
+                raise ValidationError(
+                    _("Final kilometers (%(final)s) must be greater than the initial kilometers (%(initial)s).") %
+                    {'final': final_km, 'initial': self.instance.initial_km}
+                )
 
         if start_date and end_date:
             if start_date > end_date:
@@ -244,7 +264,9 @@ class UserCreateForm(forms.ModelForm):
 class VehicleCreateForm(forms.ModelForm):
     class Meta:
         model = Vehicle
-        fields = ['license_plate', 'vehicle_type', 'model', 'picture', 'current_location','insurance_document','registration_document',]
+        fields = ['license_plate', 'vehicle_type', 'model', 'picture', 'current_location',
+                  'insurance_document','registration_document','next_maintenance_date',
+                  ]
         labels = {
             'license_plate': _('License Plate'),
             'vehicle_type': _('Vehicle Type'),
@@ -253,6 +275,11 @@ class VehicleCreateForm(forms.ModelForm):
             'current_location': _('Current Location'),
             'insurance_document': _('Insurance'),
             'registration_document': _('Registration'),
+            'next_maintenance_date': _('Next Maintenance Date'),
+        }
+
+        widgets = {
+            'next_maintenance_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -284,9 +311,11 @@ class VehicleEditForm(forms.ModelForm):
             'is_available',
             'insurance_document',
             'registration_document',
+            'next_maintenance_date',
         ]
         widgets = {
             'picture': forms.FileInput(),
+            'next_maintenance_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):

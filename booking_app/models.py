@@ -175,6 +175,13 @@ class Vehicle(models.Model):
         help_text=_("The current physical location of the vehicle.")
     )
 
+    next_maintenance_date = models.DateField(
+        _("Next Maintenance Date"),
+        null=True,
+        blank=True,
+        help_text=_("Required only for APV vehicles.")
+    )
+
     def save(self, *args, **kwargs):
         if not self.picture:
             if self.vehicle_type == 'LIGHT':
@@ -206,6 +213,7 @@ class Booking(models.Model):
         ('pending', _('Pending')),
         ('pending_contract', _('Pending Contract')),
         ('confirmed', _('Confirmed')),
+        ('pending_final_km', _('Pending Final KM')),
         ('completed', _('Completed')),
         ('cancelled', _('Cancelled')),
     )
@@ -256,6 +264,20 @@ class Booking(models.Model):
         blank=True,
         null=True,
         help_text=_("Upload the signed contract to confirm the booking.")
+    )
+
+    initial_km = models.PositiveIntegerField(
+        _("Initial Kilometers"),
+        null=True,
+        blank=True,
+        help_text=_("The vehicle's kilometers at the start of the booking.")
+    )
+
+    final_km = models.PositiveIntegerField(
+        _("Final Kilometers"),
+        null=True,
+        blank=True,
+        help_text=_("The vehicle's kilometers at the end of the booking.")
     )
 
     def get_absolute_url(self):
@@ -340,6 +362,7 @@ class EmailTemplate(models.Model):
         ('Manager Actions', (
             ('booking_approved', _('Booking Approved by Manager')),
             ('booking_canceled_by_manager', _('Booking Canceled by Manager')),
+            ('apv_booking_approved', _('APV Booking Approved by Manager')),
         )),
         ('User Actions', (
             ('booking_canceled_by_user', _('Booking Canceled by User')),
@@ -438,46 +461,46 @@ class AutomationSettings(models.Model):
     class Meta:
         verbose_name_plural = _("Automation Settings")
 
-        class EmailLog(models.Model):
-            """
-            Stores a record of every email sent by the application.
-            """
-            STATUS_CHOICES = [
-                ('sent', _('Sent')),
-                ('failed', _('Failed')),
-            ]
+class EmailLog(models.Model):
+    """
+    Stores a record of every email sent by the application.
+    """
+    STATUS_CHOICES = [
+        ('sent', _('Sent')),
+        ('failed', _('Failed')),
+    ]
 
-            recipient = models.EmailField(
-                _("Recipient"),
-                help_text=_("The email address of the recipient.")
-            )
-            subject = models.CharField(
-                _("Subject"),
-                max_length=255,
-                help_text=_("The subject line of the email.")
-            )
-            status = models.CharField(
-                _("Status"),
-                max_length=10,
-                choices=STATUS_CHOICES,
-                help_text=_("The status of the email sending attempt.")
-            )
-            sent_at = models.DateTimeField(
-                _("Sent At"),
-                auto_now_add=True,
-                help_text=_("The timestamp when the email was attempted to be sent.")
-            )
-            error_message = models.TextField(
-                _("Error Message"),
-                blank=True,
-                null=True,
-                help_text=_("Any error message if the email failed to send.")
-            )
+    recipient = models.EmailField(
+        _("Recipient"),
+        help_text=_("The email address of the recipient.")
+    )
+    subject = models.CharField(
+        _("Subject"),
+        max_length=255,
+        help_text=_("The subject line of the email.")
+    )
+    status = models.CharField(
+        _("Status"),
+        max_length=10,
+        choices=STATUS_CHOICES,
+        help_text=_("The status of the email sending attempt.")
+    )
+    sent_at = models.DateTimeField(
+        _("Sent At"),
+        auto_now_add=True,
+        help_text=_("The timestamp when the email was attempted to be sent.")
+    )
+    error_message = models.TextField(
+        _("Error Message"),
+        blank=True,
+        null=True,
+        help_text=_("Any error message if the email failed to send.")
+    )
 
-            def __str__(self):
-                return f"To: {self.recipient} | Subject: {self.subject} | Status: {self.get_status_display()}"
+    def __str__(self):
+        return f"To: {self.recipient} | Subject: {self.subject} | Status: {self.get_status_display()}"
 
-            class Meta:
-                verbose_name = _("Email Log")
-                verbose_name_plural = _("Email Logs")
-                ordering = ['-sent_at']
+    class Meta:
+        verbose_name = _("Email Log")
+        verbose_name_plural = _("Email Logs")
+        ordering = ['-sent_at']

@@ -62,6 +62,12 @@
                                 {% endif %}
                             </span>
                         </li>
+                        {% if vehicle.vehicle_type == 'APV' %}
+                            <li class="list-group-item px-0 d-flex justify-content-between">
+                                <strong>{% translate "Next Maintenance" %}:</strong>
+                                <span>{{ vehicle.next_maintenance_date|date:"Y-m-d"|default:_("Not Set") }}</span>
+                            </li>
+                        {% endif %}
                         </ul>
                     <div class="mt-4">
                         <a href="{% url 'booking_app:admin_vehicle_edit' pk=vehicle.pk %}" class="btn btn-primary">{% translate "Edit Vehicle" %}</a>

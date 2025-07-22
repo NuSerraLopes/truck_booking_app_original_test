@@ -37,6 +37,10 @@
                                     <button type="submit" name="action" value="approve" class="btn btn-success">{% translate "Approve" %}</button>
                                 {% endif %}
 
+                                {% if can_approve_apv %}
+                                    <button type="submit" name="action" value="approve_apv" class="btn btn-success">{% translate "Approve APV Booking" %}</button>
+                                {% endif %}
+
                                 {% if can_confirm_contract %}
                                     <button type="submit" name="action" value="confirm_with_contract" class="btn btn-success" id="confirm-contract-btn">{% translate "Finalize & Confirm" %}</button>
                                 {% else %}
@@ -52,6 +56,20 @@
                                 {% endif %}
                             </p>
                         </div>
+
+                        {% if is_apv_booking %}
+                            {% if booking.status == 'pending_final_km' %}
+                                <div class="alert alert-danger">
+                                    <strong>{% translate "Action Required:" %}</strong> {% translate "Please enter the final kilometers to complete this booking." %}
+                                </div>
+                            {% endif %}
+
+                            {% if booking.initial_km is not None %}
+                            <div class="alert alert-secondary">
+                                <strong>{% translate "Initial Kilometers Recorded:" %}</strong> {{ booking.initial_km }} KM
+                            </div>
+                            {% endif %}
+                        {% endif %}
 
                         {% if booking.contract_document %}
                         <div class="alert alert-info">
@@ -74,6 +92,9 @@
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             {% if can_update_form_fields %}
                                 <button type="submit" class="btn btn-primary">{% translate "Save Changes" %}</button>
+                            {% endif %}
+                            {% if can_request_final_km %}
+                                <button type="submit" name="action" value="request_final_km" class="btn btn-warning">{% translate "Request Final KM" %}</button>
                             {% endif %}
                             <a href="{{ booking.get_absolute_url }}" class="btn btn-secondary me-auto">{% translate "Cancel" %}</a>
                         </div>

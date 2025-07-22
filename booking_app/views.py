@@ -19,7 +19,7 @@ from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
 from .forms import UserCreateForm, VehicleCreateForm, LocationCreateForm, BookingForm, UpdateUserForm, \
     LocationUpdateForm, VehicleEditForm, GroupForm, EmailTemplateForm, DistributionListForm, AutomationSettingsForm
-from .models import User, Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings
+from .models import User, Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings, EmailLog
 from .utils import add_business_days, send_booking_notification, subtract_business_days
 
 
@@ -290,17 +290,32 @@ def vehicle_api_view(request):
     ]
     return JsonResponse(resource_list, safe=False)
 
+
 @login_required
 def book_vehicle_view(request, vehicle_pk):
+    """
+    Handles the creation of a new booking for a specific vehicle.
+    This view now dynamically determines a vehicle's availability based on its type.
+    """
     vehicle = get_object_or_404(Vehicle, pk=vehicle_pk)
 
-    # --- Determine earliest possible start date ---
+    # --- UPDATED LOGIC: Determine unavailable statuses based on vehicle type ---
+    if vehicle.vehicle_type == 'APV':
+        # For APVs, a booking is unavailable if it's pending, confirmed, or awaiting final KMs.
+        unavailable_statuses = ['pending', 'confirmed', 'pending_final_km']
+    else:
+        # For Light/Heavy vehicles, it's unavailable if pending, awaiting contract, or confirmed.
+        unavailable_statuses = ['pending', 'pending_contract', 'confirmed']
+
+    # --- The rest of the view now uses the dynamic 'unavailable_statuses' list ---
+
+    # Determine the earliest possible start date for a new booking
     latest_booking_data = Booking.objects.filter(
         vehicle=vehicle,
-        status__in=['pending', 'confirmed']
+        status__in=unavailable_statuses
     ).aggregate(max_end_date=Max('end_date'))
-    latest_end_date = latest_booking_data['max_end_date']
 
+    latest_end_date = latest_booking_data['max_end_date']
     if latest_end_date:
         vehicle.available_after = add_business_days(latest_end_date, 3)
         if vehicle.available_after <= date.today():
@@ -308,17 +323,17 @@ def book_vehicle_view(request, vehicle_pk):
     else:
         vehicle.available_after = None
 
-    # --- Find next booking for optional use ---
+    # Find the next upcoming booking to help the date-picker logic
     next_booking = Booking.objects.filter(
         vehicle=vehicle,
-        status__in=['pending', 'confirmed'],
+        status__in=unavailable_statuses,
         start_date__gt=date.today()
     ).order_by('start_date').first()
 
-    # --- Add 3 business days before and after each booking ---
+    # Get all relevant bookings to generate disabled date ranges for the calendar
     all_bookings = Booking.objects.filter(
         vehicle=vehicle,
-        status__in=['pending', 'confirmed']
+        status__in=unavailable_statuses
     ).order_by('start_date')
 
     unavailable_ranges = [
@@ -331,7 +346,7 @@ def book_vehicle_view(request, vehicle_pk):
 
     # --- Handle form submission ---
     if request.method == 'POST':
-        form = BookingForm(request.POST, vehicle=vehicle)
+        form = BookingForm(request.POST, vehicle=vehicle, is_create_page=True)
         if form.is_valid():
             booking = form.save(commit=False)
             booking.user = request.user
@@ -344,7 +359,7 @@ def book_vehicle_view(request, vehicle_pk):
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
-        form = BookingForm(vehicle=vehicle)
+        form = BookingForm(vehicle=vehicle, is_create_page=True)
 
     context = {
         'form': form,
@@ -370,28 +385,36 @@ def update_booking_view(request, booking_pk):
     is_sd_group = request.user.groups.filter(name='sd').exists()
     is_tl_heavy_group = request.user.groups.filter(name='tlheavy').exists()
     is_tl_light_group = request.user.groups.filter(name='tllight').exists()
+    is_tlapv_member = request.user.groups.filter(name='tlapv').exists()
     can_manage_booking_status = (
-        is_admin or is_sd_group or
-        (is_tl_heavy_group and booking.vehicle.vehicle_type == 'HEAVY') or
-        (is_tl_light_group and booking.vehicle.vehicle_type == 'LIGHT')
+            is_admin or is_sd_group or
+            (is_tl_heavy_group and booking.vehicle.vehicle_type == 'HEAVY') or
+            (is_tl_light_group and booking.vehicle.vehicle_type == 'LIGHT')
     )
 
-    can_approve = booking.status == 'pending' and can_manage_booking_status
+    is_apv_booking = booking.vehicle.vehicle_type == 'APV'
 
-    can_confirm_contract = (
-        booking.status == 'pending_contract' and
-        booking.contract_document and
-        can_manage_booking_status
+    can_approve_apv = is_apv_booking and booking.status == 'pending' and (is_admin or is_tlapv_member)
+    can_request_final_km = is_apv_booking and booking.status == 'confirmed' and can_approve_apv
+    can_complete_apv_booking = (
+            is_apv_booking and
+            booking.status == 'pending_final_km' and
+            booking.final_km is not None and
+            can_approve_apv
     )
 
+    # Non-APV Permissions
+    can_approve = not is_apv_booking and booking.status == 'pending' and can_manage_booking_status
+    can_confirm_contract = not is_apv_booking and booking.status == 'pending_contract' and booking.contract_document and can_manage_booking_status
+
+    # General Permissions
     can_cancel_by_manager = booking.status in ['pending', 'pending_contract', 'confirmed'] and can_manage_booking_status
-    can_complete_booking = booking.status == 'confirmed' and can_manage_booking_status
-
+    can_complete_booking = not is_apv_booking and booking.status == 'confirmed' and can_manage_booking_status
     can_update_form_fields = (
-        request.user == booking.user or can_manage_booking_status
-    ) and booking.status not in ['confirmed', 'cancelled', 'completed']
+                                     request.user == booking.user or can_manage_booking_status
+                             ) and booking.status not in ['confirmed', 'cancelled', 'completed']
 
-    # --- Standard permission check to access the page ---
+    # --- Page Access Check ---
     if not (request.user == booking.user or can_manage_booking_status):
         messages.error(request, _("You do not have permission to access or manage this booking."))
         return redirect('booking_app:my_bookings')
@@ -399,12 +422,39 @@ def update_booking_view(request, booking_pk):
     if request.method == 'POST':
         action = request.POST.get('action')
 
-        if action == 'approve' and can_approve:
+        # --- APV ACTIONS ---
+        if action == 'request_final_km' and can_request_final_km:
+            last_booking = Booking.objects.filter(
+                vehicle=booking.vehicle, status='completed', final_km__isnull=False
+            ).order_by('-end_date').first()
+
+            if last_booking:
+                booking.initial_km = last_booking.final_km
+            else:
+                booking.initial_km = 0
+                messages.warning(request,
+                                 _("This is the first trip for this APV. Initial KM set to 0. Please verify and update if necessary."))
+
+            booking.status = 'pending_final_km'
+            booking.save()
+            messages.info(request,
+                          _("Booking is now awaiting final kilometers. Please enter the final reading to complete."))
+            return redirect(request.path_info)
+
+        elif action == 'approve_apv' and can_approve_apv:
+            booking.status = 'confirmed'
+            booking.save()
+            send_booking_notification('apv_booking_approved', booking_instance=booking)
+            messages.success(request, _("APV Booking has been approved successfully."))
+            return redirect(request.path_info)
+
+        # --- NON-APV ACTIONS ---
+        elif action == 'approve' and can_approve:
             booking.status = 'pending_contract'
             booking.save()
             send_booking_notification('booking_awaiting_contract', booking_instance=booking)
             messages.success(request, _(f"Booking {booking.pk} approved. Status is now 'Pending Contract'."))
-            return redirect(request.path_info)  # <-- Redirect to same page to upload contract
+            return redirect(request.path_info)
 
         elif action == 'confirm_with_contract' and can_confirm_contract:
             booking.status = 'confirmed'
@@ -413,6 +463,7 @@ def update_booking_view(request, booking_pk):
             messages.success(request, _(f"Booking {booking.pk} has been confirmed with the uploaded contract."))
             return redirect('booking_app:my_group_bookings')
 
+        # --- GENERAL ACTIONS ---
         elif action == 'cancel_by_manager' and can_cancel_by_manager:
             booking.status = 'cancelled'
             booking.cancelled_by = request.user
@@ -430,18 +481,27 @@ def update_booking_view(request, booking_pk):
             messages.success(request, _(f"Booking {booking.pk} has been marked as completed."))
             return redirect('booking_app:my_group_bookings')
 
+        # --- FORM SUBMISSION (SAVE CHANGES) ---
         else:
             if can_update_form_fields:
                 form = BookingForm(request.POST, request.FILES, instance=booking, vehicle=booking.vehicle)
                 if form.is_valid():
-                    form.save()
-                    send_booking_notification('booking_updated', booking_instance=booking)
+                    updated_booking = form.save(commit=False)
+                    # If completing an APV booking, set status to 'completed'
+                    if can_complete_apv_booking:
+                        updated_booking.status = 'completed'
+
+                    updated_booking.save()
                     messages.success(request, _("Your booking has been updated successfully."))
-                    return redirect(request.path_info) # <-- Redirect to same page
+
+                    if updated_booking.status == 'completed':
+                        return redirect('booking_app:my_group_bookings')
+                    return redirect(request.path_info)
                 else:
                     messages.error(request, _("Error updating booking. Please check the form."))
             else:
-                messages.error(request, _("You do not have permission to update this booking's details or its status prevents it."))
+                messages.error(request,
+                               _("You do not have permission to update this booking's details or its status prevents it."))
                 return redirect(request.path_info)
     else:
         form = BookingForm(instance=booking, vehicle=booking.vehicle)
@@ -450,11 +510,13 @@ def update_booking_view(request, booking_pk):
                 field.widget.attrs['readonly'] = 'readonly'
                 field.widget.attrs['disabled'] = 'disabled'
 
-    # --- 5. UPDATED CONTEXT ---
     context = {
         'form': form,
         'booking': booking,
+        'is_apv_booking': is_apv_booking,
+        'can_request_final_km': can_request_final_km,
         'can_approve': can_approve,
+        'can_approve_apv': can_approve_apv,
         'can_confirm_contract': can_confirm_contract,
         'can_cancel_by_manager': can_cancel_by_manager,
         'can_complete_booking': can_complete_booking,
@@ -630,12 +692,9 @@ def admin_user_reset_password_view(request, pk):
         if form.is_valid():
             form.save()
 
-            # --- ADD THIS LOGIC ---
-            # Automatically set the requires_password_change flag to True
             user_to_reset.requires_password_change = True
             user_to_reset.save(update_fields=['requires_password_change'])
 
-            # --- Your existing notification and message ---
             send_booking_notification('password_reset', context_data={'user': user_to_reset})
             messages.success(request, _(f"Password for user '{user_to_reset.username}' has been reset successfully!"))
 
@@ -957,6 +1016,24 @@ def admin_email_template_test_view(request, pk):
         messages.error(request, _(f"Failed to send test email. Error: {e}"))
 
     return HttpResponseRedirect(reverse('booking_app:admin_email_template_list'))
+
+@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def email_log_list_view(request):
+    """
+    Displays a paginated list of all email logs.
+    """
+    log_list = EmailLog.objects.all()
+    paginator = Paginator(log_list, 25)  # Show 25 logs per page
+
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_title': _("Email Sending Logs"),
+        'page_obj': page_obj,
+    }
+    return render(request, 'admin/admin_email_log_list.html', context)
 
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')

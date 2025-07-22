@@ -40,6 +40,17 @@
                             <h2 class="h4 mt-4 border-bottom pb-2 mb-3">{% translate "Vehicle" %}</h2>
                             <div class="mb-3"><h6 class="text-muted mb-0">{% translate "Model" %}</h6><p>{{ booking.vehicle.model }}</p></div>
                             <div class="mb-3"><h6 class="text-muted mb-0">{% translate "License Plate" %}</h6><p>{{ booking.vehicle.license_plate }}</p></div>
+                            {% if booking.vehicle.vehicle_type == 'APV' and booking.initial_km is not None %}
+                            <div class="row mt-3">
+                                <div class="col">
+                                    <h3 class="h5">{% translate "Kilometer Log" %}</h3>
+                                    <ul class="list-group">
+                                        <li class="list-group-item"><strong>{% translate "Initial KM" %}:</strong> {{ booking.initial_km }}</li>
+                                        <li class="list-group-item"><strong>{% translate "Final KM" %}:</strong> {{ booking.final_km|default:_("Pending") }}</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
 
                         <div class="col-md-6">

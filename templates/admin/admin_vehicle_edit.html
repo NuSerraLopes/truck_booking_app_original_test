@@ -52,3 +52,28 @@
     </div>
 </div>
 {% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const vehicleTypeSelect = document.getElementById('id_vehicle_type');
+    // Note: The field name is 'next_maintenance_date', but Crispy wraps it.
+    // We select the parent div that Crispy Forms creates.
+    const maintenanceDateDiv = document.querySelector('#div_id_next_maintenance_date');
+
+    function toggleMaintenanceField() {
+        if (vehicleTypeSelect.value === 'APV') {
+            maintenanceDateDiv.style.display = 'block';
+        } else {
+            maintenanceDateDiv.style.display = 'none';
+        }
+    }
+
+    // Run on page load
+    toggleMaintenanceField();
+
+    // Run whenever the vehicle type is changed
+    vehicleTypeSelect.addEventListener('change', toggleMaintenanceField);
+});
+</script>
+{% endblock scripts %}
