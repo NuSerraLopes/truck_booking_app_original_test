@@ -39,6 +39,7 @@ urlpatterns = [
     path('admin-dashboard/users/create/', views.user_create_view, name='admin_user_create'),
     path('admin-dashboard/users/edit/<uuid:pk>/', views.admin_user_edit_view, name='admin_user_edit'),
     path('admin-dashboard/users/<uuid:pk>/reset-password/', views.admin_user_reset_password_view, name='admin_user_reset_password'),
+    path('admin-dashboard/users/<uuid:pk>/send-credentials/', views.send_credentials_view, name='admin_send_credentials'),
 
     # Admin Group Management
     path('admin-dashboard/groups/', views.group_list_view, name='admin_group_list'),

@@ -1,6 +1,7 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\views.py
 import json
 
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
@@ -780,6 +781,32 @@ def admin_user_edit_view(request, pk):
         'user_to_edit': user_to_edit,
     }
     return render(request, 'admin/admin_user_edit.html', context)
+
+
+@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def send_credentials_view(request, pk):
+    """
+    Sends an email to the user with their username and a password reset link.
+    """
+    user_to_notify = get_object_or_404(User, pk=pk)
+
+    # Get the current domain to build a full URL
+    current_site = get_current_site(request)
+    domain = current_site.domain
+
+    # Use your existing email function to send the notification
+    send_booking_notification(
+        event_trigger='send_user_credentials',
+        context_data={
+            'user': user_to_notify,
+            'domain': domain
+        },
+        test_email_recipient=user_to_notify.email  # Send directly to the user
+    )
+
+    messages.success(request, _(f"Login credentials have been sent to {user_to_notify.email}."))
+    return redirect('booking_app:admin_user_edit', pk=pk)
 
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
