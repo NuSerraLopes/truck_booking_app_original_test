@@ -437,3 +437,47 @@ class AutomationSettings(models.Model):
 
     class Meta:
         verbose_name_plural = _("Automation Settings")
+
+        class EmailLog(models.Model):
+            """
+            Stores a record of every email sent by the application.
+            """
+            STATUS_CHOICES = [
+                ('sent', _('Sent')),
+                ('failed', _('Failed')),
+            ]
+
+            recipient = models.EmailField(
+                _("Recipient"),
+                help_text=_("The email address of the recipient.")
+            )
+            subject = models.CharField(
+                _("Subject"),
+                max_length=255,
+                help_text=_("The subject line of the email.")
+            )
+            status = models.CharField(
+                _("Status"),
+                max_length=10,
+                choices=STATUS_CHOICES,
+                help_text=_("The status of the email sending attempt.")
+            )
+            sent_at = models.DateTimeField(
+                _("Sent At"),
+                auto_now_add=True,
+                help_text=_("The timestamp when the email was attempted to be sent.")
+            )
+            error_message = models.TextField(
+                _("Error Message"),
+                blank=True,
+                null=True,
+                help_text=_("Any error message if the email failed to send.")
+            )
+
+            def __str__(self):
+                return f"To: {self.recipient} | Subject: {self.subject} | Status: {self.get_status_display()}"
+
+            class Meta:
+                verbose_name = _("Email Log")
+                verbose_name_plural = _("Email Logs")
+                ordering = ['-sent_at']
