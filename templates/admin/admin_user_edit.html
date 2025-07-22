@@ -37,17 +37,16 @@
                         <div class="mt-5">
                             <h2 class="h5">{% translate "Password Management" %}</h2>
                             <hr>
-                            <a href="{% url 'booking_app:admin_user_reset_password' pk=user_to_edit.pk %}" class="btn btn-warning">{% translate "Reset User Password" %}</a>
-                        </div>
-
-                        <div class="d-flex justify-content-end mt-4">
-                            <button type="submit" class="btn btn-primary">{% translate "Update User" %}</button>
                             <a href="{% url 'booking_app:admin_send_credentials' pk=user_to_edit.pk %}" class="btn btn-info">
                                 {% translate "Send Login Credentials" %}
                             </a>
                             <a href="{% url 'booking_app:admin_send_temp_password' pk=user_to_edit.pk %}" class="btn btn-warning">
                                 {% translate "Send Temporary Password" %}
                             </a>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-primary">{% translate "Update User" %}</button>
                             <a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-secondary me-2">{% translate "Cancel" %}</a>
                         </div>
                     </form>
