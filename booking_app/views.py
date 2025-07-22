@@ -808,6 +808,73 @@ def send_credentials_view(request, pk):
     messages.success(request, _(f"Login credentials have been sent to {user_to_notify.email}."))
     return redirect('booking_app:admin_user_edit', pk=pk)
 
+
+@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def send_temporary_password_view(request, pk):
+    """
+    Generates a temporary password, sets it for the user, and emails it.
+    Forces the user to change the password on their next login.
+    """
+    user_to_reset = get_object_or_404(User, pk=pk)
+
+    # Generate a random, temporary password
+    temp_password = User.objects.make_random_password(length=10)
+
+    # Set the new password for the user
+    user_to_reset.set_password(temp_password)
+
+    # IMPORTANT: Flag the user to require a password change on next login
+    user_to_reset.requires_password_change = True
+
+    # Save the changes to the user object
+    user_to_reset.save()
+
+    # Use your existing email function to send the notification
+    send_booking_notification(
+        event_trigger='send_temporary_password',  # A new, specific trigger
+        context_data={
+            'user': user_to_reset,
+            'temp_password': temp_password,
+        },
+        test_email_recipient=user_to_reset.email  # Send directly to the user
+    )
+
+    messages.success(request, _(f"A temporary password has been sent to {user_to_reset.email}."))
+    return redirect('booking_app:admin_user_edit', pk=pk)@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def send_temporary_password_view(request, pk):
+    """
+    Generates a temporary password, sets it for the user, and emails it.
+    Forces the user to change the password on their next login.
+    """
+    user_to_reset = get_object_or_404(User, pk=pk)
+
+    # Generate a random, temporary password
+    temp_password = User.objects.make_random_password(length=10)
+
+    # Set the new password for the user
+    user_to_reset.set_password(temp_password)
+
+    # IMPORTANT: Flag the user to require a password change on next login
+    user_to_reset.requires_password_change = True
+
+    # Save the changes to the user object
+    user_to_reset.save()
+
+    # Use your existing email function to send the notification
+    send_booking_notification(
+        event_trigger='send_temporary_password', # A new, specific trigger
+        context_data={
+            'user': user_to_reset,
+            'temp_password': temp_password,
+        },
+        test_email_recipient=user_to_reset.email # Send directly to the user
+    )
+
+    messages.success(request, _(f"A temporary password has been sent to {user_to_reset.email}."))
+    return redirect('booking_app:admin_user_edit', pk=pk)
+
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def location_create_view(request):

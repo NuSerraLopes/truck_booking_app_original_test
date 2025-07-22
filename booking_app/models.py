@@ -364,6 +364,7 @@ class EmailTemplate(models.Model):
             ('booking_canceled_by_manager', _('Booking Canceled by Manager')),
             ('apv_booking_approved', _('APV Booking Approved by Manager')),
             ('send_user_credentials', _('Send User Credentials')),
+            ('send_temporary_password', _('Send Temporary Password')),
         )),
         ('User Actions', (
             ('booking_canceled_by_user', _('Booking Canceled by User')),
