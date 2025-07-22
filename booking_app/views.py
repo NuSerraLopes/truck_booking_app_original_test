@@ -1,7 +1,7 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\views.py
 import json
 
-from django.contrib.auth.base_user import BaseUserManager
+from django.utils.crypto import get_random_string
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.http import HttpResponseRedirect, JsonResponse
@@ -852,7 +852,7 @@ def send_temporary_password_view(request, pk):
     user_to_reset = get_object_or_404(User, pk=pk)
 
     # Generate a random, temporary password
-    temp_password = BaseUserManager().make_random_password(length=10)
+    temp_password = get_random_string(length=10)
 
     # Set the new password for the user
     user_to_reset.set_password(temp_password)
