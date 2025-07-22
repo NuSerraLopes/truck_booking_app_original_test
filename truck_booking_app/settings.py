@@ -188,6 +188,35 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-
 APP_VERSION = 'v0.9.5'
 APP_UPDATE_DATE = date(2025, 7, 22)
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    # Formatters define how your log messages will look.
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {message}",
+            "style": "{",
+        },
+    },
+    # Handlers decide what to do with a log message (e.g., write to file, show in console).
+    "handlers": {
+        "file": {
+            "level": "DEBUG", # Log messages of level DEBUG and higher.
+            "class": "logging.FileHandler",
+            "filename": BASE_DIR / "debug.log", # The log file will be in your project's root directory.
+            "formatter": "verbose",
+        },
+    },
+    # Loggers are the entry point. Your app will send messages to a logger.
+    "loggers": {
+        # This logger is specifically for your 'booking_app'.
+        "booking_app": {
+            "handlers": ["file"], # Send messages to the 'file' handler we defined above.
+            "level": "DEBUG",
+            "propagate": True,
+        },
+    },
+}
