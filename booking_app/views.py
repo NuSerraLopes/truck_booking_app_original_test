@@ -666,6 +666,10 @@ def user_create_view(request):
         if form.is_valid():
             # This line correctly passes the request to your form's save() method
             user = form.save(request=request)
+
+            user.requires_password_change = True
+            user.save(update_fields=['requires_password_change'])
+
             send_booking_notification('user_created', context_data={'user': user})
             return redirect(reverse('booking_app:admin_user_list'))
         else:
