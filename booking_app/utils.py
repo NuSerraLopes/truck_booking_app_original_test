@@ -9,6 +9,8 @@ import logging
 
 from .models import EmailTemplate, DistributionList, EmailLog
 
+logger = logging.getLogger('booking_app')
+
 def add_business_days(start_date, num_business_days):
     current_date = start_date
     days_added = 0
@@ -26,10 +28,6 @@ def subtract_business_days(from_date, days):
         if current_date.weekday() < 5:
             days -= 1
     return current_date
-
-
-logger = logging.getLogger('booking_app')
-
 
 def send_booking_notification(event_trigger, booking_instance=None, context_data=None, test_email_recipient=None):
     """
