@@ -18,13 +18,13 @@
 
                         <div class="text-center mb-4">
                             <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#variablesModal">
-                                {% translate "Show Variables" %}
+                                {% translate "Show Available Variables" %}
                             </button>
                         </div>
-    
+
                         <form method="post" novalidate>
                             {% csrf_token %}
-    
+
                             {% if form.non_field_errors %}
                                 <div class="alert alert-danger" role="alert">
                                     {% for error in form.non_field_errors %}
@@ -32,7 +32,7 @@
                                     {% endfor %}
                                 </div>
                             {% endif %}
-    
+
                             {% for field in form %}
                                 {% if field.name == 'event_trigger' and template %}
                                     <div class="mb-3">
@@ -41,7 +41,7 @@
                                         <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
                                         <div class="form-text text-muted small">{% translate "The event trigger cannot be changed after creation." %}</div>
                                     </div>
-    
+
                                 {% elif field.field.widget.input_type == 'checkbox' %}
                                     <div class="mb-3 form-check form-switch">
                                         {{ field|as_crispy_field }}
@@ -58,7 +58,7 @@
                                     </div>
                                 {% endif %}
                             {% endfor %}
-    
+
                             <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                                 <a href="{% url 'booking_app:admin_email_template_list' %}" class="btn btn-secondary me-md-2">{% translate "Cancel" %}</a>
                                 <button type="submit" class="btn btn-primary">
@@ -75,17 +75,20 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Variables Help Modal -->
     <div class="modal fade" id="variablesModal" tabindex="-1" aria-labelledby="variablesModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="variablesModalLabel">{% translate "Available Template Variables" %}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
-            <p>{% translate "You can use the following variables in the subject and body of the email. They will be replaced with the actual booking data." %}</p>
+            <p>{% translate "You can use the following variables in the subject and body of the email. They will be replaced with the actual data." %}</p>
+
+            <h6 class="mt-4">{% translate "Booking-Related Variables" %}</h6>
+            <p class="text-muted small">{% translate "Available for events related to bookings (e.g., 'booking_created', 'booking_approved')." %}</p>
             <div class="table-responsive">
                 <table class="table table-bordered table-sm">
                     <thead class="table-light">
@@ -96,27 +99,50 @@
                     </thead>
                     <tbody>
                         <tr><td colspan="2" class="text-center fw-bold">{% translate "Booking Details" %}</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.pk {% templatetag closevariable %}</code></td><td>The unique ID of the booking (e.g., 123).</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.start_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>The start date of the booking.</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.end_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>The end date of the booking.</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.start_location.name {% templatetag closevariable %}</code></td><td>The pickup location name.</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.end_location.name {% templatetag closevariable %}</code></td><td>The drop-off location name.</td></tr>
-                        
+                        <tr><td><code>{% templatetag openvariable %} booking.pk {% templatetag closevariable %}</code></td><td>{% translate "The unique ID of the booking." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.start_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>{% translate "The start date of the booking." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.end_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>{% translate "The end date of the booking." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.start_location.name {% templatetag closevariable %}</code></td><td>{% translate "The pickup location name." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.end_location.name {% templatetag closevariable %}</code></td><td>{% translate "The drop-off location name." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.motive {% templatetag closevariable %}</code></td><td><strong>({% translate "APV Only" %})</strong> {% translate "The reason for the booking." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.initial_km {% templatetag closevariable %}</code></td><td><strong>({% translate "APV Only" %})</strong> {% translate "The starting kilometers." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.final_km {% templatetag closevariable %}</code></td><td><strong>({% translate "APV Only" %})</strong> {% translate "The final kilometers." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.contract_document.url {% templatetag closevariable %}</code></td><td>{% translate "The URL to the contract document." %}</td></tr>
+
                         <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Client Information" %}</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.customer_name {% templatetag closevariable %}</code></td><td>The client's full name.</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.customer_email {% templatetag closevariable %}</code></td><td>The client's email address.</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.customer_phone {% templatetag closevariable %}</code></td><td>The client's phone number.</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.client_tax_number {% templatetag closevariable %}</code></td><td>The client's tax number (NIF).</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.client_company_registration {% templatetag closevariable %}</code></td><td>The client's company registration number.</td></tr>
-    
+                        <tr><td><code>{% templatetag openvariable %} booking.customer_name {% templatetag closevariable %}</code></td><td>{% translate "The client's full name." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.customer_email {% templatetag closevariable %}</code></td><td>{% translate "The client's email address." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.customer_phone {% templatetag closevariable %}</code></td><td>{% translate "The client's phone number." %}</td></tr>
+
                         <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Vehicle Information" %}</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.vehicle.model {% templatetag closevariable %}</code></td><td>The model name of the vehicle.</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.vehicle.license_plate {% templatetag closevariable %}</code></td><td>The license plate of the vehicle.</td></tr>
-    
+                        <tr><td><code>{% templatetag openvariable %} booking.vehicle.model {% templatetag closevariable %}</code></td><td>{% translate "The model name of the vehicle." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.vehicle.license_plate {% templatetag closevariable %}</code></td><td>{% translate "The license plate of the vehicle." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.vehicle.next_maintenance_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td><strong>({% translate "APV Only" %})</strong> {% translate "The next maintenance date." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.vehicle.insurance_document.url {% templatetag closevariable %}</code></td><td>{% translate "The URL to the insurance document." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.vehicle.registration_document.url {% templatetag closevariable %}</code></td><td>{% translate "The URL to the registration document." %}</td></tr>
+
                         <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Salesperson Information" %}</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.user.first_name {% templatetag closevariable %}</code></td><td>The first name of the salesperson who made the booking.</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.user.last_name {% templatetag closevariable %}</code></td><td>The last name of the salesperson.</td></tr>
-                        <tr><td><code>{% templatetag openvariable %} booking.user.email {% templatetag closevariable %}</code></td><td>The email of the salesperson.</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.user.get_full_name {% templatetag closevariable %}</code></td><td>{% translate "The full name of the salesperson." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.user.email {% templatetag closevariable %}</code></td><td>{% translate "The email of the salesperson." %}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h6 class="mt-4">{% translate "User-Related Variables" %}</h6>
+            <p class="text-muted small">{% translate "Available for events like 'user_created', 'password_reset', etc." %}</p>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm">
+                    <thead class="table-light">
+                        <tr>
+                            <th>{% translate "Variable" %}</th>
+                            <th>{% translate "Description" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><code>{% templatetag openvariable %} user.username {% templatetag closevariable %}</code></td><td>{% translate "The user's username." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} user.get_full_name {% templatetag closevariable %}</code></td><td>{% translate "The user's full name." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} user.email {% templatetag closevariable %}</code></td><td>{% translate "The user's email address." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} temp_password {% templatetag closevariable %}</code></td><td>{% translate "The generated temporary password." %}</td></tr>
                     </tbody>
                 </table>
             </div>

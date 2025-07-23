@@ -280,6 +280,18 @@ class Booking(models.Model):
         help_text=_("The vehicle's kilometers at the end of the booking.")
     )
 
+    motive = models.TextField(
+        _("Motive"),
+        blank=True,
+        help_text=_("Required only for APV vehicle bookings.")
+    )
+
+    created_at = models.DateTimeField(
+        _("Created At"),
+        auto_now_add=True,
+        help_text=_("The date and time the booking was created.")
+    )
+
     def get_absolute_url(self):
         """
         Returns the canonical URL for a booking instance.
@@ -440,6 +452,17 @@ class AutomationSettings(models.Model):
         default=False,
         verbose_name=_("Activate Pending Booking Automation"),
         help_text=_("If checked, the system will automatically send reminders and cancel unapproved bookings.")
+    )
+
+    enable_pending_reminders = models.BooleanField(
+        _("Enable Pending Booking Reminders"),
+        default=False,
+        help_text=_("If checked, the system will send reminders for bookings that are pending for too long.")
+    )
+    reminder_days_pending = models.PositiveIntegerField(
+        _("Days Before Sending Reminder"),
+        default=3,
+        help_text=_("Send a reminder if a booking has been in 'Pending' status for this many days.")
     )
 
     def save(self, *args, **kwargs):

@@ -29,7 +29,7 @@ class BookingForm(forms.ModelForm):
             'customer_name', 'customer_email', 'customer_phone',
             'client_tax_number', 'client_company_registration',
             'start_location', 'end_location', 'start_date', 'end_date',
-            'contract_document','final_km',
+            'contract_document', 'final_km', 'motive', # 👈 Add 'motive'
         ]
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
@@ -47,6 +47,7 @@ class BookingForm(forms.ModelForm):
             'end_date': _("End Date"),
             'contract_document': _("Contract"),
             'final_km': _("Final Kilometers"),
+            'motive': _("Motive"),
         }
 
     def __init__(self, *args, **kwargs):
@@ -58,6 +59,15 @@ class BookingForm(forms.ModelForm):
             self.initial_contract_document = self.instance.contract_document
         else:
             self.initial_contract_document = None
+
+        # --- Conditionally handle the 'motive' field ---
+        if self.vehicle and self.vehicle.vehicle_type == 'APV':
+            self.fields['motive'].required = True
+            self.fields['motive'].label = _("Motive (Required for APV)")
+        else:
+            # If not an APV booking, hide the motive field
+            self.fields['motive'].widget = forms.HiddenInput()
+            self.fields['motive'].required = False
 
         self.helper = FormHelper()
         self.helper.form_method = 'post'
@@ -73,6 +83,8 @@ class BookingForm(forms.ModelForm):
                 Column('client_company_registration', css_class='form-group col-md-6 mb-0'),
             ),
             HTML(f'<h5 class="mt-4">{_("Booking Details")}</h5><hr>'),
+            # Add the motive field to the layout
+            'motive',
             Row(
                 Column('start_location', css_class='form-group col-md-6 mb-0'),
                 Column('end_location', css_class='form-group col-md-6 mb-0'),
@@ -82,6 +94,7 @@ class BookingForm(forms.ModelForm):
                 Column('end_date', css_class='form-group col-md-6 mb-0'),
             ),
             'contract_document',
+            'final_km',
         )
 
         if is_create_page:
@@ -123,6 +136,11 @@ class BookingForm(forms.ModelForm):
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
         final_km = cleaned_data.get('final_km')
+        motive = cleaned_data.get('motive')
+
+        if self.vehicle and self.vehicle.vehicle_type == 'APV':
+            if not motive:
+                self.add_error('motive', _("This field is required for APV bookings."))
 
         if self.instance and self.instance.initial_km is not None and final_km is not None:
             if final_km <= self.instance.initial_km:
@@ -481,7 +499,16 @@ class DistributionListForm(forms.ModelForm):
 class AutomationSettingsForm(forms.ModelForm):
     class Meta:
         model = AutomationSettings
-        fields = ['pending_booking_automation_active']
-        widgets = {
-            'pending_booking_automation_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        fields = [
+            'pending_booking_automation_active',
+            'enable_pending_reminders',
+            'reminder_days_pending',
+        ]
+        labels = {
+            'enable_pending_reminders': _("Enable Reminders for Pending Bookings"),
+            'reminder_days_pending': _("Send Reminder After (Days)"),
+        }
+        help_texts = {
+            'enable_pending_reminders': _("If checked, the system will send reminders for bookings that are pending for too long."),
+            'reminder_days_pending': _("The number of days a booking can be in 'Pending' status before a reminder is sent."),
         }

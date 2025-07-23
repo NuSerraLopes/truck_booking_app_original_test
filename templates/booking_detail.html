@@ -60,6 +60,12 @@
                             <div class="mb-3"><h6 class="text-muted mb-0">{% translate "Client Phone" %}</h6><p>{{ booking.customer_phone|default:_("N/A") }}</p></div>
                             <div class="mb-3"><h6 class="text-muted mb-0">{% translate "Tax Number (NIF)" %}</h6><p>{{ booking.client_tax_number }}</p></div>
                             <div class="mb-3"><h6 class="text-muted mb-0">{% translate "Company Registration" %}</h6><p>{{ booking.client_company_registration }}</p></div>
+                            {% if booking.vehicle.vehicle_type == 'APV' %}
+                                <div class="mb-3">
+                                    <h6 class="text-muted mb-0">{% translate "Motive for Booking" %}</h6>
+                                    <p>{{ booking.motive|default:_("Not provided.") }}</p>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
 

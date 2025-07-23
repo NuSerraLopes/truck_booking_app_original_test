@@ -13,13 +13,27 @@
                     <h1 class="card-title text-center mb-4">{{ page_title }}</h1>
                     <form method="post">
                         {% csrf_token %}
-                        <div class="form-check form-switch">
+
+                        <!-- This is your existing setting -->
+                        <div class="form-check form-switch mb-3">
                             {{ form.pending_booking_automation_active|as_crispy_field }}
                         </div>
 
+                        <hr>
+                        <h5 class="mt-4">{% translate "Pending Booking Reminders" %}</h5>
+                        <p class="text-muted">{% translate "Settings for sending automatic reminders for bookings that have been pending for too long." %}</p>
+
+                        <div class="form-check form-switch mb-3">
+                            {{ form.enable_pending_reminders|as_crispy_field }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form.reminder_days_pending|as_crispy_field }}
+                        </div>
+
                         <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary">{% translate "Back to Dashboard" %}</a>
                             <button type="submit" class="btn btn-primary">{% translate "Save Settings" %}</button>
-                            <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary me-2">{% translate "Back to Dashboard" %}</a>
                         </div>
                     </form>
                 </div>

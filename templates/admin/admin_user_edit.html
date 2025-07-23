@@ -37,9 +37,6 @@
                         <div class="mt-5">
                             <h2 class="h5">{% translate "Password Management" %}</h2>
                             <hr>
-                            <a href="{% url 'booking_app:admin_send_credentials' pk=user_to_edit.pk %}" class="btn btn-info">
-                                {% translate "Send Login Credentials" %}
-                            </a>
                             <a href="{% url 'booking_app:admin_send_temp_password' pk=user_to_edit.pk %}" class="btn btn-warning">
                                 {% translate "Send Temporary Password" %}
                             </a>

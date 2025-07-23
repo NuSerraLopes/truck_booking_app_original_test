@@ -51,6 +51,9 @@
                                 <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Client Phone" %}:</strong> <span>{{ booking.customer_phone|default:_("N/A") }}</span></li>
                                 <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Tax Number (NIF)" %}:</strong> <span>{{ booking.client_tax_number }}</span></li>
                                 <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Company Registration" %}:</strong> <span>{{ booking.client_company_registration }}</span></li>
+                                {% if booking.vehicle.vehicle_type == 'APV' %}
+                                    <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Motive for Booking" %}:</strong> <span>{{ booking.motive|default:_("Not provided.") }}</span></li>
+                            {% endif %}
                             </ul>
                         </div>
                     </div>
