@@ -32,7 +32,7 @@ def is_admin(user):
 
 def is_group_leader(user):
     """Checks if a user is in any of the team leader groups."""
-    return user.groups.filter(name__in=['tlheavy', 'tllight', 'tlapv', 'sd']).exists()
+    return user.groups.filter(name__in=['tlheavy', 'tllight', 'tlapv', 'sd']).exists() or user.is_admin_member
 
 def home(request):
     """
