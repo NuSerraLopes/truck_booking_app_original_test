@@ -13,8 +13,8 @@
             <thead class="table-dark">
                 <tr>
                     <th>{% translate "Picture" %}</th>
-                    <th>{% translate "Model" %}</th>
                     <th>{% translate "License Plate" %}</th>
+                    <th>{% translate "Model" %}</th>
                     <th>{% translate "Type" %}</th>
                     <th>{% translate "Availability" %}</th>
                     <th>{% translate "Location" %}</th>
@@ -31,8 +31,8 @@
                             <span class="text-muted small">{% translate "No Image" %}</span>
                         {% endif %}
                     </td>
-                    <td>{{ vehicle.model }}</td>
                     <td>{{ vehicle.license_plate }}</td>
+                    <td>{{ vehicle.model }}</td>
                     <td>{{ vehicle.get_vehicle_type_display }}</td>
                     <td>
                         {% if vehicle.is_available_now %}

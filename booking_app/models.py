@@ -103,6 +103,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         """
         return self.groups.filter(name='Admin').exists()
 
+    def is_group_leader(self):
+        """
+        Checks if the user belongs to the 'Admin' group.
+        Ensure you have a Django Group named 'Admin' created for this to work.
+        """
+        return self.groups.filter(name__in=['tlheavy', 'tllight', 'tlapv', 'sd']).exists() or self.is_admin_member
+
     @property
     def is_booking_admin_member(self):
         """
