@@ -214,19 +214,11 @@ class UpdateUserForm(forms.ModelForm):
 
 
 class UserCreateForm(forms.ModelForm):
-    # Form-only fields (not on the User model) are defined here.
-    password = forms.CharField(
-        label=_("Password"),
-        widget=forms.PasswordInput(),
-        strip=False,
-        help_text=_("Enter a password for the new user. Must be at least 8 characters long.")
-    )
-    password2 = forms.CharField(
-        label=_("Password confirmation"),
-        widget=forms.PasswordInput(),
-        strip=False,
-        help_text=_("Enter the same password as above, for verification.")
-    )
+    """
+    A form for creating new users by an admin.
+    This form does not handle passwords. It creates a user with an
+    unusable password that must be set later by an admin sending credentials.
+    """
 
     class Meta:
         model = User
@@ -239,13 +231,14 @@ class UserCreateForm(forms.ModelForm):
             'first_name': _('First Name'),
             'last_name': _('Last Name'),
             'phone_number': _('Phone Number'),
-            'groups': _("Assign to Other Groups"),
+            'groups': _("Assign to Groups"),
         }
+        # This widget requires a custom implementation or a third-party package
+        # to render checkboxes correctly with Bootstrap styling.
         widgets = {
-            'groups': BootstrapCheckboxSelectMultiple,
+            'groups': forms.CheckboxSelectMultiple,
         }
 
-    # The __init__, save, and clean methods remain the same.
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
@@ -254,22 +247,18 @@ class UserCreateForm(forms.ModelForm):
     def save(self, request=None, commit=True):
         user = super().save(commit=False)
         user.is_active = True
-        password = self.cleaned_data.get("password")
-        if password:
-            user.set_password(password)
+
+        # Set an unusable password. An admin must send credentials to activate.
+        user.set_unusable_password()
+
         if commit:
             user.save()
+            # self.save_m2m() is needed to save the groups relationship
+            self.save_m2m()
 
-        # This logic handles both the 'groups' and 'is_admin_member_checkbox' fields.
-        selected_groups_from_form = set(self.cleaned_data.get('groups', []))
-
-        user.groups.set(list(selected_groups_from_form))
-
-        if request:
-            messages.success(request, _(f"User '{user.username}' created successfully!"))
+        # The success message is now handled in the view after redirecting.
         return user
 
-    # The clean methods remain unchanged.
     def clean_username(self):
         username = self.cleaned_data['username']
         if User.objects.filter(username__iexact=username).exists():
@@ -281,19 +270,6 @@ class UserCreateForm(forms.ModelForm):
         if User.objects.filter(email__iexact=email).exists():
             raise forms.ValidationError(_("A user with that email already exists."))
         return email
-
-    def clean(self):
-        cleaned_data = super().clean()
-        password = cleaned_data.get("password")
-        password2 = cleaned_data.get("password2")
-        if password and password2:
-            if password != password2:
-                self.add_error('password2', _("The two password fields didn't match."))
-            if len(password) < 8:
-                self.add_error('password', _("Password must be at least 8 characters long."))
-        elif password or password2:
-            self.add_error('password', _("Both password fields are required."))
-        return cleaned_data
 
 
 class VehicleCreateForm(forms.ModelForm):

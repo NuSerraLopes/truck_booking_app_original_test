@@ -746,30 +746,34 @@ def admin_vehicle_detail_view(request, pk):
     context = {'vehicle': vehicle, 'page_title': _("Vehicle Details"), 'upcoming_bookings': upcoming_bookings}
     return render(request, 'admin/admin_vehicle_detail.html', context)
 
+
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def user_create_view(request):
-    User = get_user_model()
+    """
+    Handles the creation of a new user and redirects to their edit page
+    so that credentials can be sent manually.
+    """
     if request.method == 'POST':
         form = UserCreateForm(request.POST, request=request)
         if form.is_valid():
+            # The updated form's save method now creates a user with an unusable password.
             user = form.save(request=request)
-            temp_password = get_random_string(length=10)
-            user.set_password(temp_password)
-            user.requires_password_change = True
-            user.save()
-            send_booking_notification(
-                event_trigger='user_created_with_temp_password',
-                context_data={'user': user, 'temp_password': temp_password},
-                test_email_recipient=user.email
-            )
-            messages.success(request, _(f"User '{user.username}' created. A temporary password has been sent to their email."))
-            return redirect(reverse('booking_app:admin_user_list'))
+
+            messages.success(request,
+                             _(f"User '{user.username}' created successfully. You can now send their credentials or a temporary password."))
+
+            # Redirect to the new user's edit/detail page.
+            return redirect(reverse('booking_app:admin_user_edit', kwargs={'pk': user.pk}))
         else:
             messages.error(request, _("Error creating user. Please check the form for errors."))
     else:
         form = UserCreateForm(request=request)
-    context = {'form': form, 'page_title': _("Create New User")}
+
+    context = {
+        'form': form,
+        'page_title': _("Create New User")
+    }
     return render(request, 'admin/admin_user_create.html', context)
 
 @login_required
