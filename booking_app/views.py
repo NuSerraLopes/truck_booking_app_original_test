@@ -15,18 +15,24 @@ from django.contrib.auth import update_session_auth_hash
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.urls import reverse
-from django.db.models import Q, Max
+from django.db.models import Q, Max, Count
 from datetime import date, timedelta
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
 from .forms import UserCreateForm, VehicleCreateForm, LocationCreateForm, BookingForm, UpdateUserForm, \
-    LocationUpdateForm, VehicleEditForm, GroupForm, EmailTemplateForm, DistributionListForm, AutomationSettingsForm
+    LocationUpdateForm, VehicleEditForm, GroupForm, EmailTemplateForm, DistributionListForm, AutomationSettingsForm, \
+    BookingFilterForm
 from .models import User, Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings, EmailLog
 from .utils import add_business_days, send_booking_notification, subtract_business_days
+from django.db.models.functions import TruncMonth
 
 
 def is_admin(user):
     return user.is_authenticated and user.is_admin_member
+
+def is_group_leader(user):
+    """Checks if a user is in any of the team leader groups."""
+    return user.groups.filter(name__in=['tlheavy', 'tllight', 'tlapv', 'sd']).exists()
 
 def home(request):
     """
@@ -634,9 +640,189 @@ def booking_api_view(request):
     return JsonResponse(event_list, safe=False)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
-def admin_calendar_view(request):
-    return render(request, 'admin/admin_calendar.html', {'page_title': _("Bookings Calendar")})
+def my_bookings_api_view(request):
+    """
+    Provides booking data as a JSON feed for the current user's calendar.
+    """
+    user_bookings = Booking.objects.filter(
+        user=request.user,
+        status__in=['pending', 'pending_contract', 'confirmed', 'on_going', 'pending_final_km']
+    )
+
+    color_map = {
+        'LIGHT': '#3c78d8',  # Blue
+        'HEAVY': '#cc0000',  # Red
+        'APV': '#6aa84f',  # Green
+    }
+
+    events = []
+    for booking in user_bookings:
+        events.append({
+            'id': booking.pk,
+            'text': f"{booking.vehicle.license_plate} - {booking.customer_name}",
+            'start': booking.start_date.isoformat(),
+            'end': (booking.end_date + timedelta(days=1)).isoformat(),
+            'url': booking.get_absolute_url(),
+            'backColor': color_map.get(booking.vehicle.vehicle_type, '#dddddd'),
+        })
+
+    return JsonResponse(events, safe=False)
+
+@login_required
+@user_passes_test(is_group_leader, login_url='booking_app:home')
+def group_dashboard_view(request):
+    user_groups = request.user.groups.values_list('name', flat=True)
+
+    vehicle_types_to_manage = []
+    if 'sd' in user_groups:
+        vehicle_types_to_manage.extend(['LIGHT', 'HEAVY'])
+    if 'tlheavy' in user_groups:
+        vehicle_types_to_manage.append('HEAVY')
+    if 'tllight' in user_groups:
+        vehicle_types_to_manage.append('LIGHT')
+    if 'tlapv' in user_groups:
+        vehicle_types_to_manage.append('APV')
+    vehicle_types_to_manage = list(set(vehicle_types_to_manage))
+
+    # --- FILTERING LOGIC ---
+    # Pass the user to the form to dynamically set choices
+    filter_form = BookingFilterForm(request.GET, user=request.user)
+    selected_status = request.GET.get('status', '')
+
+    # Start with a base query for all bookings managed by this leader
+    base_query = Booking.objects.filter(
+        vehicle__vehicle_type__in=vehicle_types_to_manage
+    )
+
+    if selected_status:
+        # If a specific status is selected, filter by it
+        actionable_bookings = base_query.filter(status=selected_status).order_by('-start_date')
+    else:
+        # By default, show bookings that are "actionable" (pending or upcoming)
+        actionable_bookings = base_query.filter(
+            status__in=['pending', 'pending_contract', 'confirmed'],
+            end_date__gte=timezone.now().date()
+        ).order_by('start_date')
+
+    context = {
+        'page_title': _("Group Dashboard"),
+        'actionable_bookings': actionable_bookings,
+        'filter_form': filter_form,  # 👈 Pass the form to the template
+    }
+    return render(request, 'group_dashboard.html', context)
+
+
+@login_required
+@user_passes_test(is_group_leader, login_url='booking_app:home')
+def group_reports_view(request):
+    """
+    Displays a page with charts and usage reports for group leaders.
+    """
+    user_groups = request.user.groups.values_list('name', flat=True)
+
+    vehicle_types_to_manage = []
+    if 'sd' in user_groups:
+        vehicle_types_to_manage.extend(['LIGHT', 'HEAVY'])
+    if 'tlheavy' in user_groups:
+        vehicle_types_to_manage.append('HEAVY')
+    if 'tllight' in user_groups:
+        vehicle_types_to_manage.append('LIGHT')
+    if 'tlapv' in user_groups:
+        vehicle_types_to_manage.append('APV')
+    vehicle_types_to_manage = list(set(vehicle_types_to_manage))
+
+    # --- Chart 1: Bookings per Month (Last 12 Months) ---
+    twelve_months_ago = timezone.now().date() - timedelta(days=365)
+    bookings_per_month = Booking.objects.filter(
+        vehicle__vehicle_type__in=vehicle_types_to_manage,
+        start_date__gte=twelve_months_ago,
+        status__in=['confirmed', 'completed', 'on_going', 'pending_final_km']
+    ).annotate(month=TruncMonth('start_date')).values('month').annotate(count=Count('id')).order_by('month')
+
+    bookings_chart_labels = [item['month'].strftime('%Y-%m') for item in bookings_per_month]
+    bookings_chart_data = [item['count'] for item in bookings_per_month]
+
+    # --- Chart 2: Most Frequently Booked Vehicles ---
+    vehicle_usage = Booking.objects.filter(
+        vehicle__vehicle_type__in=vehicle_types_to_manage,
+        status__in=['confirmed', 'completed', 'on_going', 'pending_final_km']
+    ).values('vehicle__license_plate').annotate(count=Count('id')).order_by('-count')
+
+    vehicle_chart_labels = [item['vehicle__license_plate'] for item in vehicle_usage[:10]]
+    vehicle_chart_data = [item['count'] for item in vehicle_usage[:10]]
+
+    context = {
+        'page_title': _("Group Reports & Charts"),
+        'bookings_chart_labels': json.dumps(bookings_chart_labels),
+        'bookings_chart_data': json.dumps(bookings_chart_data),
+        'vehicle_chart_labels': json.dumps(vehicle_chart_labels),
+        'vehicle_chart_data': json.dumps(vehicle_chart_data),
+        'vehicle_usage_table': vehicle_usage,
+    }
+    return render(request, 'group_reports.html', context)
+
+
+@login_required
+@user_passes_test(is_group_leader, login_url='booking_app:home')
+def group_calendar_view(request):
+    """
+    Displays a full-page DayPilot calendar for the user's group, with colors
+    assigned per unique license plate.
+    """
+    user_groups = request.user.groups.values_list('name', flat=True)
+
+    vehicle_types_to_manage = []
+    if 'sd' in user_groups:
+        vehicle_types_to_manage.extend(['LIGHT', 'HEAVY', 'APV'])
+    if 'tlheavy' in user_groups:
+        vehicle_types_to_manage.append('HEAVY')
+    if 'tllight' in user_groups:
+        vehicle_types_to_manage.append('LIGHT')
+    if 'tlapv' in user_groups:
+        vehicle_types_to_manage.append('APV')
+    vehicle_types_to_manage = list(set(vehicle_types_to_manage))
+
+    # --- Calendar Events ---
+    calendar_bookings = Booking.objects.filter(
+        vehicle__vehicle_type__in=vehicle_types_to_manage,
+        status__in=['pending', 'pending_contract', 'confirmed', 'on_going', 'pending_final_km']
+    ).select_related('vehicle')
+
+    # --- DYNAMIC COLOR LOGIC ---
+    # Get unique vehicles from the booking query
+    unique_vehicles = {booking.vehicle for booking in calendar_bookings}
+
+    # A palette of distinct colors
+    colors = [
+        '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4',
+        '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff',
+        '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1',
+        '#000075', '#808080'
+    ]
+
+    # Create a color map for each unique license plate
+    license_plate_color_map = {
+        vehicle.license_plate: colors[i % len(colors)]
+        for i, vehicle in enumerate(sorted(unique_vehicles, key=lambda v: v.license_plate))
+    }
+
+    calendar_events = []
+    for booking in calendar_bookings:
+        calendar_events.append({
+            'id': booking.pk,
+            'text': f"{booking.vehicle.license_plate} - {booking.customer_name}",
+            'start': booking.start_date.isoformat(),
+            'end': (booking.end_date + timedelta(days=1)).isoformat(),
+            'url': booking.get_absolute_url(),
+            'backColor': license_plate_color_map.get(booking.vehicle.license_plate, '#dddddd'),
+        })
+
+    context = {
+        'page_title': _("Group Bookings Calendar"),
+        'calendar_events': json.dumps(calendar_events),
+        'color_legend': license_plate_color_map,  # Pass the map to the template for the legend
+    }
+    return render(request, 'group_calendar.html', context)
 
 @login_required
 def my_account_view(request):

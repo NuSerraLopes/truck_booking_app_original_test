@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-header text-center">
+             <div class="d-flex justify-content-between align-items-center">
+                <a href="{% url 'booking_app:group_dashboard' %}" class="btn btn-secondary">{% translate "Back to Dashboard" %}</a>
+                <div class="d-flex justify-content-center align-items-center gap-3 flex-grow-1">
+                    <button id="previous-btn" class="btn btn-outline-secondary">‹ {% translate "Previous" %}</button>
+                    <h2 id="calendar-title" class="h4 mb-0 text-center" style="width: 200px;"></h2>
+                    <button id="next-btn" class="btn btn-outline-secondary">{% translate "Next" %} ›</button>
+                </div>
+                <div style="width: 150px;"></div>
+            </div>
+            <div class="d-flex justify-content-center flex-wrap gap-3 mt-2 small text-muted">
+                {% for plate, color in color_legend.items %}
+                    <span><span style="display: inline-block; width: 12px; height: 12px; background-color: {{ color }}; border-radius: 3px; margin-right: 5px;"></span> {{ plate }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="dp_group_month"></div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'daypilot/daypilot-all.min.js' %}"></script>
+{% get_current_language as lang_code %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const prevButton = document.getElementById("previous-btn");
+    const nextButton = document.getElementById("next-btn");
+    const title = document.getElementById("calendar-title");
+
+    let lang = "{{ lang_code }}";
+    if (lang === "pt") { lang = "pt-pt"; }
+
+    const dp = new DayPilot.Month("dp_group_month");
+
+    dp.locale = lang;
+    dp.eventHeight = 25;
+    dp.events.list = {{ calendar_events|safe }};
+
+    dp.onEventClick = args => {
+        if (args.e.data.url) {
+            window.open(args.e.data.url, '_blank');
+        }
+    };
+
+    function updateTitle() {
+        title.innerText = dp.startDate.toString("MMMM yyyy", dp.locale);
+    }
+
+    prevButton.addEventListener("click", () => {
+        dp.startDate = dp.startDate.addMonths(-1);
+        dp.update();
+        updateTitle();
+    });
+    
+    nextButton.addEventListener("click", () => {
+        dp.startDate = dp.startDate.addMonths(1);
+        dp.update();
+        updateTitle();
+    });
+
+    dp.init();
+    updateTitle();
+});
+</script>
+{% endblock scripts %}

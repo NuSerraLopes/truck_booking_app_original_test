@@ -512,3 +512,34 @@ class AutomationSettingsForm(forms.ModelForm):
             'enable_pending_reminders': _("If checked, the system will send reminders for bookings that are pending for too long."),
             'reminder_days_pending': _("The number of days a booking can be in 'Pending' status before a reminder is sent."),
         }
+
+class BookingFilterForm(forms.Form):
+    """
+    A form for filtering bookings on the group dashboard.
+    The status choices are dynamically adjusted based on the user's group.
+    """
+    status = forms.ChoiceField(
+        required=False,
+        label=_("Filter by Status"),
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+
+        choices = [
+            ('', _('All Actionable')),
+            ('pending', _('Pending Approval')),
+            ('pending_contract', _('Pending Contract')),
+            ('confirmed', _('Confirmed / Upcoming')),
+            ('completed', _('Completed')),
+            ('cancelled', _('Cancelled')),
+        ]
+
+        if user and user.groups.filter(name='tlapv').exists():
+            choices.insert(4, ('pending_final_km', _('Pending Final KM')))
+
+        # Set the choices for the status field
+        self.fields['status'].choices = choices

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">{{ page_title }}</h1>
+        <a href="{% url 'booking_app:group_dashboard' %}" class="btn btn-secondary">{% translate "Back to Dashboard" %}</a>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">{% translate "Bookings Per Month (Last 12 Months)" %}</h2>
+                </div>
+                <div class="card-body">
+                    <canvas id="bookingsPerMonthChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">{% translate "Top 10 Most Booked Vehicles" %}</h2>
+                </div>
+                <div class="card-body">
+                    <canvas id="vehicleUsageChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Raw Data Table Row -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">{% translate "Vehicle Usage Data" %}</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% translate "License Plate" %}</th>
+                                    <th>{% translate "Total Bookings" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in vehicle_usage_table %}
+                                    <tr>
+                                        <td>{{ item.vehicle__license_plate }}</td>
+                                        <td>{{ item.count }}</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="2" class="text-center text-muted">{% translate "No booking data available." %}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script src="{% static 'js/chart.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Chart.js Initializations ---
+    const bookingsCtx = document.getElementById('bookingsPerMonthChart').getContext('2d');
+    const bookingsChart = new Chart(bookingsCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ bookings_chart_labels|safe }},
+            datasets: [{
+                label: '{% translate "Number of Bookings" %}',
+                data: {{ bookings_chart_data|safe }},
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+    });
+
+    const vehicleCtx = document.getElementById('vehicleUsageChart').getContext('2d');
+    const vehicleChart = new Chart(vehicleCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ vehicle_chart_labels|safe }},
+            datasets: [{
+                label: '{% translate "Bookings" %}',
+                data: {{ vehicle_chart_data|safe }},
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)','rgba(54, 162, 235, 0.7)','rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)','rgba(153, 102, 255, 0.7)','rgba(255, 159, 64, 0.7)',
+                    'rgba(199, 199, 199, 0.7)','rgba(83, 102, 255, 0.7)','rgba(40, 159, 64, 0.7)',
+                    'rgba(210, 99, 132, 0.7)'
+                ],
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'top' } } }
+    });
+});
+</script>
+{% endblock scripts %}

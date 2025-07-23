@@ -20,6 +20,7 @@ urlpatterns = [
 
     # User's Personal Booking Management URLs
     path('my-bookings/', views.my_bookings_view, name='my_bookings'),
+    path('my-bookings/api/', views.my_bookings_api_view, name='my_bookings_api'),
     path('my-bookings/<int:booking_pk>/', views.booking_detail_view, name='bookings_detail'),
     path('group_bookings/', views.my_group_bookings_view, name='my_group_bookings'),
     path('group_bookings/<int:booking_pk>/', views.group_booking_detail_view, name='group_bookings_detail'),
@@ -30,6 +31,11 @@ urlpatterns = [
     path('my-account/', views.my_account_view, name='my_account'),
     path('my-account/update-data/', views.update_user_data_view, name='update_user_data'),
     path('my-account/change-password/', views.change_password_view, name='change_password'),
+
+    # Group Dashboard & Management URLs
+    path('group-dashboard/', views.group_dashboard_view, name='group_dashboard'),
+    path('group-dashboard/reports/', views.group_reports_view, name='group_reports'),
+    path('group-dashboard/calendar/', views.group_calendar_view, name='group_calendar'),
 
     # Admin Dashboard & Management URLs
     path('admin-dashboard/', views.admin_dashboard_view, name='admin_dashboard'),
@@ -73,7 +79,6 @@ urlpatterns = [
     path('admin-dashboard/distribution-lists/edit/<int:pk>/', views.admin_dl_form_view, name='admin_dl_edit'),
     path('admin-dashboard/distribution-lists/delete/<int:pk>/', views.admin_dl_delete_view, name='admin_dl_delete'),
     path('admin-dashboard/settings/', views.automation_settings_view, name='automation_settings'),
-    path('admin-dashboard/calendar/', views.admin_calendar_view, name='admin_calendar'),
 
     # --- Full Calendar API ---
     path('api/vehicles/', views.vehicle_api_view, name='vehicle_api'),

@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% load i18n static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="mb-0">{{ page_title }}</h1>
+        <div>
+            <a href="{% url 'booking_app:group_reports' %}" class="btn btn-info">{% translate "View Reports & Charts" %}</a>
+            <a href="{% url 'booking_app:group_calendar' %}" class="btn btn-primary">{% translate "Open Calendar" %}</a>
+        </div>
+    </div>
+
+    <!-- 👇 NEW: FILTER FORM 👇 -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="{{ filter_form.status.id_for_label }}" class="form-label">{{ filter_form.status.label }}</label>
+                    {{ filter_form.status }}
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">{% translate "Filter" %}</button>
+                    <a href="{% url 'booking_app:group_dashboard' %}" class="btn btn-secondary">{% translate "Clear" %}</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- 👆 END OF FILTER FORM 👆 -->
+
+    <!-- Unified Bookings List -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h2 class="h5 mb-0">{% translate "Bookings" %}</h2>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>{% translate "Status" %}</th>
+                                    <th>{% translate "License Plate" %}</th>
+                                    <th>{% translate "Client Name" %}</th>
+                                    <th>{% translate "Dates" %}</th>
+                                    <th>{% translate "Motive" %}</th>
+                                    <th>{% translate "Actions" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for booking in actionable_bookings %}
+                                    <tr>
+                                        <td>
+                                            <span class="badge
+                                                {% if booking.status == 'pending' %}bg-warning text-dark
+                                                {% elif booking.status == 'pending_contract' %}bg-info text-dark
+                                                {% elif booking.status == 'confirmed' %}bg-success
+                                                {% elif booking.status == 'cancelled' %}bg-danger
+                                                {% elif booking.status == 'completed' %}bg-secondary
+                                                {% else %}bg-primary
+                                                {% endif %}">
+                                                {{ booking.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ booking.vehicle.license_plate }}</td>
+                                        <td>{{ booking.customer_name }}</td>
+                                        <td>{{ booking.start_date|date:"Y-m-d" }} - {{ booking.end_date|date:"Y-m-d" }}</td>
+                                        <td>
+                                            {% if booking.vehicle.vehicle_type == 'APV' %}
+                                                {{ booking.motive|truncatechars:40|default:"-" }}
+                                            {% else %}
+                                                <span class="text-muted fst-italic">{% translate "N/A" %}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'booking_app:update_booking' booking.pk %}" class="btn btn-sm btn-primary">{% translate "Manage" %}</a>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted">{% translate "No bookings match the selected filter." %}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
