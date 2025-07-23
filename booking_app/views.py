@@ -244,7 +244,10 @@ def update_booking_view(request, booking_pk):
     can_access_page = (user == booking.user) or can_manage_booking_status or is_booking_admin
     can_update_form_fields = (
         (user == booking.user) or can_manage_booking_status or is_booking_admin
-    ) and booking.status not in ['confirmed', 'cancelled', 'completed', 'pending_final_km']
+    ) and booking.status not in ['cancelled', 'completed', 'pending_final_km']
+
+    if booking.status == 'confirmed' and timezone.now().date() < booking.start_date:
+        can_update_form_fields = True
 
     if not can_access_page:
         messages.error(request, _("You do not have permission to access or manage this booking."))
@@ -311,6 +314,11 @@ def update_booking_view(request, booking_pk):
                 form = BookingForm(request.POST, request.FILES, instance=booking, vehicle=booking.vehicle)
                 if form.is_valid():
                     updated_booking = form.save(commit=False)
+                    if booking.status == 'confirmed' and timezone.now().date() < booking.start_date and form.has_changed():
+                        updated_booking.status = 'pending'
+                        messages.info(request,
+                                      _("The booking was modified and has been returned to 'Pending' status for re-approval."))
+                        send_booking_notification('booking_reverted', booking_instance=updated_booking)
                     if can_complete_apv_booking:
                         updated_booking.status = 'completed'
                     updated_booking.save()

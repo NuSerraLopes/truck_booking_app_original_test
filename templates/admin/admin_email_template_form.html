@@ -108,6 +108,14 @@
                         <tr><td><code>{% templatetag openvariable %} booking.initial_km {% templatetag closevariable %}</code></td><td><strong>({% translate "APV Only" %})</strong> {% translate "The starting kilometers." %}</td></tr>
                         <tr><td><code>{% templatetag openvariable %} booking.final_km {% templatetag closevariable %}</code></td><td><strong>({% translate "APV Only" %})</strong> {% translate "The final kilometers." %}</td></tr>
                         <tr><td><code>{% templatetag openvariable %} booking.contract_document.url {% templatetag closevariable %}</code></td><td>{% translate "The URL to the contract document." %}</td></tr>
+                        <tr><td><code>{% templatetag openvariable %} booking.needs_transport {% templatetag closevariable %}</code></td><td>{% translate 'Vehicle needs transport? if clause required (refer to support if needed)' %}</td></tr>
+                        <!-- <strong>Transport Required Before Booking:</strong>
+                                {% if booking.needs_transport %}
+                                    Yes
+                                {% else %}
+                                    No
+                                {% endif %} -->
+
 
                         <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Client Information" %}</td></tr>
                         <tr><td><code>{% templatetag openvariable %} booking.customer_name {% templatetag closevariable %}</code></td><td>{% translate "The client's full name." %}</td></tr>

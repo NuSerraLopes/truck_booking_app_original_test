@@ -307,6 +307,13 @@ class Booking(models.Model):
         help_text=_("The date and time the booking was created.")
     )
 
+    needs_transport = models.BooleanField(
+        _("Transport Required Before Booking"),
+        default=False,
+        help_text=_(
+            "Indicates if the vehicle needs to be moved from a different location before this booking can start.")
+    )
+
     def get_absolute_url(self):
         """
         Returns the canonical URL for a booking instance.
@@ -380,11 +387,18 @@ class EmailTemplate(models.Model):
     """
     EVENT_CHOICES = [
         ('Booking Events', (
-            ('booking_created', _('Booking Created by Salesperson')),
-            ('booking_updated', _('Booking Updated by Salesperson')),
+            ('light_booking_created', _('New LIGHT Vehicle Booking Created')),
+            ('heavy_booking_created', _('New HEAVY Vehicle Booking Created')),
+            ('apv_booking_created', _('New APV Booking Created')),
+            ('light_booking_reverted', _('LIGHT Booking Reverted to Pending')),
+            ('heavy_booking_reverted', _('HEAVY Booking Reverted to Pending')),
+            ('apv_booking_reverted', _('APV Booking Reverted to Pending')),
+            ('booking_approved', _('Booking Approved')),
+            ('apv_booking_approved', _('APV Booking Approved')),
+            ('booking_canceled_by_manager', _('Booking Canceled by Manager')),
+            ('booking_canceled_by_user', _('Booking Canceled by User')),
             ('booking_completed', _('Booking Completed')),
-            ('booking_reminder', _('Booking Reminder (Upcoming)')),
-            ('booking_awaiting_contract', _('Booking Awaiting Contract')),
+            ('booking_pending_reminder', _('Booking Pending Reminder')),
         )),
         ('Manager Actions', (
             ('booking_approved', _('Booking Approved by Manager')),

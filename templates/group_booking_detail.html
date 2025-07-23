@@ -34,6 +34,14 @@
                                 <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "End Date" %}:</strong> <span>{{ booking.end_date|date:"Y-m-d" }}</span></li>
                                 <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Start Location" %}:</strong> <span>{{ booking.start_location.name }}</span></li>
                                 <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "End Location" %}:</strong> <span>{{ booking.end_location.name }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Transport Required" %}:</strong><span>
+                                        {% if booking.needs_transport %}
+                                            {% translate "Yes" %}
+                                        {% else %}
+                                            {% translate "No" %}
+                                        {% endif %}
+                                    </span>
+                                </li>
                             </ul>
 
                             <h2 class="h5 mt-4">{% translate "Vehicle" %}</h2>

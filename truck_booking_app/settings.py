@@ -190,7 +190,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-APP_VERSION = 'v0.10.3'
+APP_VERSION = 'v0.10.4'
 APP_UPDATE_DATE = date(2025, 7, 23)
 
 IMPERSONATE_PERMISSIONS = 'impersonate.permissions.staff'

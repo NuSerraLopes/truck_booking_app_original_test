@@ -4,6 +4,7 @@ import os
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Row, Column, Submit, HTML, Div, Field
 from django import forms
+from django.db import transaction
 from django.contrib.auth import get_user_model
 from django.forms.widgets import PasswordInput, TextInput
 from django.db import transaction
@@ -14,6 +15,9 @@ from .models import Vehicle, Booking, Location, User, EmailTemplate, Distributio
 from django.contrib.auth.models import Group
 from django.contrib import messages
 from django.urls import reverse_lazy
+
+from .utils import subtract_business_days, add_business_days
+
 
 class BootstrapCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     def __init__(self, attrs=None):
@@ -54,7 +58,7 @@ class BookingForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.vehicle = kwargs.pop('vehicle', None)
         is_create_page = kwargs.pop('is_create_page', False)
-        upload_only = kwargs.pop('upload_only', False)  # 👈 This line is required
+        upload_only = kwargs.pop('upload_only', False)
         super().__init__(*args, **kwargs)
 
         if self.instance and self.instance.pk:
@@ -62,25 +66,20 @@ class BookingForm(forms.ModelForm):
         else:
             self.initial_contract_document = None
 
-        # Conditionally handle the 'motive' field
         if self.vehicle and self.vehicle.vehicle_type == 'APV':
             self.fields['motive'].required = True
             self.fields['motive'].label = _("Motive (Required for APV)")
-
-            # Only show 'final_km' if the booking is awaiting the final reading
             if self.instance and self.instance.status == 'pending_final_km':
                 self.fields['final_km'].required = True
             else:
                 self.fields['final_km'].widget = forms.HiddenInput()
                 self.fields['final_km'].required = False
         else:
-            # For non-APVs, hide APV-specific fields
             self.fields['motive'].widget = forms.HiddenInput()
             self.fields['motive'].required = False
             self.fields['final_km'].widget = forms.HiddenInput()
             self.fields['final_km'].required = False
 
-        # Lock down the form if in upload_only mode
         if upload_only:
             for field_name, field in self.fields.items():
                 if field_name != 'contract_document':
@@ -91,25 +90,17 @@ class BookingForm(forms.ModelForm):
         self.helper.form_method = 'post'
         self.helper.layout = Layout(
             HTML(f'<h5>{_("Client Information")}</h5><hr>'),
-            Row(
-                Column('customer_name', css_class='form-group col-md-6 mb-0'),
-                Column('customer_phone', css_class='form-group col-md-6 mb-0'),
-            ),
+            Row(Column('customer_name', css_class='form-group col-md-6 mb-0'),
+                Column('customer_phone', css_class='form-group col-md-6 mb-0')),
             'customer_email',
-            Row(
-                Column('client_tax_number', css_class='form-group col-md-6 mb-0'),
-                Column('client_company_registration', css_class='form-group col-md-6 mb-0'),
-            ),
+            Row(Column('client_tax_number', css_class='form-group col-md-6 mb-0'),
+                Column('client_company_registration', css_class='form-group col-md-6 mb-0')),
             HTML(f'<h5 class="mt-4">{_("Booking Details")}</h5><hr>'),
             'motive',
-            Row(
-                Column('start_location', css_class='form-group col-md-6 mb-0'),
-                Column('end_location', css_class='form-group col-md-6 mb-0'),
-            ),
-            Row(
-                Column('start_date', css_class='form-group col-md-6 mb-0'),
-                Column('end_date', css_class='form-group col-md-6 mb-0'),
-            ),
+            Row(Column('start_location', css_class='form-group col-md-6 mb-0'),
+                Column('end_location', css_class='form-group col-md-6 mb-0')),
+            Row(Column('start_date', css_class='form-group col-md-6 mb-0'),
+                Column('end_date', css_class='form-group col-md-6 mb-0')),
             'contract_document',
             'final_km',
         )
@@ -132,20 +123,57 @@ class BookingForm(forms.ModelForm):
             return True
         return False
 
+    @transaction.atomic
     def save(self, commit=True):
+        # Logic for clearing the contract document
         if self.data.get("contract_document-clear") and self.initial_contract_document:
             self.initial_contract_document.delete(save=False)
-        return super().save(commit)
+
+        booking = super().save(commit=False)
+
+        # --- CORRECTED LOGIC: Use self.vehicle which is guaranteed to exist ---
+        vehicle_for_check = self.vehicle if self.vehicle else booking.vehicle
+
+        # --- Logic to check the PREVIOUS booking ---
+        previous_booking = Booking.objects.filter(
+            vehicle=vehicle_for_check,
+            end_date__lt=booking.start_date
+        ).order_by('-end_date').first()
+
+        if previous_booking:
+            if previous_booking.end_location != booking.start_location:
+                booking.needs_transport = True
+            else:
+                booking.needs_transport = False
+        else:
+            booking.needs_transport = False
+
+        if commit:
+            booking.save()
+            self.save_m2m()
+
+        # --- Logic to check and update the NEXT booking ---
+        next_booking = Booking.objects.filter(
+            vehicle=vehicle_for_check,
+            start_date__gt=booking.end_date
+        ).order_by('start_date').first()
+
+        if next_booking:
+            if booking.end_location != next_booking.start_location:
+                next_booking.needs_transport = True
+            else:
+                next_booking.needs_transport = False
+            next_booking.save(update_fields=['needs_transport'])
+
+        return booking
 
     def clean_start_date(self):
         start_date = self.cleaned_data.get('start_date')
         tomorrow = date.today() + timedelta(days=1)
-
         if start_date and start_date < tomorrow:
             raise ValidationError(
                 _("Booking date cannot be today or in the past. Please select tomorrow or a future date."),
-                code='invalid_start_date'
-            )
+                code='invalid_start_date')
         return start_date
 
     def clean(self):
@@ -155,8 +183,42 @@ class BookingForm(forms.ModelForm):
         final_km = cleaned_data.get('final_km')
         motive = cleaned_data.get('motive')
 
+        if start_date and end_date and start_date > end_date:
+            raise ValidationError(_("End date must be after start date."))
+
+        # --- UPDATED OVERLAP VALIDATION LOGIC ---
+        if self.vehicle and start_date and end_date:
+            if self.vehicle.vehicle_type == 'APV':
+                unavailable_statuses = ['pending', 'confirmed', 'pending_final_km']
+            else:
+                unavailable_statuses = ['pending', 'pending_contract', 'confirmed']
+
+            new_booking_start_buffer = subtract_business_days(start_date, 3)
+            new_booking_end_buffer = add_business_days(end_date, 3)
+
+            conflicting_bookings = Booking.objects.filter(
+                vehicle=self.vehicle,
+                status__in=unavailable_statuses,
+                start_date__lte=new_booking_end_buffer,
+                end_date__gte=new_booking_start_buffer,
+            )
+
+            if self.instance and self.instance.pk:
+                conflicting_bookings = conflicting_bookings.exclude(pk=self.instance.pk)
+
+            if conflicting_bookings.exists():
+                conflict = conflicting_bookings.first()
+                raise ValidationError(
+                    _("The selected date range conflicts with an existing booking (ID: %(booking_id)s) for this vehicle from %(start)s to %(end)s.") % {
+                        'booking_id': conflict.pk,
+                        'start': conflict.start_date.strftime('%Y-%m-%d'),
+                        'end': conflict.end_date.strftime('%Y-%m-%d'),
+                    }
+                )
+
+        # --- Other validations ---
         if self.vehicle and self.vehicle.vehicle_type == 'APV':
-            if not motive and self.instance.pk is None:
+            if not motive and not self.instance.pk:
                 self.add_error('motive', _("This field is required for APV bookings."))
 
         if self.instance and self.instance.initial_km is not None and final_km is not None:
@@ -164,19 +226,6 @@ class BookingForm(forms.ModelForm):
                 raise ValidationError(
                     _("Final kilometers (%(final)s) must be greater than the initial kilometers (%(initial)s).") %
                     {'final': final_km, 'initial': self.instance.initial_km}
-                )
-
-        if start_date and end_date:
-            if start_date > end_date:
-                raise ValidationError(_("End date must be after start date."))
-
-        if self.vehicle:
-            earliest_booking_date = getattr(self.vehicle, 'available_after', None)
-            if earliest_booking_date and start_date and start_date < earliest_booking_date:
-                raise ValidationError(
-                    _("This vehicle is only available after %(earliest_date)s. Please select a later date.") % {
-                        'earliest_date': earliest_booking_date.strftime('%d/%m/%Y')
-                    }
                 )
 
         return cleaned_data

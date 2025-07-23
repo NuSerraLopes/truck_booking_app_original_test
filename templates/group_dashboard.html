@@ -47,6 +47,7 @@
                                     <th>{% translate "Client Name" %}</th>
                                     <th>{% translate "Dates" %}</th>
                                     <th>{% translate "Motive" %}</th>
+                                    <th>{% translate "Transport?" %}</th>
                                     <th>{% translate "Actions" %}</th>
                                 </tr>
                             </thead>
@@ -73,6 +74,13 @@
                                                 {{ booking.motive|truncatechars:40|default:"-" }}
                                             {% else %}
                                                 <span class="text-muted fst-italic">{% translate "N/A" %}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if booking.needs_transport %}
+                                                <span class="badge bg-warning text-dark">{% translate "Yes" %}</span>
+                                            {% else %}
+                                                <span class="badge bg-light text-dark">{% translate "No" %}</span>
                                             {% endif %}
                                         </td>
                                         <td>
