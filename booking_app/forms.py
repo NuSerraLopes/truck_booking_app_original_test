@@ -16,7 +16,7 @@ from django.contrib.auth.models import Group
 from django.contrib import messages
 from django.urls import reverse_lazy
 
-from .utils import subtract_business_days, add_business_days
+from .utils import subtract_business_days, add_business_days, send_booking_notification
 
 
 class BootstrapCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
@@ -129,9 +129,10 @@ class BookingForm(forms.ModelForm):
         if self.data.get("contract_document-clear") and self.initial_contract_document:
             self.initial_contract_document.delete(save=False)
 
-        booking = super().save(commit=False)
+        # Get the original transport status before any changes are made
+        original_needs_transport = self.instance.needs_transport if self.instance.pk else False
 
-        # --- CORRECTED LOGIC: Use self.vehicle which is guaranteed to exist ---
+        booking = super().save(commit=False)
         vehicle_for_check = self.vehicle if self.vehicle else booking.vehicle
 
         # --- Logic to check the PREVIOUS booking ---
@@ -141,12 +142,13 @@ class BookingForm(forms.ModelForm):
         ).order_by('-end_date').first()
 
         if previous_booking:
-            if previous_booking.end_location != booking.start_location:
-                booking.needs_transport = True
-            else:
-                booking.needs_transport = False
+            booking.needs_transport = (previous_booking.end_location != booking.start_location)
         else:
             booking.needs_transport = False
+
+        # --- Check if the transport status of the CURRENT booking has changed ---
+        if booking.needs_transport != original_needs_transport:
+            send_booking_notification('transport_status_changed', booking_instance=booking)
 
         if commit:
             booking.save()
@@ -159,10 +161,13 @@ class BookingForm(forms.ModelForm):
         ).order_by('start_date').first()
 
         if next_booking:
-            if booking.end_location != next_booking.start_location:
-                next_booking.needs_transport = True
-            else:
-                next_booking.needs_transport = False
+            original_next_needs_transport = next_booking.needs_transport
+            next_booking.needs_transport = (booking.end_location != next_booking.start_location)
+
+            # --- Check if the transport status of the NEXT booking has changed ---
+            if next_booking.needs_transport != original_next_needs_transport:
+                send_booking_notification('transport_status_changed', booking_instance=next_booking)
+
             next_booking.save(update_fields=['needs_transport'])
 
         return booking
@@ -186,7 +191,6 @@ class BookingForm(forms.ModelForm):
         if start_date and end_date and start_date > end_date:
             raise ValidationError(_("End date must be after start date."))
 
-        # --- UPDATED OVERLAP VALIDATION LOGIC ---
         if self.vehicle and start_date and end_date:
             if self.vehicle.vehicle_type == 'APV':
                 unavailable_statuses = ['pending', 'confirmed', 'pending_final_km']
@@ -216,9 +220,8 @@ class BookingForm(forms.ModelForm):
                     }
                 )
 
-        # --- Other validations ---
         if self.vehicle and self.vehicle.vehicle_type == 'APV':
-            if not motive and not self.instance.pk:
+            if not motive and not self.instance.pk:  # Only require motive on creation
                 self.add_error('motive', _("This field is required for APV bookings."))
 
         if self.instance and self.instance.initial_km is not None and final_km is not None:
@@ -489,7 +492,6 @@ class GroupForm(forms.ModelForm):
 class EmailTemplateForm(forms.ModelForm):
     class Meta:
         model = EmailTemplate
-        # --- UPDATED: Added send_to_distribution_lists ---
         fields = [
             'name', 'event_trigger', 'subject', 'body', 'is_active',
             'send_to_salesperson', 'send_to_groups', 'send_to_users',

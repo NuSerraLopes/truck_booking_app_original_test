@@ -399,6 +399,7 @@ class EmailTemplate(models.Model):
             ('booking_canceled_by_user', _('Booking Canceled by User')),
             ('booking_completed', _('Booking Completed')),
             ('booking_pending_reminder', _('Booking Pending Reminder')),
+            ('transport_status_changed', _('Booking Transport Status Changed')),
         )),
         ('Manager Actions', (
             ('booking_approved', _('Booking Approved by Manager')),
@@ -432,7 +433,7 @@ class EmailTemplate(models.Model):
 
     event_trigger = models.CharField(
         max_length=50,
-        unique=True,
+        unique=False,
         choices=EVENT_CHOICES,
         default='booking_created',
         help_text=_("Select the specific event that will trigger this email notification.")
