@@ -148,7 +148,14 @@ class BookingForm(forms.ModelForm):
 
         # --- Check if the transport status of the CURRENT booking has changed ---
         if booking.needs_transport != original_needs_transport:
-            send_booking_notification('transport_status_changed', booking_instance=booking)
+            context = {}
+            if previous_booking:
+                context['previous_end_location'] = previous_booking.end_location
+            send_booking_notification(
+                'transport_status_changed',
+                booking_instance=booking,
+                context_data=context
+            )
 
         if commit:
             booking.save()
@@ -166,7 +173,13 @@ class BookingForm(forms.ModelForm):
 
             # --- Check if the transport status of the NEXT booking has changed ---
             if next_booking.needs_transport != original_next_needs_transport:
-                send_booking_notification('transport_status_changed', booking_instance=next_booking)
+                # The 'previous' location for the next booking is the end of the current one
+                context = {'previous_end_location': booking.end_location}
+                send_booking_notification(
+                    'transport_status_changed',
+                    booking_instance=next_booking,
+                    context_data=context
+                )
 
             next_booking.save(update_fields=['needs_transport'])
 
