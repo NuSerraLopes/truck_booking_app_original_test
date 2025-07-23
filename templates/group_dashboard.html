@@ -62,7 +62,7 @@
                                                 {% elif booking.status == 'completed' %}bg-secondary
                                                 {% else %}bg-primary
                                                 {% endif %}">
-                                                {{ booking.get_status_display }}
+                                                {{ booking.current_status_display }}
                                             </span>
                                         </td>
                                         <td>{{ booking.vehicle.license_plate }}</td>
@@ -76,7 +76,7 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <a href="{% url 'booking_app:update_booking' booking.pk %}" class="btn btn-sm btn-primary">{% translate "Manage" %}</a>
+                                            <a href="{% url 'booking_app:group_booking_detail' booking.pk %}" class="btn btn-sm btn-primary">{% translate "Manage" %}</a>
                                         </td>
                                     </tr>
                                 {% empty %}

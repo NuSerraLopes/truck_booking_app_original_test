@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load i18n crispy_forms_tags %}
 
-{% block title %}{% translate "Update Booking" %}{% endblock %}
+{% block title %}{% translate "Manage Group Booking" %}{% endblock %}
 
 {% block content %}
 <div class="container my-5">
@@ -10,9 +10,9 @@
             <div class="card shadow-sm">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h1 class="h3 mb-0">{% translate "Manage Booking" %} #{{ booking.pk }}</h1>
-                    <a href="{{ booking.get_absolute_url }}" class="btn btn-secondary btn-sm">{% translate "Back to Details" %}</a>
+                    <!-- This button correctly links back to the group detail page -->
+                    <a href="{% url 'booking_app:group_booking_detail' booking.pk %}" class="btn btn-secondary btn-sm">{% translate "Back to Details" %}</a>
                 </div>
-
                 <form id="booking-update-form" method="post" enctype="multipart/form-data">
                     {% csrf_token %}
                     <input type="hidden" name="confirmed_by_user" id="confirmed_by_user_input" value="false">
@@ -96,7 +96,7 @@
                             {% if can_request_final_km %}
                                 <button type="submit" name="action" value="request_final_km" class="btn btn-warning">{% translate "Request Final KM" %}</button>
                             {% endif %}
-                            <a href="{{ booking.get_absolute_url }}" class="btn btn-secondary me-auto">{% translate "Cancel" %}</a>
+                            <a href="{% url 'booking_app:group_booking_detail' booking.pk%}" class="btn btn-secondary me-auto">{% translate "Cancel" %}</a>
                         </div>
                     </div>
                 </form>

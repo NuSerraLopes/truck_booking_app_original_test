@@ -37,12 +37,7 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'booking_app:my_account' %}">{% translate "My Account" %}</a>
                         </li>
-                       <!--# {% if can_view_group_bookings %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'booking_app:my_group_bookings' %}">{% translate "Group Bookings" %}</a>
-                            </li>
-                        {% endif %}-->
-                        {% if user.is_group_leader or user.is_admin_member %} {# Or your specific check #}
+                        {% if user.is_group_leader or user.is_booking_admin_member %} {# Or your specific check #}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'booking_app:group_dashboard' %}">{% translate "Group Dashboard" %}</a>
                             </li>

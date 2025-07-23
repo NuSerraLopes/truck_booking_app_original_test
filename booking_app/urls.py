@@ -5,7 +5,7 @@ from . import views
 from django.conf import settings
 from django.conf.urls.static import static
 
-app_name = 'booking_app' # Define app_name for namespacing
+app_name = 'booking_app'
 
 urlpatterns = [
     # Core Authentication & Home URLs
@@ -22,8 +22,7 @@ urlpatterns = [
     path('my-bookings/', views.my_bookings_view, name='my_bookings'),
     path('my-bookings/api/', views.my_bookings_api_view, name='my_bookings_api'),
     path('my-bookings/<int:booking_pk>/', views.booking_detail_view, name='bookings_detail'),
-    path('group_bookings/', views.my_group_bookings_view, name='my_group_bookings'),
-    path('group_bookings/<int:booking_pk>/', views.group_booking_detail_view, name='group_bookings_detail'),
+    # The 'my_group_bookings' URL has been removed.
     path('bookings/update/<int:booking_pk>/', views.update_booking_view, name='update_booking'),
     path('bookings/cancel/<int:booking_pk>/', views.cancel_booking_view, name='cancel_booking'),
 
@@ -34,6 +33,8 @@ urlpatterns = [
 
     # Group Dashboard & Management URLs
     path('group-dashboard/', views.group_dashboard_view, name='group_dashboard'),
+    path('group-bookings/<int:booking_pk>/', views.group_booking_detail_view, name='group_booking_detail'),
+    path('group-bookings/update/<int:booking_pk>/', views.group_booking_update_view, name='group_booking_update'),
     path('group-dashboard/reports/', views.group_reports_view, name='group_reports'),
     path('group-dashboard/calendar/', views.group_calendar_view, name='group_calendar'),
 
@@ -81,7 +82,6 @@ urlpatterns = [
     path('admin-dashboard/settings/', views.automation_settings_view, name='automation_settings'),
 
     # --- Full Calendar API ---
-    path('api/vehicles/', views.vehicle_api_view, name='vehicle_api'),
     path('api/bookings/', views.booking_api_view, name='booking_api'),
 ]
 

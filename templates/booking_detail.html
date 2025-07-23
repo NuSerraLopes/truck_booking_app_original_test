@@ -27,7 +27,7 @@
                                         {% elif booking.status == 'completed' %}bg-secondary
                                         {% else %}bg-primary
                                         {% endif %}">
-                                        {{ booking.get_status_display }}
+                                        {{ booking.current_status_display }}
                                     </span>
                                 </p>
                             </div>

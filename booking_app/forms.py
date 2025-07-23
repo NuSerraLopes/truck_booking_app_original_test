@@ -22,6 +22,7 @@ class BootstrapCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
         attrs['class'] = attrs.get('class', '') + ' form-check-input'
         super().__init__(attrs)
 
+
 class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
@@ -29,7 +30,7 @@ class BookingForm(forms.ModelForm):
             'customer_name', 'customer_email', 'customer_phone',
             'client_tax_number', 'client_company_registration',
             'start_location', 'end_location', 'start_date', 'end_date',
-            'contract_document', 'final_km', 'motive', # 👈 Add 'motive'
+            'contract_document', 'final_km', 'motive',
         ]
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
@@ -53,6 +54,7 @@ class BookingForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.vehicle = kwargs.pop('vehicle', None)
         is_create_page = kwargs.pop('is_create_page', False)
+        upload_only = kwargs.pop('upload_only', False)  # 👈 This line is required
         super().__init__(*args, **kwargs)
 
         if self.instance and self.instance.pk:
@@ -60,14 +62,30 @@ class BookingForm(forms.ModelForm):
         else:
             self.initial_contract_document = None
 
-        # --- Conditionally handle the 'motive' field ---
+        # Conditionally handle the 'motive' field
         if self.vehicle and self.vehicle.vehicle_type == 'APV':
             self.fields['motive'].required = True
             self.fields['motive'].label = _("Motive (Required for APV)")
+
+            # Only show 'final_km' if the booking is awaiting the final reading
+            if self.instance and self.instance.status == 'pending_final_km':
+                self.fields['final_km'].required = True
+            else:
+                self.fields['final_km'].widget = forms.HiddenInput()
+                self.fields['final_km'].required = False
         else:
-            # If not an APV booking, hide the motive field
+            # For non-APVs, hide APV-specific fields
             self.fields['motive'].widget = forms.HiddenInput()
             self.fields['motive'].required = False
+            self.fields['final_km'].widget = forms.HiddenInput()
+            self.fields['final_km'].required = False
+
+        # Lock down the form if in upload_only mode
+        if upload_only:
+            for field_name, field in self.fields.items():
+                if field_name != 'contract_document':
+                    field.widget.attrs['disabled'] = 'disabled'
+                    field.widget.attrs['readonly'] = 'readonly'
 
         self.helper = FormHelper()
         self.helper.form_method = 'post'
@@ -83,7 +101,6 @@ class BookingForm(forms.ModelForm):
                 Column('client_company_registration', css_class='form-group col-md-6 mb-0'),
             ),
             HTML(f'<h5 class="mt-4">{_("Booking Details")}</h5><hr>'),
-            # Add the motive field to the layout
             'motive',
             Row(
                 Column('start_location', css_class='form-group col-md-6 mb-0'),
@@ -139,7 +156,7 @@ class BookingForm(forms.ModelForm):
         motive = cleaned_data.get('motive')
 
         if self.vehicle and self.vehicle.vehicle_type == 'APV':
-            if not motive:
+            if not motive and self.instance.pk is None:
                 self.add_error('motive', _("This field is required for APV bookings."))
 
         if self.instance and self.instance.initial_km is not None and final_km is not None:
