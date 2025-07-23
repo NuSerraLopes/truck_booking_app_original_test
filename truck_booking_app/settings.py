@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'booking_app',
     'crispy_forms',
     'crispy_bootstrap5',
+    'impersonate',
 ]
 
 AUTH_USER_MODEL = 'booking_app.User'
@@ -54,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'booking_app.middleware.UserLanguageMiddleware',
+    'impersonate.middleware.ImpersonateMiddleware',
 ]
 
 ROOT_URLCONF = 'truck_booking_app.urls'
@@ -188,8 +190,10 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-APP_VERSION = 'v0.10.0'
+APP_VERSION = 'v0.10.1'
 APP_UPDATE_DATE = date(2025, 7, 23)
+
+IMPERSONATE_PERMISSIONS = 'impersonate.permissions.staff'
 
 LOGGING = {
     "version": 1,

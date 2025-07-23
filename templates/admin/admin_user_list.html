@@ -44,6 +44,10 @@
                                 <td class="text-end">
                                     <a href="{% url 'booking_app:admin_user_edit' pk=user_obj.pk %}" class="btn btn-info btn-sm">{% translate "Edit" %}</a>
                                     <a href="#" class="btn btn-danger btn-sm disabled" aria-disabled="true">{% translate "Delete" %}</a> {# Placeholder for future delete #}
+                                    {% if request.user.is_admin_member and request.user != user_obj %}
+                                        <!-- Added ?next={{ request.path }} to return to this page -->
+                                        <a href="{% url 'impersonate-start' user_obj.id %}?next={{ request.path }}" class="btn btn-sm btn-warning">{% translate "Impersonate" %}</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}

@@ -47,10 +47,23 @@
                                 <a class="nav-link" href="{% url 'booking_app:group_dashboard' %}">{% translate "Group Dashboard" %}</a>
                             </li>
                         {% endif %}
-                        {% if user.is_admin_member %}
+                         {% if user.is_booking_admin_member %}
                              <li class="nav-item">
                                 <a class="nav-link" href="{% url 'booking_app:admin_dashboard' %}">{% translate "Admin Dashboard" %}</a>
                             </li>
+                        {% endif %}
+                        {% if request.user.is_impersonate %}
+                            <!-- First, resolve the URL and store it in a variable -->
+                            {% url 'impersonate-stop' as stop_impersonate_url %}
+                            <!-- The div now has custom styling for the background and text color -->
+                            <div style="background-color: #1554ff; color: white;" class="alert text-center mb-0" role="alert">
+                                <!-- The variable now correctly points to the user being impersonated -->
+                                {% blocktranslate with impersonated_user=request.user.username stop_url=stop_impersonate_url %}
+                                You are currently impersonating <strong>{{ impersonated_user }}</strong>.
+                                <!-- The link is also styled to be white -->
+                                <a href="{{ stop_url }}" style="color: white; text-decoration: underline;">Stop Impersonating</a>.
+                                {% endblocktranslate %}
+                            </div>
                         {% endif %}
                     {% endif %}
                 </ul>

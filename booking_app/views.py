@@ -30,9 +30,35 @@ from django.db.models.functions import TruncMonth
 def is_admin(user):
     return user.is_authenticated and user.is_admin_member
 
+def is_booking_manager(user):
+    """
+    Checks if a user is a full Admin or a Booking Admin.
+    This is used for views that both roles can access.
+    """
+    return user.is_authenticated and user.is_booking_admin_member
+
 def is_group_leader(user):
     """Checks if a user is in any of the team leader groups."""
     return user.groups.filter(name__in=['tlheavy', 'tllight', 'tlapv', 'sd']).exists() or user.is_admin_member
+
+def can_impersonate(request):
+    """
+    Returns True if the user is authenticated and is a member of the 'Admin' group.
+    """
+    print("\n--- DEBUG: Checking impersonate permissions from views.py ---")
+
+    is_auth = request.user.is_authenticated
+    print(f"User is authenticated: {is_auth}")
+
+    if is_auth:
+        is_admin_member = request.user.is_admin_member
+        print(f"User is_admin_member: {is_admin_member}")
+        result = is_admin_member
+    else:
+        result = False
+
+    print(f"Permission result: {result}\n")
+    return result
 
 def home(request):
     """
@@ -87,7 +113,7 @@ def logout_user(request):
 
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def vehicle_create_view(request):
     if request.method == 'POST':
         # --- DEBUGGING: Check if the file is in the request ---
@@ -114,7 +140,7 @@ def vehicle_create_view(request):
     return render(request, 'admin/admin_vehicle_create.html', {'form': form, 'page_title': _("Create New Vehicle")})
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def vehicle_edit_view(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
     if request.method == 'POST':
@@ -133,7 +159,7 @@ def vehicle_edit_view(request, pk):
     return render(request, 'admin/admin_vehicle_edit.html', context)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def vehicle_delete_view(request, pk):
     vehicle_to_delete = get_object_or_404(Vehicle, pk=pk)
     if vehicle_to_delete.bookings.exists():
@@ -233,7 +259,7 @@ def vehicle_list_view(request, group_name=None):
     return render(request, 'vehicle_list.html', context)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_vehicle_list_view(request):
     vehicles = Vehicle.objects.all()
     paginator = Paginator(vehicles, 10)
@@ -267,7 +293,7 @@ def vehicle_detail_view(request, pk):
 
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_vehicle_detail_view(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
     current_date = timezone.now().date()
@@ -674,6 +700,8 @@ def group_dashboard_view(request):
     user_groups = request.user.groups.values_list('name', flat=True)
 
     vehicle_types_to_manage = []
+    if 'Admin' in user_groups:
+        vehicle_types_to_manage.extend(['LIGHT', 'HEAVY','APV'])
     if 'sd' in user_groups:
         vehicle_types_to_manage.extend(['LIGHT', 'HEAVY'])
     if 'tlheavy' in user_groups:
@@ -721,6 +749,8 @@ def group_reports_view(request):
     user_groups = request.user.groups.values_list('name', flat=True)
 
     vehicle_types_to_manage = []
+    if 'Admin' in user_groups:
+        vehicle_types_to_manage.extend(['LIGHT', 'HEAVY','APV'])
     if 'sd' in user_groups:
         vehicle_types_to_manage.extend(['LIGHT', 'HEAVY'])
     if 'tlheavy' in user_groups:
@@ -772,8 +802,10 @@ def group_calendar_view(request):
     user_groups = request.user.groups.values_list('name', flat=True)
 
     vehicle_types_to_manage = []
+    if 'Admin' in user_groups:
+        vehicle_types_to_manage.extend(['LIGHT', 'HEAVY','APV'])
     if 'sd' in user_groups:
-        vehicle_types_to_manage.extend(['LIGHT', 'HEAVY', 'APV'])
+        vehicle_types_to_manage.extend(['LIGHT', 'HEAVY'])
     if 'tlheavy' in user_groups:
         vehicle_types_to_manage.append('HEAVY')
     if 'tllight' in user_groups:
@@ -899,7 +931,7 @@ def admin_user_reset_password_view(request, pk):
     return render(request, 'admin/admin_user_reset_password.html', context)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_dashboard_view(request):
     context = {'page_title': _("Admin Dashboard")}
     return render(request, 'admin/admin_dashboard.html', context)
@@ -1063,7 +1095,7 @@ def send_temporary_password_view(request, pk):
     return redirect('booking_app:admin_user_edit', pk=pk)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def location_create_view(request):
     if request.method == 'POST':
         form = LocationCreateForm(request.POST)
@@ -1079,7 +1111,7 @@ def location_create_view(request):
     return render(request, 'admin/admin_location_create.html', {'form': form, 'page_title': _("Create New Location")})
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def location_list_view(request):
     locations = Location.objects.all().order_by('name')
     paginator = Paginator(locations, 10)
@@ -1092,7 +1124,7 @@ def location_list_view(request):
     return render(request, 'admin/admin_location_list.html', context)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def location_edit_view(request, pk):
     location_to_edit = get_object_or_404(Location, pk=pk)
     if request.method == 'POST':
@@ -1114,7 +1146,7 @@ def location_edit_view(request, pk):
     return render(request, 'admin/admin_location_edit.html', context)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def location_delete_view(request, pk):
     location_to_delete = get_object_or_404(Location, pk=pk)
     is_used = Booking.objects.filter(
@@ -1208,7 +1240,7 @@ def group_delete_view(request, pk):
 
 # --- Admin Email Templates ---
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_email_template_list_view(request):
     templates = EmailTemplate.objects.all()
     context = {
@@ -1219,7 +1251,7 @@ def admin_email_template_list_view(request):
 
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_email_template_form_view(request, pk=None):
     if pk:
         template = get_object_or_404(EmailTemplate, pk=pk)
@@ -1246,7 +1278,7 @@ def admin_email_template_form_view(request, pk=None):
     return render(request, 'admin/admin_email_template_form.html', context)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_email_template_test_view(request, pk):
     """
     Sends a test version of an email template to the current user.
@@ -1299,7 +1331,7 @@ def admin_email_template_test_view(request, pk):
     return HttpResponseRedirect(reverse('booking_app:admin_email_template_list'))
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def email_log_list_view(request):
     """
     Displays a paginated list of all email logs.
@@ -1317,7 +1349,7 @@ def email_log_list_view(request):
     return render(request, 'admin/admin_email_log_list.html', context)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_dl_list_view(request):
     """
     Displays a list of all distribution lists.
@@ -1330,7 +1362,7 @@ def admin_dl_list_view(request):
     return render(request, 'admin/admin_dl_list.html', context)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_dl_form_view(request, pk=None):
     """
     Handles both creating and editing a distribution list.
@@ -1361,7 +1393,7 @@ def admin_dl_form_view(request, pk=None):
     return render(request, 'admin/admin_dl_form.html', context)
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_dl_delete_view(request, pk):
     """
     Handles the deletion of a distribution list.
@@ -1380,7 +1412,7 @@ def admin_dl_delete_view(request, pk):
 
 
 @login_required
-@user_passes_test(is_admin, login_url='booking_app:login_user')
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def automation_settings_view(request):
     settings_instance = AutomationSettings.load()
     if request.method == 'POST':

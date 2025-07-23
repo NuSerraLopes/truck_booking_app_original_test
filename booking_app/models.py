@@ -103,6 +103,14 @@ class User(AbstractBaseUser, PermissionsMixin):
         """
         return self.groups.filter(name='Admin').exists()
 
+    @property
+    def is_booking_admin_member(self):
+        """
+        Checks if the user is a full Admin OR a Booking Admin.
+        This will be used to grant access to most admin pages.
+        """
+        return self.groups.filter(name__in=['Admin', 'Booking Admin']).exists()
+
     def __str__(self):
         return self.username
 
@@ -189,7 +197,7 @@ class Vehicle(models.Model):
             elif self.vehicle_type == 'HEAVY':
                 self.picture = 'Default/heavy.jpg'
             else:
-                 self.picture = 'Default/no_image.jpg'
+                 self.picture = 'Default/no_image.png'
 
         super().save(*args, **kwargs)
 
