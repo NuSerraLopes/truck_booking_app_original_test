@@ -8,20 +8,39 @@
     <h1 class="mb-4">{% translate "Admin Dashboard" %}</h1>
 
     <div class="row">
-        <!-- User Management Card -->
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm text-center">
-                <div class="card-body d-flex flex-column">
-                    <h2 class="h5 card-title">{% translate "User Management" %}</h2>
-                    <p class="card-text text-muted">{% translate "Manage user accounts, permissions, and groups." %}</p>
-                    <div class="mt-auto">
-                        <div class="d-grid gap-2">
-                            <a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-primary">{% translate "View All Users" %}</a>
+        <!-- 👇 THIS SECTION IS NOW VISIBLE ONLY TO FULL ADMINS 👇 -->
+        {% if request.user.is_admin_member %}
+            <!-- User Management Card -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm text-center">
+                    <div class="card-body d-flex flex-column">
+                        <h2 class="h5 card-title">{% translate "User Management" %}</h2>
+                        <p class="card-text text-muted">{% translate "Manage user accounts, permissions, and groups." %}</p>
+                        <div class="mt-auto">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-primary">{% translate "View All Users" %}</a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            <!-- Group Management Card -->
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 shadow-sm text-center">
+                    <div class="card-body d-flex flex-column">
+                        <h2 class="h5 card-title">{% translate "Group Management" %}</h2>
+                        <p class="card-text text-muted">{% translate "Manage user groups and their permissions." %}</p>
+                        <div class="mt-auto">
+                            <div class="d-grid gap-2">
+                                <a href="{% url 'booking_app:admin_group_list' %}" class="btn btn-primary">{% translate "Manage Groups" %}</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+        <!-- 👆 END OF ADMIN-ONLY SECTION 👆 -->
 
         <!-- Vehicle Management Card -->
         <div class="col-md-6 col-lg-4 mb-4">
@@ -47,21 +66,6 @@
                     <div class="mt-auto">
                         <div class="d-grid gap-2">
                             <a href="{% url 'booking_app:admin_location_list' %}" class="btn btn-primary">{% translate "View All Locations" %}</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Group Management Card -->
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm text-center">
-                <div class="card-body d-flex flex-column">
-                    <h2 class="h5 card-title">{% translate "Group Management" %}</h2>
-                    <p class="card-text text-muted">{% translate "Manage user groups and their permissions." %}</p>
-                    <div class="mt-auto">
-                        <div class="d-grid gap-2">
-                            <a href="{% url 'booking_app:admin_group_list' %}" class="btn btn-primary">{% translate "Manage Groups" %}</a>
                         </div>
                     </div>
                 </div>
