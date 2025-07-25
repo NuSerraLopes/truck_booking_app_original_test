@@ -23,6 +23,7 @@
                     {% endif %}
 
                     <div id="date-validation-error" class="alert alert-danger" style="display: none;"></div>
+                    <div id="crc-lookup-message" class="alert" style="display: none;"></div>
 
                     {% crispy form %}
                 </div>
@@ -31,107 +32,183 @@
     </div>
 </div>
 
-{# --- Add Flatpickr JS --- #}
 <script src="/static/js/flatpickr.min.js"></script>
-
-{# --- UPDATED: Final JavaScript Logic --- #}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // --- FORM ELEMENTS ---
+    const crcInput = document.getElementById('id_client_company_registration');
+    const companyNameInput = document.getElementById('id_customer_name');
+    const nifInput = document.getElementById('id_client_tax_number');
     const startDateInput = document.getElementById('id_start_date');
     const endDateInput = document.getElementById('id_end_date');
-    const submitButton = document.querySelector('button[type="submit"]');
-    const errorMessageDiv = document.getElementById('date-validation-error');
+    const phoneNumberInput = document.getElementById('id_customer_phone');
+    const emailInput = document.getElementById('id_customer_email');
+    const startLocationInput = document.getElementById('id_start_location');
+    const endLocationInput = document.getElementById('id_end_location');
+    const contractInput = document.getElementById('id_contract_document');
+    const motiveInput = document.getElementById('id_motive');
+    const submitButton = document.querySelector('input[type="submit"]');
+    const dateErrorDiv = document.getElementById('date-validation-error');
+    const crcMessageDiv = document.getElementById('crc-lookup-message');
 
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    // --- GET SETTING FROM DJANGO ---
+    const crcIsMandatory = {{ crc_is_mandatory|yesno:"true,false" }};
 
-    const unavailableRanges = JSON.parse('{{ unavailable_ranges_json|default:"[]"|safe }}');
+    // --- STATE MANAGEMENT ---
+    let isCrcVerified = false;
 
-    const disabledDates = unavailableRanges.map(range => ({
-        from: range.start,
-        to: range.end
-    }));
+    // --- HELPER FUNCTIONS ---
+    const fieldsToToggle = [
+        companyNameInput, nifInput, startDateInput, endDateInput, emailInput,
+        startLocationInput, endLocationInput, contractInput, motiveInput, phoneNumberInput
+    ];
 
-    function validateDates() {
-        errorMessageDiv.style.display = 'none';
-        errorMessageDiv.textContent = '';
-        submitButton.disabled = false;
-
-        const start = startDateInput.value;
-        const end = endDateInput.value;
-
-        if (!start || !end) {
-            submitButton.disabled = true;
-            return;
-        }
-
-        const startDate = new Date(start + 'T00:00:00');
-        const endDate = new Date(end + 'T00:00:00');
-
-        if (startDate > endDate) {
-            errorMessageDiv.textContent = "{% translate 'The end date must be on or after the start date.' %}";
-            errorMessageDiv.style.display = 'block';
-            submitButton.disabled = true;
+    function toggleFormFields(enable) {
+        fieldsToToggle.forEach(field => {
+            if (field) {
+                field.disabled = !enable;
+            }
+        });
+        if (!enable) {
+            fpStart.clear();
+            fpEnd.clear();
+            endDateInput.disabled = true;
         }
     }
 
-    // --- Flatpickr Configuration ---
-    const fpStart = flatpickr(startDateInput, {
-        dateFormat: "Y-m-d",
-        minDate: tomorrow,
-        disable: disabledDates,
-        onChange: function(selectedDates, dateStr, instance) {
-            if (selectedDates[0]) {
-                const selectedStartDate = selectedDates[0];
+    function validateFormState() {
+        let datesAreValid = false;
+        const start = startDateInput.value;
+        const end = endDateInput.value;
 
-                // Enable the end date picker
-                fpEnd.set('minDate', selectedStartDate);
-                endDateInput.disabled = false;
-
-                // Find the next unavailable period after the selected start date
-                let nextUnavailableStart = null;
-                for (const range of unavailableRanges) {
-                    const rangeStart = new Date(range.start);
-                    if (rangeStart > selectedStartDate) {
-                        if (!nextUnavailableStart || rangeStart < nextUnavailableStart) {
-                            nextUnavailableStart = rangeStart;
-                        }
-                    }
-                }
-
-                // If there is a next booking, set the max date for the end picker
-                if (nextUnavailableStart) {
-                    // This is the start of the buffer for the next booking
-                    const maxDate = new Date(nextUnavailableStart.getTime());
-                    fpEnd.set('maxDate', maxDate);
-                } else {
-                    // If no next booking, clear any previous max date constraint
-                    fpEnd.set('maxDate', null);
-                }
-
-                // If the current end date is now invalid, clear it
-                if (endDateInput.value && (new Date(endDateInput.value) < selectedStartDate || (nextUnavailableStart && new Date(endDateInput.value) > nextUnavailableStart))) {
-                    fpEnd.clear();
-                }
+        if (start && end) {
+            const startDate = new Date(start + 'T00:00:00');
+            const endDate = new Date(end + 'T00:00:00');
+            if (startDate <= endDate) {
+                datesAreValid = true;
+                dateErrorDiv.style.display = 'none';
+            } else {
+                dateErrorDiv.textContent = "{% translate 'The end date must be on or after the start date.' %}";
+                dateErrorDiv.style.display = 'block';
             }
-            validateDates();
+        } else {
+            dateErrorDiv.style.display = 'none';
         }
-    });
+
+        if (submitButton) {
+            const crcConditionMet = crcIsMandatory ? isCrcVerified : true;
+            submitButton.disabled = !(datesAreValid && crcConditionMet);
+        }
+    }
+
+    // --- FLATICKR DATE PICKER LOGIC ---
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const unavailableRanges = JSON.parse('{{ unavailable_ranges_json|default:"[]"|safe }}');
+    const disabledDates = unavailableRanges.map(range => ({ from: range.start, to: range.end }));
 
     const fpEnd = flatpickr(endDateInput, {
         dateFormat: "Y-m-d",
         minDate: tomorrow,
         disable: disabledDates,
-        onChange: function(selectedDates, dateStr, instance) {
-            validateDates();
+        onChange: function() {
+            validateFormState();
         }
     });
 
-    // Initially disable the end date picker
-    endDateInput.disabled = true;
+    const fpStart = flatpickr(startDateInput, {
+        dateFormat: "Y-m-d",
+        minDate: tomorrow,
+        disable: disabledDates,
+        onChange: function(selectedDates) {
+            if (selectedDates[0]) {
+                fpEnd.set('minDate', selectedDates[0]);
+                endDateInput.disabled = false;
+            }
+            validateFormState();
+        }
+    });
 
-    // Initial validation check
-    validateDates();
+    // --- CRC COMPANY LOOKUP LOGIC ---
+    crcInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/\D/g, '').substring(0, 12);
+        if (value.length > 8) {
+            value = value.replace(/(\d{4})(\d{4})(\d{1,4})/, '$1-$2-$3');
+        } else if (value.length > 4) {
+            value = value.replace(/(\d{4})(\d{1,4})/, '$1-$2');
+        }
+        e.target.value = value;
+
+        if (isCrcVerified) {
+            isCrcVerified = false;
+            if (crcIsMandatory) {
+                toggleFormFields(false);
+            }
+            companyNameInput.value = '';
+            nifInput.value = '';
+            crcMessageDiv.style.display = 'none';
+            validateFormState();
+        }
+    });
+
+    const verifyButton = document.createElement('button');
+    verifyButton.textContent = '{% translate "Verify" %}';
+    verifyButton.type = 'button';
+    verifyButton.className = 'btn btn-sm btn-info ms-2';
+    crcInput.parentNode.appendChild(verifyButton);
+
+    verifyButton.addEventListener('click', function() {
+        const crcValue = crcInput.value.trim();
+        if (!crcValue) {
+            alert('{% translate "Please enter a Company Registration Code first." %}');
+            return;
+        }
+
+        crcMessageDiv.className = 'alert alert-info';
+        crcMessageDiv.textContent = '{% translate "Looking up company..." %}';
+        crcMessageDiv.style.display = 'block';
+        verifyButton.disabled = true;
+        isCrcVerified = false;
+        validateFormState();
+
+        fetch(`{% url 'booking_app:get_company_details' %}?crc=${encodeURIComponent(crcValue)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    crcMessageDiv.className = 'alert alert-danger';
+                    crcMessageDiv.textContent = data.error;
+                    isCrcVerified = false;
+                    if (crcIsMandatory) toggleFormFields(false);
+                } else {
+                    crcMessageDiv.className = 'alert alert-success';
+                    crcMessageDiv.textContent = `{% translate "Company found:" %} ${data.company_name}`;
+                    companyNameInput.value = data.company_name;
+                    nifInput.value = data.nif;
+                    isCrcVerified = true;
+                    toggleFormFields(true);
+                }
+            })
+            .catch(error => {
+                crcMessageDiv.className = 'alert alert-danger';
+                crcMessageDiv.textContent = '{% translate "An unexpected error occurred. Please try again." %}';
+                console.error('Fetch error:', error);
+                isCrcVerified = false;
+                if (crcIsMandatory) toggleFormFields(false);
+            })
+            .finally(() => {
+                verifyButton.disabled = false;
+                validateFormState();
+            });
+    });
+
+    // --- INITIAL STATE ---
+    if (crcIsMandatory) {
+        toggleFormFields(false);
+    } else {
+        toggleFormFields(true);
+        endDateInput.disabled = true;
+    }
+    validateFormState();
 });
 </script>
 {% endblock %}

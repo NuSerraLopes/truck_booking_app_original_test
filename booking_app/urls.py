@@ -83,6 +83,7 @@ urlpatterns = [
 
     # --- Full Calendar API ---
     path('api/bookings/', views.booking_api_view, name='booking_api'),
+    path('api/get-company-details/', views.get_company_details_view, name='get_company_details'),
 ]
 
 # Serve media and static files during development

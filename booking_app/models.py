@@ -493,6 +493,13 @@ class AutomationSettings(models.Model):
         help_text=_("Send a reminder if a booking has been in 'Pending' status for this many days.")
     )
 
+    require_crc_verification = models.BooleanField(
+        _("Require Company Verification via CRC"),
+        default=True,
+        help_text=_(
+            "If checked, users must successfully verify a company's CRC before they can fill out the rest of the booking form.")
+    )
+
     def save(self, *args, **kwargs):
         """Ensure there is only one instance of this model."""
         self.pk = 1

@@ -1,5 +1,9 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\views.py
 import json
+import requests
+import re
+from bs4 import BeautifulSoup
+from django.http import JsonResponse
 from django.utils.crypto import get_random_string
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator
@@ -161,6 +165,10 @@ def vehicle_detail_view(request, pk):
 @login_required
 def book_vehicle_view(request, vehicle_pk):
     vehicle = get_object_or_404(Vehicle, pk=vehicle_pk)
+
+    settings = AutomationSettings.load()
+    crc_is_mandatory = settings.require_crc_verification
+
     if vehicle.vehicle_type == 'APV':
         unavailable_statuses = ['pending', 'confirmed', 'pending_final_km']
     else:
@@ -205,6 +213,7 @@ def book_vehicle_view(request, vehicle_pk):
         'form': form, 'vehicle': vehicle,
         'next_booking_start_date': next_booking.start_date if next_booking else None,
         'unavailable_ranges_json': json.dumps(unavailable_ranges),
+        'crc_is_mandatory': crc_is_mandatory,
     }
     return render(request, 'book_vehicle.html', context)
 
@@ -1131,3 +1140,75 @@ def my_bookings_api_view(request):
             'backColor': color_map.get(booking.vehicle.vehicle_type, '#dddddd'),
         })
     return JsonResponse(events, safe=False)
+
+
+@login_required
+def get_company_details_view(request):
+    """
+    Receives a CRC via a GET parameter, scrapes the government website,
+    and returns the company's name, NIF, and address as JSON.
+    """
+    crc = request.GET.get('crc', None)
+    if not crc:
+        return JsonResponse({'error': _('CRC code is required.')}, status=400)
+
+    url = f"https://www2.gov.pt/RegistoOnline/Services/CertidaoPermanente/consultaCertidao.aspx?id={crc}"
+
+    try:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # --- UPDATED ERROR CHECK ---
+            # Look for the specific error span with id="lblErrorList"
+            error_span = soup.find('span', id='lblErrorList')
+            if error_span and "Não existe qualquer certidão com esse número." in error_span.get_text():
+                return JsonResponse({'error': _("Company not found or CRC is invalid.")}, status=404)
+
+            # --- PARSING LOGIC (remains the same if no error is found) ---
+            details_table = soup.find('table', class_='tabela_matricula')
+            if not details_table:
+                return JsonResponse({'error': _("Could not find the details table on the page.")}, status=404)
+
+            details_td = details_table.find_all('tr')[1].find('td')
+            if not details_td:
+                return JsonResponse({'error': _("Could not find the details cell on the page.")}, status=404)
+
+            full_text = details_td.get_text(separator='\n', strip=True)
+            lines = [line.strip() for line in full_text.split('\n')]
+
+            company_data = {}
+            address_parts = []
+            capture_address = False
+
+            for i, line in enumerate(lines):
+                if line == 'NIPC:':
+                    company_data['nif'] = lines[i + 1]
+                elif line == 'Firma:':
+                    company_data['company_name'] = lines[i + 1]
+                elif line == 'Sede:':
+                    address_parts.append(lines[i + 1])
+                    capture_address = True
+                elif capture_address:
+                    if re.match(r'\d{4}\s*-\s*\d{3}', line):
+                        address_parts.append(line)
+                        capture_address = False
+                    elif ':' in line:
+                        capture_address = False
+
+            company_data['address'] = ' '.join(address_parts)
+
+            if 'nif' in company_data and 'company_name' in company_data and 'address' in company_data:
+                return JsonResponse(company_data)
+            else:
+                return JsonResponse({'error': _("Could not parse all required company details from the page.")},
+                                    status=404)
+        else:
+            return JsonResponse({'error': _(f"Server responded with status {response.status_code}")}, status=500)
+
+    except requests.exceptions.RequestException as e:
+        return JsonResponse({'error': _(f"An error occurred: {e}")}, status=500)

@@ -31,9 +31,13 @@
                             {{ form.reminder_days_pending|as_crispy_field }}
                         </div>
 
+                        <div class="form-check form-switch mb-3">
+                            {{ form.require_crc_verification|as_crispy_field }}
+                        </div>
+
                         <div class="d-flex justify-content-end gap-2 mt-4">
-                            <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary">{% translate "Back to Dashboard" %}</a>
                             <button type="submit" class="btn btn-primary">{% translate "Save Settings" %}</button>
+                            <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary">{% translate "Back to Dashboard" %}</a>
                         </div>
                     </form>
                 </div>

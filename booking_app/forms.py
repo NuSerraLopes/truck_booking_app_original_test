@@ -560,14 +560,18 @@ class AutomationSettingsForm(forms.ModelForm):
             'pending_booking_automation_active',
             'enable_pending_reminders',
             'reminder_days_pending',
+            'require_crc_verification',
         ]
         labels = {
             'enable_pending_reminders': _("Enable Reminders for Pending Bookings"),
             'reminder_days_pending': _("Send Reminder After (Days)"),
+            'require_crc_verification': _("Require Company Verification (CRC)"),
         }
         help_texts = {
             'enable_pending_reminders': _("If checked, the system will send reminders for bookings that are pending for too long."),
             'reminder_days_pending': _("The number of days a booking can be in 'Pending' status before a reminder is sent."),
+            'require_crc_verification': _(
+                "If checked, the booking form will be locked until a valid CRC is entered and verified."),
         }
 
 class BookingFilterForm(forms.Form):

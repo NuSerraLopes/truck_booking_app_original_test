@@ -6,6 +6,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.template import Template, Context
 import logging
+import requests
 
 from .models import EmailTemplate, DistributionList, EmailLog
 
@@ -101,3 +102,63 @@ def send_booking_notification(event_trigger, booking_instance=None, context_data
             for recipient in final_recipient_list:
                 EmailLog.objects.create(recipient=recipient, subject=rendered_subject, status='failed', error_message=error_message)
             logger.error(f"FAILED to send email using template '{template_obj.name}'. Error: {error_message}")
+
+            def check_company_by_crc(crc: str):
+
+                url = f"https://www2.gov.pt/RegistoOnline/Services/CertidaoPermanente/consultaCertidao.aspx?id={crc}"
+
+                print(f"\nChecking for company with CRC: {crc}...")
+
+                try:
+                    # Perform the GET request. It's good practice to set a timeout.
+                    # We add headers to mimic a real browser request.
+                    headers = {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    }
+                    response = requests.get(url, headers=headers, timeout=10)
+
+                    # Check if the request was successful (HTTP status code 200)
+                    if response.status_code == 200:
+                        # The page returns a 200 status even for invalid codes.
+                        # We must check the content of the page for the specific error message.
+                        error_message = "O código de acesso introduzido não é válido"
+
+                        if error_message in response.text:
+                            # If the error message is found, the company does not exist.
+                            return False
+                        else:
+                            # If the error message is NOT found, the page is valid, so the company exists.
+                            return True
+                    else:
+                        # The request failed with an HTTP error (e.g., 404 Not Found, 500 Server Error)
+                        print(f"Error: The server responded with status code {response.status_code}")
+                        return False
+
+                except requests.exceptions.RequestException as e:
+                    # Handle network-related errors (e.g., no internet connection, DNS failure)
+                    print(f"An error occurred during the request: {e}")
+                    return False
+
+            # --- Main execution block to demonstrate the function ---
+            if __name__ == "__main__":
+                # Example 1: A CRC that is likely to be valid (using a common format)
+                # Note: You will need to use a real, valid CRC code for a successful test.
+                existing_crc = "1234-5678-9012"
+                company_exists = check_company_by_crc(existing_crc)
+
+                if company_exists:
+                    print(f"Success! A company with CRC '{existing_crc}' was found.")
+                else:
+                    # If False was returned, print the specific error message
+                    print("Result: company don't exist")
+
+                print("-" * 30)
+
+                # Example 2: A CRC that is very unlikely to exist
+                non_existing_crc = "0000-0000-0000"
+                company_exists = check_company_by_crc(non_existing_crc)
+
+                if company_exists:
+                    print(f"Success! A company with CRC '{non_existing_crc}' was found.")
+                else:
+                    print("Result: company don't exist")
