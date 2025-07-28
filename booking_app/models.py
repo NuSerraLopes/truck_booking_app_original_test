@@ -240,7 +240,14 @@ class Booking(models.Model):
     customer_phone = models.CharField(max_length=20, blank=True, null=True)
     client_tax_number = models.CharField(max_length=50, blank=False, verbose_name=_("Client Tax Number"))
     client_company_registration = models.CharField(max_length=100, blank=False,
-                                                   verbose_name=_("Permanent registration certificate code"))
+                                                   verbose_name=_("Client CRC"))
+
+    customer_address = models.TextField(
+        _("Customer Address"),
+        blank=True,
+        null=True,
+        help_text=_("The address of the customer, can be auto-filled from VAT validation.")
+    )
 
     start_date = models.DateField()
     end_date = models.DateField()

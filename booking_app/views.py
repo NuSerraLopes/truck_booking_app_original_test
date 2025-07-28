@@ -1212,3 +1212,59 @@ def get_company_details_view(request):
 
     except requests.exceptions.RequestException as e:
         return JsonResponse({'error': _(f"An error occurred: {e}")}, status=500)
+
+@login_required
+def get_vies_countries_view(request):
+    """
+    Fetches the list of available member states from the VIES check-status API.
+    """
+    api_url = "https://ec.europa.eu/taxation_customs/vies/rest-api/check-status"
+    try:
+        response = requests.get(api_url, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            # We only need the list of countries
+            countries = data.get('countries', [])
+            return JsonResponse(countries, safe=False)
+        else:
+            return JsonResponse([], safe=False) # Return empty list on error
+    except requests.exceptions.RequestException:
+        return JsonResponse([], safe=False)
+
+@login_required
+def validate_vat_view(request):
+    """
+    Receives a VAT number and a country code, and validates it against the VIES REST API.
+    """
+    vat_number = request.GET.get('vat_number', None)
+    country_code = request.GET.get('country_code', None) # 👈 Now dynamic
+
+    if not all([vat_number, country_code]):
+        return JsonResponse({'error': _('Country code and VAT number are required.')}, status=400)
+
+    api_url = "https://ec.europa.eu/taxation_customs/vies/rest-api/check-vat-number"
+    payload = {
+        "countryCode": country_code,
+        "vatNumber": vat_number
+    }
+
+    try:
+        response = requests.post(api_url, json=payload, timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            is_valid = data.get('valid', False)
+            if is_valid:
+                return JsonResponse({
+                    'valid': True,
+                    'company_name': data.get('name', ''),
+                    'address': data.get('address', ''),
+                })
+            else:
+                return JsonResponse({'valid': False, 'error': _('Invalid VAT number for the selected country.')}, status=404)
+        else:
+            error_details = response.json()
+            error_message = error_details.get('message', 'VIES service returned an error.')
+            return JsonResponse({'valid': False, 'error': _(error_message)}, status=response.status_code)
+
+    except requests.exceptions.RequestException:
+        return JsonResponse({'valid': False, 'error': _('Could not connect to the VIES service.')}, status=503)

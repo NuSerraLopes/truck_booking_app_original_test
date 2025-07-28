@@ -81,9 +81,11 @@ urlpatterns = [
     path('admin-dashboard/distribution-lists/delete/<int:pk>/', views.admin_dl_delete_view, name='admin_dl_delete'),
     path('admin-dashboard/settings/', views.automation_settings_view, name='automation_settings'),
 
-    # --- Full Calendar API ---
+    # API URLs
     path('api/bookings/', views.booking_api_view, name='booking_api'),
     path('api/get-company-details/', views.get_company_details_view, name='get_company_details'),
+    path('api/validate-vat/', views.validate_vat_view, name='validate_vat'),
+    path('api/get-vies-countries/', views.get_vies_countries_view, name='get_vies_countries'),
 ]
 
 # Serve media and static files during development

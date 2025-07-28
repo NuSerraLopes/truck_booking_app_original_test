@@ -14,16 +14,9 @@
                 <div class="card-body">
                     <h1 class="card-title text-center mb-4">{% translate "Book" %} {{ vehicle.model }} ({{ vehicle.license_plate }})</h1>
 
-                    {% if vehicle.available_after %}
-                        <div class="alert alert-info" role="alert">
-                            <p class="mb-0">
-                                {% translate "This vehicle is available for booking on or after" %} <strong>{{ vehicle.available_after|date:"Y-m-d" }}</strong>.
-                            </p>
-                        </div>
-                    {% endif %}
-
                     <div id="date-validation-error" class="alert alert-danger" style="display: none;"></div>
                     <div id="crc-lookup-message" class="alert" style="display: none;"></div>
+                    <div id="vat-lookup-message" class="alert" style="display: none;"></div>
 
                     {% crispy form %}
                 </div>
@@ -39,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const crcInput = document.getElementById('id_client_company_registration');
     const companyNameInput = document.getElementById('id_customer_name');
     const nifInput = document.getElementById('id_client_tax_number');
+    const addressInput = document.getElementById('id_customer_address');
     const startDateInput = document.getElementById('id_start_date');
     const endDateInput = document.getElementById('id_end_date');
     const phoneNumberInput = document.getElementById('id_customer_phone');
@@ -50,30 +44,44 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitButton = document.querySelector('input[type="submit"]');
     const dateErrorDiv = document.getElementById('date-validation-error');
     const crcMessageDiv = document.getElementById('crc-lookup-message');
-
-    // --- GET SETTING FROM DJANGO ---
-    const crcIsMandatory = {{ crc_is_mandatory|yesno:"true,false" }};
+    const vatMessageDiv = document.getElementById('vat-lookup-message');
 
     // --- STATE MANAGEMENT ---
     let isCrcVerified = false;
+    let isVatVerified = false;
 
     // --- HELPER FUNCTIONS ---
-    const fieldsToToggle = [
-        companyNameInput, nifInput, startDateInput, endDateInput, emailInput,
-        startLocationInput, endLocationInput, contractInput, motiveInput, phoneNumberInput
-    ];
+    const identityFields = [companyNameInput, addressInput];
+    const contactFields = [phoneNumberInput, emailInput];
+    const bookingFields = [startDateInput, endDateInput, startLocationInput, endLocationInput, contractInput, motiveInput];
 
-    function toggleFormFields(enable) {
-        fieldsToToggle.forEach(field => {
+    function toggleFields(fields, enable) {
+        fields.forEach(field => {
             if (field) {
                 field.disabled = !enable;
             }
         });
+    }
+
+    function toggleContactFields(enable) {
+        toggleFields(contactFields, enable);
+    }
+
+    function toggleBookingFields(enable) {
+        toggleFields(bookingFields, enable);
         if (!enable) {
             fpStart.clear();
             fpEnd.clear();
             endDateInput.disabled = true;
         }
+    }
+
+    function setFieldsReadOnly(fields, isReadOnly) {
+        fields.forEach(field => {
+            if (field) {
+                field.readOnly = isReadOnly;
+            }
+        });
     }
 
     function validateFormState() {
@@ -92,12 +100,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 dateErrorDiv.style.display = 'block';
             }
         } else {
-            dateErrorDiv.style.display = 'none';
+            datesAreValid = false;
         }
 
         if (submitButton) {
-            const crcConditionMet = crcIsMandatory ? isCrcVerified : true;
-            submitButton.disabled = !(datesAreValid && crcConditionMet);
+            submitButton.disabled = !(datesAreValid && (isCrcVerified || isVatVerified));
         }
     }
 
@@ -129,86 +136,238 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // --- CRC COMPANY LOOKUP LOGIC ---
-    crcInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '').substring(0, 12);
-        if (value.length > 8) {
-            value = value.replace(/(\d{4})(\d{4})(\d{1,4})/, '$1-$2-$3');
-        } else if (value.length > 4) {
-            value = value.replace(/(\d{4})(\d{1,4})/, '$1-$2');
-        }
-        e.target.value = value;
+    // --- DYNAMIC COUNTRY SELECTOR ---
+    const nifWrapperDiv = document.getElementById('div_id_client_tax_number');
+    if (nifInput && nifWrapperDiv) {
+        const countrySelect = document.createElement('select');
+        countrySelect.id = 'id_country_code';
+        countrySelect.className = 'form-select';
+        countrySelect.style.flex = '0 0 100px';
 
-        if (isCrcVerified) {
-            isCrcVerified = false;
-            if (crcIsMandatory) {
-                toggleFormFields(false);
+        const flagImage = document.createElement('img');
+        flagImage.className = 'input-group-text';
+        flagImage.style.padding = '0.375rem'; // Use standard bootstrap padding
+        flagImage.style.height = 'auto';
+        flagImage.alt = 'Selected country flag';
+
+        const inputGroupWrapper = document.createElement('div');
+        inputGroupWrapper.className = 'input-group';
+
+        // Move the original nifInput into the new wrapper
+        nifInput.parentElement.replaceChild(inputGroupWrapper, nifInput);
+        inputGroupWrapper.appendChild(flagImage);
+        inputGroupWrapper.appendChild(countrySelect);
+        inputGroupWrapper.appendChild(nifInput);
+
+        const verifyNifButtonContainer = document.createElement('div');
+        verifyNifButtonContainer.className = 'text-end mt-2';
+        const verifyNifButton = document.createElement('button');
+        verifyNifButton.type = 'button';
+        verifyNifButton.className = 'btn btn-info btn-sm';
+        verifyNifButton.textContent = '{% translate "Verify VAT" %}';
+        verifyNifButtonContainer.appendChild(verifyNifButton);
+        nifWrapperDiv.appendChild(verifyNifButtonContainer);
+
+        function updateFlag(countryCode) {
+            let flagCode = countryCode.toLowerCase();
+            if (flagCode === 'el') {
+                flagCode = 'gr';
+            } else if (flagCode === 'xi') {
+                flagCode = 'gb';
             }
-            companyNameInput.value = '';
-            nifInput.value = '';
-            crcMessageDiv.style.display = 'none';
-            validateFormState();
+            flagImage.src = `https://flagcdn.com/w40/${flagCode}.png`;
         }
+
+        fetch("{% url 'booking_app:get_vies_countries' %}")
+            .then(response => response.json())
+            .then(countries => {
+                countries.forEach(country => {
+                    const option = document.createElement('option');
+                    option.value = country.countryCode;
+                    option.textContent = country.countryCode;
+                    if (country.countryCode === 'PT') {
+                        option.selected = true;
+                    }
+                    countrySelect.appendChild(option);
+                });
+                updateFlag(countrySelect.value);
+            });
+
+        countrySelect.addEventListener('change', function() {
+            updateFlag(this.value);
+            if (nifInput.value) {
+                verifyVat(nifInput.value);
+            }
+            nifInput.value = '';
+            nifInput.dispatchEvent(new Event('input'));
+        });
+
+        verifyNifButton.addEventListener('click', function() {
+            if (nifInput.value) {
+                verifyVat(nifInput.value);
+            } else {
+                alert('{% translate "Please enter a VAT number first." %}');
+            }
+        });
+    }
+
+
+    // --- VAT/NIF VALIDATION LOGIC ---
+    nifInput.addEventListener('input', function(e) {
+        let value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
+        e.target.value = value.toUpperCase();
+        isVatVerified = false;
+        vatMessageDiv.style.display = 'none';
+        companyNameInput.value = '';
+        addressInput.value = '';
+        validateFormState();
     });
 
-    const verifyButton = document.createElement('button');
-    verifyButton.textContent = '{% translate "Verify" %}';
-    verifyButton.type = 'button';
-    verifyButton.className = 'btn btn-sm btn-info ms-2';
-    crcInput.parentNode.appendChild(verifyButton);
+    function verifyVat(vatNumber) {
+        const countryCode = document.getElementById('id_country_code').value;
+        vatMessageDiv.className = 'alert alert-info';
+        vatMessageDiv.textContent = '{% translate "Verifying VAT number..." %}';
+        vatMessageDiv.style.display = 'block';
 
-    verifyButton.addEventListener('click', function() {
-        const crcValue = crcInput.value.trim();
-        if (!crcValue) {
-            alert('{% translate "Please enter a Company Registration Code first." %}');
-            return;
-        }
-
-        crcMessageDiv.className = 'alert alert-info';
-        crcMessageDiv.textContent = '{% translate "Looking up company..." %}';
-        crcMessageDiv.style.display = 'block';
-        verifyButton.disabled = true;
-        isCrcVerified = false;
-        validateFormState();
-
-        fetch(`{% url 'booking_app:get_company_details' %}?crc=${encodeURIComponent(crcValue)}`)
-            .then(response => response.json())
+        fetch(`{% url 'booking_app:validate_vat' %}?country_code=${countryCode}&vat_number=${vatNumber}`)
+            .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
             .then(data => {
-                if (data.error) {
-                    crcMessageDiv.className = 'alert alert-danger';
-                    crcMessageDiv.textContent = data.error;
-                    isCrcVerified = false;
-                    if (crcIsMandatory) toggleFormFields(false);
+                var companyName;
+                if (data.valid) {
+                    if (data.company_name === "---") {
+                        vatMessageDiv.className = 'alert alert-success';
+                        vatMessageDiv.textContent = '{% translate "VAT number is valid. But no company name provided" %}';
+                        setFieldsReadOnly(identityFields, false);
+                        toggleFields(identityFields, true);
+                        toggleContactFields(true);
+                        toggleBookingFields(true);
+                    } else {
+                        vatMessageDiv.className = 'alert alert-success';
+                        vatMessageDiv.textContent = `{% translate "VAT number is valid." %} ${data.company_name || ''}`;
+                        isVatVerified = true;
+                        if (!companyNameInput.value) companyNameInput.value = data.company_name || '';
+                        if (!addressInput.value) addressInput.value = (data.address || '').replace(/\\n/g, ', ').replace(/---/g, '').trim();
+                        toggleContactFields(true);
+                        toggleBookingFields(true);
+                        setFieldsReadOnly(identityFields, true);
+                    }
                 } else {
-                    crcMessageDiv.className = 'alert alert-success';
-                    crcMessageDiv.textContent = `{% translate "Company found:" %} ${data.company_name}`;
-                    companyNameInput.value = data.company_name;
-                    nifInput.value = data.nif;
-                    isCrcVerified = true;
-                    toggleFormFields(true);
+                    vatMessageDiv.className = 'alert alert-danger';
+                    vatMessageDiv.textContent = data.error || '{% translate "Invalid VAT number." %}';
+                    isVatVerified = false;
                 }
             })
             .catch(error => {
-                crcMessageDiv.className = 'alert alert-danger';
-                crcMessageDiv.textContent = '{% translate "An unexpected error occurred. Please try again." %}';
-                console.error('Fetch error:', error);
-                isCrcVerified = false;
-                if (crcIsMandatory) toggleFormFields(false);
+                console.error("VAT fetch failed:", error);
+                vatMessageDiv.className = 'alert alert-danger';
+                vatMessageDiv.textContent = '{% translate "An error occurred during VAT verification." %}';
+                isVatVerified = false;
             })
             .finally(() => {
-                verifyButton.disabled = false;
                 validateFormState();
             });
-    });
+    }
+
+    // --- CRC COMPANY LOOKUP LOGIC ---
+    const crcWrapperDiv = document.getElementById('div_id_client_company_registration');
+    if (crcInput && crcWrapperDiv) {
+        const verifyCrcButtonContainer = document.createElement('div');
+        verifyCrcButtonContainer.className = 'text-end mt-2';
+        const verifyCrcButton = document.createElement('button');
+        verifyCrcButton.textContent = '{% translate "Verify CRC" %}';
+        verifyCrcButton.type = 'button';
+        verifyCrcButton.className = 'btn btn-sm btn-info';
+        verifyCrcButtonContainer.appendChild(verifyCrcButton);
+        crcWrapperDiv.appendChild(verifyCrcButtonContainer);
+
+        verifyCrcButton.addEventListener('click', function() {
+            const crcValue = crcInput.value.trim();
+            if (!crcValue) {
+                alert('{% translate "Please enter a Company Registration Code first." %}');
+                return;
+            }
+            crcMessageDiv.className = 'alert alert-info';
+            crcMessageDiv.textContent = '{% translate "Looking up company..." %}';
+            crcMessageDiv.style.display = 'block';
+            verifyCrcButton.disabled = true;
+            isCrcVerified = false;
+            validateFormState();
+            fetch(`{% url 'booking_app:get_company_details' %}?crc=${encodeURIComponent(crcValue)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        crcMessageDiv.className = 'alert alert-danger';
+                        crcMessageDiv.textContent = data.error;
+                        isCrcVerified = false;
+                        toggleContactFields(false);
+                        toggleBookingFields(false);
+                    } else {
+                        crcMessageDiv.className = 'alert alert-success';
+                        crcMessageDiv.textContent = `{% translate "Company found:" %} ${data.company_name}`;
+                        if (!companyNameInput.value) companyNameInput.value = data.company_name;
+                        if (!nifInput.value) nifInput.value = data.nif;
+                        if (!addressInput.value) addressInput.value = data.address;
+                        isCrcVerified = true;
+                        toggleContactFields(true);
+                        toggleBookingFields(true);
+                        setFieldsReadOnly(identityFields, true);
+                        if (data.nif) {
+                            verifyVat(data.nif);
+                        }
+                    }
+                })
+                .catch(error => {
+                    crcMessageDiv.className = 'alert alert-danger';
+                    crcMessageDiv.textContent = '{% translate "An unexpected error occurred. Please try again." %}';
+                    console.error('Fetch error:', error);
+                    isCrcVerified = false;
+                    toggleContactFields(false);
+                    toggleBookingFields(false);
+                })
+                .finally(() => {
+                    verifyCrcButton.disabled = false;
+                    validateFormState();
+                });
+        });
+
+        crcInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '').substring(0, 12);
+            if (value.length > 8) {
+                value = value.replace(/(\d{4})(\d{4})(\d{1,4})/, '$1-$2-$3');
+            } else if (value.length > 4) {
+                value = value.replace(/(\d{4})(\d{1,4})/, '$1-$2');
+            }
+            e.target.value = value;
+
+            if (isCrcVerified) {
+                isCrcVerified = false;
+                toggleContactFields(false);
+                toggleBookingFields(false);
+                setFieldsReadOnly(identityFields, false);
+                companyNameInput.value = '';
+                nifInput.value = '';
+                addressInput.value = '';
+                crcMessageDiv.style.display = 'none';
+                validateFormState();
+            }
+        });
+    }
 
     // --- INITIAL STATE ---
-    if (crcIsMandatory) {
-        toggleFormFields(false);
-    } else {
-        toggleFormFields(true);
+    function initializeForm() {
+        toggleFields(identityFields, false);
+        toggleFields(contactFields, false);
+        toggleFields(bookingFields, false);
         endDateInput.disabled = true;
+        validateFormState();
     }
-    validateFormState();
+
+    initializeForm();
 });
 </script>
 {% endblock %}

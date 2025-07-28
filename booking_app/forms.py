@@ -31,7 +31,7 @@ class BookingForm(forms.ModelForm):
     class Meta:
         model = Booking
         fields = [
-            'customer_name', 'customer_email', 'customer_phone',
+            'customer_name', 'customer_email', 'customer_phone', 'customer_address',
             'client_tax_number', 'client_company_registration',
             'start_location', 'end_location', 'start_date', 'end_date',
             'contract_document', 'final_km', 'motive',
@@ -39,13 +39,15 @@ class BookingForm(forms.ModelForm):
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'customer_address': forms.Textarea(attrs={'rows': 3}),
         }
         labels = {
             'customer_name': _("Customer Name"),
             'customer_email': _("Customer Email"),
             'customer_phone': _("Customer Phone"),
+            'customer_address': _("Customer Address"),
             'client_tax_number': _("Client Tax Number"),
-            'client_company_registration': _("Client Company Registration Code"),
+            'client_company_registration': _("Client CRC"),
             'start_location': _("Start Location"),
             'end_location': _("End Location"),
             'start_date': _("Start Date"),
@@ -65,6 +67,10 @@ class BookingForm(forms.ModelForm):
             self.initial_contract_document = self.instance.contract_document
         else:
             self.initial_contract_document = None
+
+        # Make customer_address non-writable by default
+        self.fields['customer_address'].widget.attrs['readonly'] = True
+        self.fields['customer_address'].widget.attrs['disabled'] = True
 
         if self.vehicle and self.vehicle.vehicle_type == 'APV':
             self.fields['motive'].required = True
@@ -90,11 +96,12 @@ class BookingForm(forms.ModelForm):
         self.helper.form_method = 'post'
         self.helper.layout = Layout(
             HTML(f'<h5>{_("Client Information")}</h5><hr>'),
+            'client_tax_number',
             Row(Column('customer_name', css_class='form-group col-md-6 mb-0'),
                 Column('customer_phone', css_class='form-group col-md-6 mb-0')),
             'customer_email',
-            Row(Column('client_tax_number', css_class='form-group col-md-6 mb-0'),
-                Column('client_company_registration', css_class='form-group col-md-6 mb-0')),
+            'customer_address',
+            'client_company_registration',
             HTML(f'<h5 class="mt-4">{_("Booking Details")}</h5><hr>'),
             'motive',
             Row(Column('start_location', css_class='form-group col-md-6 mb-0'),
@@ -129,13 +136,11 @@ class BookingForm(forms.ModelForm):
         if self.data.get("contract_document-clear") and self.initial_contract_document:
             self.initial_contract_document.delete(save=False)
 
-        # Get the original transport status before any changes are made
         original_needs_transport = self.instance.needs_transport if self.instance.pk else False
 
         booking = super().save(commit=False)
         vehicle_for_check = self.vehicle if self.vehicle else booking.vehicle
 
-        # --- Logic to check the PREVIOUS booking ---
         previous_booking = Booking.objects.filter(
             vehicle=vehicle_for_check,
             end_date__lt=booking.start_date
@@ -146,7 +151,6 @@ class BookingForm(forms.ModelForm):
         else:
             booking.needs_transport = False
 
-        # --- Check if the transport status of the CURRENT booking has changed ---
         if booking.needs_transport != original_needs_transport:
             context = {}
             if previous_booking:
@@ -161,7 +165,6 @@ class BookingForm(forms.ModelForm):
             booking.save()
             self.save_m2m()
 
-        # --- Logic to check and update the NEXT booking ---
         next_booking = Booking.objects.filter(
             vehicle=vehicle_for_check,
             start_date__gt=booking.end_date
@@ -171,9 +174,7 @@ class BookingForm(forms.ModelForm):
             original_next_needs_transport = next_booking.needs_transport
             next_booking.needs_transport = (booking.end_location != next_booking.start_location)
 
-            # --- Check if the transport status of the NEXT booking has changed ---
             if next_booking.needs_transport != original_next_needs_transport:
-                # The 'previous' location for the next booking is the end of the current one
                 context = {'previous_end_location': booking.end_location}
                 send_booking_notification(
                     'transport_status_changed',

@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-23 17:37+0100\n"
-"PO-Revision-Date: 2025-07-23 18:02+0100\n"
+"POT-Creation-Date: 2025-07-28 18:11+0100\n"
+"PO-Revision-Date: 2025-07-28 18:52+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: pt\n"
@@ -19,7 +19,7 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Poedit 3.6\n"
 
-#: booking_app/admin.py:60 booking_app/forms.py:261 booking_app/forms.py:320
+#: booking_app/admin.py:60 booking_app/forms.py:278 booking_app/forms.py:337
 msgid "A user with that email already exists."
 msgstr "Já existe um utilizador com esse email."
 
@@ -48,77 +48,85 @@ msgstr "Permissões"
 msgid "Important dates"
 msgstr "Datas Importantes"
 
-#: booking_app/forms.py:44
+#: booking_app/forms.py:45
 #: templates/emails/booking_cancellation_notification.html:28
 #: templates/emails/booking_confirmation.html:28
 #: templates/emails/booking_update_notification.html:28
 msgid "Customer Name"
 msgstr "Nome do Cliente"
 
-#: booking_app/forms.py:45
+#: booking_app/forms.py:46
 msgid "Customer Email"
 msgstr "Email do Cliente"
 
-#: booking_app/forms.py:46
+#: booking_app/forms.py:47
 msgid "Customer Phone"
 msgstr "Telefone do Cliente"
 
-#: booking_app/forms.py:47 booking_app/models.py:241
+#: booking_app/forms.py:48 booking_app/models.py:246
+#, fuzzy
+#| msgid "Customer Name"
+msgid "Customer Address"
+msgstr "Nome do Cliente"
+
+#: booking_app/forms.py:49 booking_app/models.py:241
 msgid "Client Tax Number"
 msgstr "Número de Contribuinte do Cliente"
 
-#: booking_app/forms.py:48
-msgid "Client Company Registration Code"
-msgstr "Código Certidão Permanente"
+#: booking_app/forms.py:50 booking_app/models.py:243
+#, fuzzy
+#| msgid "Client Name"
+msgid "Client CRC"
+msgstr "Nome do Cliente"
 
-#: booking_app/forms.py:49 templates/booking_detail.html:37
+#: booking_app/forms.py:51 templates/booking_detail.html:37
 #: templates/cancel_booking.html:27 templates/group_booking_detail.html:35
 #: templates/my_group_bookings.html:22
 msgid "Start Location"
 msgstr "Local de Início"
 
-#: booking_app/forms.py:50 templates/booking_detail.html:38
+#: booking_app/forms.py:52 templates/booking_detail.html:38
 #: templates/cancel_booking.html:31 templates/group_booking_detail.html:36
 #: templates/my_group_bookings.html:23
 msgid "End Location"
 msgstr "Local de Fim"
 
-#: booking_app/forms.py:51 templates/admin/admin_vehicle_detail.html:87
+#: booking_app/forms.py:53 templates/admin/admin_vehicle_detail.html:87
 #: templates/booking_detail.html:35 templates/cancel_booking.html:35
 #: templates/group_booking_detail.html:33 templates/my_account.html:61
 #: templates/my_bookings.html:25 templates/my_group_bookings.html:24
 msgid "Start Date"
 msgstr "Data de Início"
 
-#: booking_app/forms.py:52 templates/admin/admin_vehicle_detail.html:88
+#: booking_app/forms.py:54 templates/admin/admin_vehicle_detail.html:88
 #: templates/booking_detail.html:36 templates/cancel_booking.html:39
 #: templates/group_booking_detail.html:34 templates/my_account.html:62
 #: templates/my_bookings.html:26 templates/my_group_bookings.html:25
 msgid "End Date"
 msgstr "Data de Fim"
 
-#: booking_app/forms.py:53 booking_app/models.py:277
+#: booking_app/forms.py:55 booking_app/models.py:284
 msgid "Contract"
 msgstr "Contrato"
 
-#: booking_app/forms.py:54 booking_app/models.py:292
+#: booking_app/forms.py:56 booking_app/models.py:299
 msgid "Final Kilometers"
 msgstr "Quilómetros finais"
 
-#: booking_app/forms.py:55 booking_app/models.py:299
+#: booking_app/forms.py:57 booking_app/models.py:306
 #: templates/group_dashboard.html:49
 msgid "Motive"
 msgstr "Motivo"
 
-#: booking_app/forms.py:71
+#: booking_app/forms.py:77
 msgid "Motive (Required for APV)"
 msgstr "Motivo (obrigatório para APV)"
 
-#: booking_app/forms.py:111
+#: booking_app/forms.py:118
 msgid "Submit Booking Request"
 msgstr "Submeter Pedido de Reserva"
 
-#: booking_app/forms.py:175
+#: booking_app/forms.py:194
 msgid ""
 "Booking date cannot be today or in the past. Please select tomorrow or a "
 "future date."
@@ -126,11 +134,11 @@ msgstr ""
 "A data da reserva não pode ser hoje ou no passado. Por favor, selecione "
 "amanhã ou uma data futura."
 
-#: booking_app/forms.py:187
+#: booking_app/forms.py:206
 msgid "End date must be after start date."
 msgstr "A data de fim deve ser posterior à data de início."
 
-#: booking_app/forms.py:212
+#: booking_app/forms.py:230
 #, python-format
 msgid ""
 "The selected date range conflicts with an existing booking (ID: "
@@ -139,11 +147,11 @@ msgstr ""
 "O intervalo de datas selecionado entra em conflito com uma reserva existente "
 "(ID: %(booking_id)s) para este veículo de %(start)s a %(end)s."
 
-#: booking_app/forms.py:222
+#: booking_app/forms.py:239
 msgid "This field is required for APV bookings."
 msgstr "Este campo é obrigatório para reservas APV."
 
-#: booking_app/forms.py:227
+#: booking_app/forms.py:244
 #, python-format
 msgid ""
 "Final kilometers (%(final)s) must be greater than the initial kilometers "
@@ -152,40 +160,40 @@ msgstr ""
 "Os quilómetros finais (%(final)s) devem ser superiores aos quilómetros "
 "iniciais (%(initial)s)."
 
-#: booking_app/forms.py:242 booking_app/forms.py:279
+#: booking_app/forms.py:259 booking_app/forms.py:296
 #: templates/admin/admin_user_list.html:25 templates/my_account.html:19
 msgid "Email"
 msgstr "Email"
 
-#: booking_app/forms.py:243 booking_app/forms.py:280
+#: booking_app/forms.py:260 booking_app/forms.py:297
 #: templates/my_account.html:21
 msgid "First Name"
 msgstr "Primeiro Nome"
 
-#: booking_app/forms.py:244 booking_app/forms.py:281
+#: booking_app/forms.py:261 booking_app/forms.py:298
 #: templates/my_account.html:24
 msgid "Last Name"
 msgstr "Último Nome"
 
-#: booking_app/forms.py:245 booking_app/forms.py:282
+#: booking_app/forms.py:262 booking_app/forms.py:299
 #: templates/my_account.html:27
 msgid "Phone Number"
 msgstr "Número de Telefone"
 
-#: booking_app/forms.py:246 booking_app/forms.py:283
+#: booking_app/forms.py:263 booking_app/forms.py:300
 msgid "Assign to Groups"
 msgstr "Atribuir a Grupos"
 
-#: booking_app/forms.py:278 templates/admin/admin_user_list.html:24
+#: booking_app/forms.py:295 templates/admin/admin_user_list.html:24
 #: templates/my_account.html:18 templates/update_user_data.html:31
 msgid "Username"
 msgstr "Nome de Utilizador"
 
-#: booking_app/forms.py:314 booking_app/models.py:78
+#: booking_app/forms.py:331 booking_app/models.py:78
 msgid "A user with that username already exists."
 msgstr "Já existe um utilizador com esse nome."
 
-#: booking_app/forms.py:331 templates/admin/admin_vehicle_detail.html:32
+#: booking_app/forms.py:348 templates/admin/admin_vehicle_detail.html:32
 #: templates/admin/admin_vehicle_list.html:26 templates/booking_detail.html:42
 #: templates/group_booking_detail.html:49 templates/group_dashboard.html:46
 #: templates/group_reports.html:49 templates/my_group_bookings.html:20
@@ -193,115 +201,121 @@ msgstr "Já existe um utilizador com esse nome."
 msgid "License Plate"
 msgstr "Matrícula"
 
-#: booking_app/forms.py:332 templates/vehicle_detail.html:35
+#: booking_app/forms.py:349 templates/vehicle_detail.html:35
 msgid "Vehicle Type"
 msgstr "Tipo de Veículo"
 
-#: booking_app/forms.py:333 booking_app/models.py:161
+#: booking_app/forms.py:350 booking_app/models.py:161
 msgid "Model Name"
 msgstr "Nome do Modelo"
 
-#: booking_app/forms.py:334 templates/booking_detail.html:94
+#: booking_app/forms.py:351 templates/booking_detail.html:94
 #: templates/group_booking_detail.html:89
 msgid "Vehicle Picture"
 msgstr "Fotografia do Veículo"
 
-#: booking_app/forms.py:335 booking_app/models.py:189
+#: booking_app/forms.py:352 booking_app/models.py:189
 #: templates/admin/admin_vehicle_detail.html:43
 #: templates/vehicle_detail.html:51
 msgid "Current Location"
 msgstr "Localização Atual"
 
-#: booking_app/forms.py:336 booking_app/models.py:170
+#: booking_app/forms.py:353 booking_app/models.py:170
 #: templates/group_booking_detail.html:94
 msgid "Insurance"
 msgstr "Seguro"
 
-#: booking_app/forms.py:337 booking_app/models.py:177
+#: booking_app/forms.py:354 booking_app/models.py:177
 #: templates/group_booking_detail.html:95
 msgid "Registration"
 msgstr "Registo"
 
-#: booking_app/forms.py:338 booking_app/models.py:194
+#: booking_app/forms.py:355 booking_app/models.py:194
 msgid "Next Maintenance Date"
 msgstr "Próxima data de manutenção"
 
-#: booking_app/forms.py:425 booking_app/forms.py:437
+#: booking_app/forms.py:442 booking_app/forms.py:454
 #: templates/admin/admin_location_list.html:22
 msgid "Location Name"
 msgstr "Nome da Localização"
 
-#: booking_app/forms.py:449
+#: booking_app/forms.py:466
 msgid "Group Members"
 msgstr "Membros do Grupo"
 
-#: booking_app/forms.py:456 templates/admin/admin_group_list.html:22
+#: booking_app/forms.py:473 templates/admin/admin_group_list.html:22
 msgid "Group Name"
 msgstr "Nome do Grupo"
 
-#: booking_app/forms.py:486
+#: booking_app/forms.py:503
 msgid "A group with this name already exists."
 msgstr "Já existe um grupo com este nome."
 
-#: booking_app/forms.py:510 templates/admin/admin_email_template_list.html:22
+#: booking_app/forms.py:526 templates/admin/admin_email_template_list.html:22
 msgid "Template Name"
 msgstr "Nome do Template"
 
-#: booking_app/forms.py:511 templates/admin/admin_email_template_list.html:23
+#: booking_app/forms.py:527 templates/admin/admin_email_template_list.html:23
 msgid "Event Trigger"
 msgstr "Acionador de Evento"
 
-#: booking_app/forms.py:512
+#: booking_app/forms.py:528
 msgid "Email Subject"
 msgstr "Assunto do Email"
 
-#: booking_app/forms.py:513
+#: booking_app/forms.py:529
 msgid "Email Body (HTML is allowed)"
 msgstr "Corpo do Email (HTML é permitido)"
 
-#: booking_app/forms.py:514
+#: booking_app/forms.py:530
 msgid "Is this template active?"
 msgstr "Esse modelo está ativo?"
 
-#: booking_app/forms.py:515 booking_app/models.py:449
+#: booking_app/forms.py:531 booking_app/models.py:455
 msgid "Send to Salesperson"
 msgstr "Enviar a Vendedor"
 
-#: booking_app/forms.py:516 booking_app/models.py:454
+#: booking_app/forms.py:532 booking_app/models.py:460
 msgid "Send to Groups"
 msgstr "Enviar a Grupo"
 
-#: booking_app/forms.py:517 booking_app/models.py:460
+#: booking_app/forms.py:533 booking_app/models.py:466
 msgid "Send to Specific Users"
 msgstr "Enviar para utikizadores específicos"
 
-#: booking_app/forms.py:518 booking_app/models.py:466
+#: booking_app/forms.py:534 booking_app/models.py:472
 msgid "Send to Distribution Lists"
 msgstr "Enviar para listas de distribuição"
 
-#: booking_app/forms.py:526 templates/admin/admin_email_template_form.html:42
+#: booking_app/forms.py:542 templates/admin/admin_email_template_form.html:42
 msgid "The event trigger cannot be changed after creation."
 msgstr "O acionador de eventos não pode ser alterado após a criação."
 
-#: booking_app/forms.py:537 booking_app/models.py:360
+#: booking_app/forms.py:553 booking_app/models.py:367
 #: templates/admin/admin_dl_list.html:18
 msgid "List Name"
 msgstr "Nome da Lista"
 
-#: booking_app/forms.py:538 booking_app/models.py:362
+#: booking_app/forms.py:554 booking_app/models.py:369
 #: templates/admin/admin_dl_list.html:19
 msgid "Email Addresses"
 msgstr "Endereço de email:"
 
-#: booking_app/forms.py:550
+#: booking_app/forms.py:567
 msgid "Enable Reminders for Pending Bookings"
 msgstr "Ativar lembretes para reservas pendentes"
 
-#: booking_app/forms.py:551
+#: booking_app/forms.py:568
 msgid "Send Reminder After (Days)"
 msgstr "Enviar lembrete após (dias)"
 
-#: booking_app/forms.py:554 booking_app/models.py:489
+#: booking_app/forms.py:569
+#, fuzzy
+#| msgid "Client Company Registration Code"
+msgid "Require Company Verification (CRC)"
+msgstr "Código Certidão Permanente"
+
+#: booking_app/forms.py:572 booking_app/models.py:495
 msgid ""
 "If checked, the system will send reminders for bookings that are pending for "
 "too long."
@@ -309,7 +323,7 @@ msgstr ""
 "Se estiver marcado, o sistema enviará lembretes para reservas que estiverem "
 "pendentes há muito tempo."
 
-#: booking_app/forms.py:555
+#: booking_app/forms.py:573
 msgid ""
 "The number of days a booking can be in 'Pending' status before a reminder is "
 "sent."
@@ -317,35 +331,43 @@ msgstr ""
 "O número de dias que uma reserva pode permanecer no estado «Pendente» antes "
 "de ser enviado um lembrete."
 
-#: booking_app/forms.py:565
+#: booking_app/forms.py:575
+msgid ""
+"If checked, the booking form will be locked until a valid CRC is entered and "
+"verified."
+msgstr ""
+"Se selecionado, o formulário de reserva ficará bloqueado até que um CRC "
+"válido seja inserido e verificado."
+
+#: booking_app/forms.py:585
 msgid "Filter by Status"
 msgstr "Filtrar por estado"
 
-#: booking_app/forms.py:575
+#: booking_app/forms.py:595
 msgid "All Actionable"
 msgstr "Tudo acionável"
 
-#: booking_app/forms.py:576
+#: booking_app/forms.py:596
 msgid "Pending Approval"
 msgstr "Aguardando aprovação"
 
-#: booking_app/forms.py:577 booking_app/models.py:229
+#: booking_app/forms.py:597 booking_app/models.py:229
 msgid "Pending Contract"
 msgstr "Pendente de Contrato"
 
-#: booking_app/forms.py:578
+#: booking_app/forms.py:598
 msgid "Confirmed / Upcoming"
 msgstr "Confirmado / Próximo"
 
-#: booking_app/forms.py:579 booking_app/models.py:232
+#: booking_app/forms.py:599 booking_app/models.py:232
 msgid "Completed"
 msgstr "Concluído"
 
-#: booking_app/forms.py:580 booking_app/models.py:233
+#: booking_app/forms.py:600 booking_app/models.py:233
 msgid "Cancelled"
 msgstr "Cancelado"
 
-#: booking_app/forms.py:584 booking_app/models.py:231
+#: booking_app/forms.py:604 booking_app/models.py:231
 msgid "Pending Final KM"
 msgstr "Pendente KM final"
 
@@ -461,59 +483,61 @@ msgstr "Pendente"
 msgid "Confirmed"
 msgstr "Confirmado"
 
-#: booking_app/models.py:243
-msgid "Permanent registration certificate code"
-msgstr "Certidão permanente de cliente"
+#: booking_app/models.py:249
+msgid "The address of the customer, can be auto-filled from VAT validation."
+msgstr ""
+"O endereço do cliente pode ser preenchido automaticamente a partir da "
+"validação do NIF."
 
-#: booking_app/models.py:257
+#: booking_app/models.py:264
 msgid "Booking Status"
 msgstr "Estado da Reserva"
 
-#: booking_app/models.py:265
+#: booking_app/models.py:272
 msgid "Cancelled By"
 msgstr "Cancelado por"
 
-#: booking_app/models.py:269
+#: booking_app/models.py:276
 msgid "Cancellation Reason"
 msgstr "Motivo do cancelamento"
 
-#: booking_app/models.py:273
+#: booking_app/models.py:280
 msgid "Cancellation Time"
 msgstr "Hora de cancelamento"
 
-#: booking_app/models.py:281
+#: booking_app/models.py:288
 msgid "Upload the signed contract to confirm the booking."
 msgstr "Carregue o contrato assinado para confirmar a reserva."
 
-#: booking_app/models.py:285
+#: booking_app/models.py:292
 msgid "Initial Kilometers"
 msgstr "Quilómetros iniciais"
 
-#: booking_app/models.py:288
+#: booking_app/models.py:295
 msgid "The vehicle's kilometers at the start of the booking."
 msgstr "Os quilómetros do veículo no início da reserva."
 
-#: booking_app/models.py:295
+#: booking_app/models.py:302
 msgid "The vehicle's kilometers at the end of the booking."
 msgstr "Os quilómetros do veículo no final da reserva."
 
-#: booking_app/models.py:301
+#: booking_app/models.py:308
 msgid "Required only for APV vehicle bookings."
 msgstr "Necessário apenas para reservas de veículos APV."
 
-#: booking_app/models.py:305
+#: booking_app/models.py:312
 msgid "Created At"
 msgstr "Criado em"
 
-#: booking_app/models.py:307
+#: booking_app/models.py:314
 msgid "The date and time the booking was created."
 msgstr "A data e a hora em que a reserva foi criada."
 
-#: booking_app/models.py:311
+#: booking_app/models.py:318
 msgid "Transport Required Before Booking"
 msgstr "Transporte necessário antes da reserva"
 
-#: booking_app/models.py:314
+#: booking_app/models.py:321
 msgid ""
 "Indicates if the vehicle needs to be moved from a different location before "
 "this booking can start."
@@ -521,162 +545,160 @@ msgstr ""
 "Indica se o veículo precisa ser movido de um local diferente antes que esta "
 "reserva possa começar."
 
-#: booking_app/models.py:333
+#: booking_app/models.py:340
 msgid "On Going"
 msgstr "Em curso"
 
-#: booking_app/models.py:338
+#: booking_app/models.py:345
 msgid "Booking"
 msgstr "Reserva"
 
-#: booking_app/models.py:339 templates/group_dashboard.html:38
+#: booking_app/models.py:346 templates/group_dashboard.html:38
 #: templates/group_reports.html:104
 msgid "Bookings"
 msgstr "Reservas"
 
-#: booking_app/models.py:354
+#: booking_app/models.py:361
 msgid "A booking must have either a customer email or a customer phone number."
 msgstr ""
 "Uma reserva tem de ter um email de cliente ou um número de telefone de "
 "cliente."
 
-#: booking_app/models.py:363
+#: booking_app/models.py:370
 msgid "Enter one or more email addresses, separated by commas or new lines."
 msgstr ""
 "Digite um ou mais endereços de e-mail, separados por vírgulas ou novas "
 "linhas."
 
-#: booking_app/models.py:379
+#: booking_app/models.py:386
 msgid "Distribution List"
 msgstr "Lista de distribuição"
 
-#: booking_app/models.py:380 templates/admin/admin_dashboard.html:94
+#: booking_app/models.py:387 templates/admin/admin_dashboard.html:94
 msgid "Distribution Lists"
 msgstr "Listas de distribuição"
 
-#: booking_app/models.py:390
+#: booking_app/models.py:397
 msgid "New LIGHT Vehicle Booking Created"
 msgstr "Nova reserva de veículo LIGHT criada"
 
-#: booking_app/models.py:391
+#: booking_app/models.py:398
 msgid "New HEAVY Vehicle Booking Created"
 msgstr "Nova reserva de veículo HEAVY criada"
 
-#: booking_app/models.py:392
+#: booking_app/models.py:399
 msgid "New APV Booking Created"
 msgstr "Nova reserva APV criada"
 
-#: booking_app/models.py:393
+#: booking_app/models.py:400
 msgid "LIGHT Booking Reverted to Pending"
 msgstr "Reserva LIGHT revertida para pendente"
 
-#: booking_app/models.py:394
+#: booking_app/models.py:401
 msgid "HEAVY Booking Reverted to Pending"
 msgstr "Reserva HEAVY revertida para pendente"
 
-#: booking_app/models.py:395
+#: booking_app/models.py:402
 msgid "APV Booking Reverted to Pending"
 msgstr "Reserva APV revertida para pendente"
 
-#: booking_app/models.py:396
-msgid "Booking Approved"
-msgstr "Reserva aprovada"
-
-#: booking_app/models.py:397
-msgid "APV Booking Approved"
-msgstr "Reserva APV aprovada"
-
-#: booking_app/models.py:398 booking_app/models.py:405
+#: booking_app/models.py:403 booking_app/models.py:412
 msgid "Booking Canceled by Manager"
 msgstr "Reserva cancelada pelo Manager"
 
-#: booking_app/models.py:399 booking_app/models.py:411
+#: booking_app/models.py:404 booking_app/models.py:417
 msgid "Booking Canceled by User"
 msgstr "Reserva cancelada pelo utilizador"
 
-#: booking_app/models.py:400
+#: booking_app/models.py:405
 msgid "Booking Completed"
 msgstr "Reserva Concluída"
 
-#: booking_app/models.py:401
+#: booking_app/models.py:406
 msgid "Booking Pending Reminder"
 msgstr "Lembrete de reserva pendente"
 
-#: booking_app/models.py:404
-msgid "Booking Approved by Manager"
-msgstr "Reserva aprovado pelo Manager"
-
-#: booking_app/models.py:406
-msgid "APV Booking Approved by Manager"
-msgstr "Reserva de APV aprovada pelo gestor"
-
 #: booking_app/models.py:407
+#, fuzzy
+#| msgid "Booking Status"
+msgid "Booking Transport Status Changed"
+msgstr "Estado da Reserva"
+
+#: booking_app/models.py:410
+msgid "Booking Approved"
+msgstr "Reserva aprovada"
+
+#: booking_app/models.py:411
+msgid "APV Booking Approved"
+msgstr "Reserva APV aprovada"
+
+#: booking_app/models.py:413
 msgid "Send User Credentials"
 msgstr "Enviar credenciais de utilizador"
 
-#: booking_app/models.py:408 templates/admin/admin_user_edit.html:41
+#: booking_app/models.py:414 templates/admin/admin_user_edit.html:41
 msgid "Send Temporary Password"
 msgstr "Enviar palavra-passe temporária"
 
-#: booking_app/models.py:414
+#: booking_app/models.py:420
 msgid "Booking Reminder (7 Days Away)"
 msgstr "Lembrente de reserva (A 7 dias)"
 
-#: booking_app/models.py:415
+#: booking_app/models.py:421
 msgid "Booking Auto-Cancelled (Unapproved)"
 msgstr "Reserva cancelada cancelada automaticamente (Não aprovada)"
 
-#: booking_app/models.py:418
+#: booking_app/models.py:424
 msgid "New User Account Created"
 msgstr "Nova conta de utilizador criada"
 
-#: booking_app/models.py:419
+#: booking_app/models.py:425
 msgid "User Password Was Reset"
 msgstr "A palavra-passe do utilizador foi redefinida"
 
-#: booking_app/models.py:422
+#: booking_app/models.py:428
 msgid "Vehicle Created"
 msgstr "Veículo Criado"
 
-#: booking_app/models.py:423
+#: booking_app/models.py:429
 msgid "Vehicle Updated"
 msgstr "Veículo Actualizado"
 
-#: booking_app/models.py:424
+#: booking_app/models.py:430
 msgid "Vehicle Deleted"
 msgstr "Veículo Removido"
 
-#: booking_app/models.py:427
+#: booking_app/models.py:433
 msgid "Location Created"
 msgstr "Localização Criada"
 
-#: booking_app/models.py:428
+#: booking_app/models.py:434
 msgid "Location Updated"
 msgstr "Localização Actualizada"
 
-#: booking_app/models.py:429
+#: booking_app/models.py:435
 msgid "Location Deleted"
 msgstr "Localização Removida"
 
-#: booking_app/models.py:438
+#: booking_app/models.py:444
 msgid "Select the specific event that will trigger this email notification."
 msgstr "Selecione o evento que irá acionar esta notificação de email."
 
-#: booking_app/models.py:442
+#: booking_app/models.py:448
 msgid ""
 "A descriptive name for this template (e.g., 'New Booking Confirmation')."
 msgstr ""
 "Um nome descritivo para este modelo (por exemplo, “Confirmação de nova "
 "reserva”)."
 
-#: booking_app/models.py:444
+#: booking_app/models.py:450
 msgid ""
 "The email subject line. You can use template variables like {{ booking.pk }}."
 msgstr ""
 "A linha de assunto do email. Pode usar variáveis de template como "
 "{{ booking.pk }}."
 
-#: booking_app/models.py:446
+#: booking_app/models.py:452
 msgid ""
 "The email body. Can contain HTML and template variables like "
 "{{ booking.customer_name }}."
@@ -684,42 +706,42 @@ msgstr ""
 "O corpo do email. Pode conter HTML e variáveis de template como "
 "{{ booking.customer_name }}."
 
-#: booking_app/models.py:447
+#: booking_app/models.py:453
 msgid "Only active templates will be sent."
 msgstr "Apenas os modelos activos serão enviados."
 
-#: booking_app/models.py:450
+#: booking_app/models.py:456
 msgid ""
 "Check to send a notification to the salesperson who created the booking."
 msgstr "Marque para enviar uma notificação ao vendedor que criou a reserva."
 
-#: booking_app/models.py:455
+#: booking_app/models.py:461
 msgid "Select groups whose members should receive this notification."
 msgstr "Selecione os grupos cujos membros devem receber esta notificação."
 
-#: booking_app/models.py:461
+#: booking_app/models.py:467
 msgid "Select specific users who should receive this notification."
 msgstr ""
 "Selecione os utilizadores específicos que devem receber esta notificação."
 
-#: booking_app/models.py:467
+#: booking_app/models.py:473
 msgid "Select distribution lists that should receive this notification."
 msgstr ""
 "Selecione as listas de distribuição que devem receber esta notificação."
 
-#: booking_app/models.py:475
+#: booking_app/models.py:481
 msgid "Email Template"
 msgstr "Template de Email"
 
-#: booking_app/models.py:476 templates/admin/admin_dashboard.html:79
+#: booking_app/models.py:482 templates/admin/admin_dashboard.html:79
 msgid "Email Templates"
 msgstr "Templates de Email"
 
-#: booking_app/models.py:482
+#: booking_app/models.py:488
 msgid "Activate Pending Booking Automation"
 msgstr "Ativar a automatização das reservas pendentes"
 
-#: booking_app/models.py:483
+#: booking_app/models.py:489
 msgid ""
 "If checked, the system will automatically send reminders and cancel "
 "unapproved bookings."
@@ -727,51 +749,63 @@ msgstr ""
 "Se estiver selecionado, o sistema enviará automaticamente lembretes e "
 "cancelará as reservas não aprovadas."
 
-#: booking_app/models.py:487
+#: booking_app/models.py:493
 msgid "Enable Pending Booking Reminders"
 msgstr "Ativar lembretes de reservas pendentes"
 
-#: booking_app/models.py:492
+#: booking_app/models.py:498
 msgid "Days Before Sending Reminder"
 msgstr "Dias antes do envio do lembrete"
 
-#: booking_app/models.py:494
+#: booking_app/models.py:500
 msgid ""
 "Send a reminder if a booking has been in 'Pending' status for this many days."
 msgstr ""
 "Envie um lembrete se uma reserva estiver no estado «Pendente» há tantos dias."
 
-#: booking_app/models.py:513 booking_app/models.py:516
-#: booking_app/views.py:1098
+#: booking_app/models.py:504
+msgid "Require Company Verification via CRC"
+msgstr "Exigir verificação da empresa através do CRC"
+
+#: booking_app/models.py:507
+msgid ""
+"If checked, users must successfully verify a company's CRC before they can "
+"fill out the rest of the booking form."
+msgstr ""
+"Se selecionado, os utilizadores devem verificar com sucesso o CRC da empresa "
+"antes de poderem preencher o restante do formulário de reserva."
+
+#: booking_app/models.py:526 booking_app/models.py:529
+#: booking_app/views.py:1107
 msgid "Automation Settings"
 msgstr "Definições automatização"
 
-#: booking_app/models.py:523
+#: booking_app/models.py:536
 msgid "Sent"
 msgstr "Enviado"
 
-#: booking_app/models.py:524
+#: booking_app/models.py:537
 msgid "Failed"
 msgstr "Falhou"
 
-#: booking_app/models.py:528 templates/admin/admin_email_log_list.html:21
+#: booking_app/models.py:541 templates/admin/admin_email_log_list.html:21
 msgid "Recipient"
 msgstr "Destinatário"
 
-#: booking_app/models.py:529
+#: booking_app/models.py:542
 msgid "The email address of the recipient."
 msgstr "O endereço de correio eletrónico do destinatário."
 
-#: booking_app/models.py:532 templates/admin/admin_email_log_list.html:22
+#: booking_app/models.py:545 templates/admin/admin_email_log_list.html:22
 #: templates/admin/admin_email_template_list.html:24
 msgid "Subject"
 msgstr "Assunto"
 
-#: booking_app/models.py:534
+#: booking_app/models.py:547
 msgid "The subject line of the email."
 msgstr "A linha de assunto da mensagem de correio eletrónico."
 
-#: booking_app/models.py:537 templates/admin/admin_email_log_list.html:20
+#: booking_app/models.py:550 templates/admin/admin_email_log_list.html:20
 #: templates/admin/admin_user_list.html:27
 #: templates/admin/admin_vehicle_detail.html:89
 #: templates/booking_detail.html:20
@@ -783,89 +817,89 @@ msgstr "A linha de assunto da mensagem de correio eletrónico."
 msgid "Status"
 msgstr "Estado"
 
-#: booking_app/models.py:540
+#: booking_app/models.py:553
 msgid "The status of the email sending attempt."
 msgstr "O estado da tentativa de envio de correio eletrónico."
 
-#: booking_app/models.py:543
+#: booking_app/models.py:556
 msgid "Sent At"
 msgstr "Enviado a"
 
-#: booking_app/models.py:545
+#: booking_app/models.py:558
 msgid "The timestamp when the email was attempted to be sent."
 msgstr ""
 "O carimbo de data/hora da tentativa de envio da mensagem de correio "
 "eletrónico."
 
-#: booking_app/models.py:548
+#: booking_app/models.py:561
 msgid "Error Message"
 msgstr "Mensagem de erro"
 
-#: booking_app/models.py:551
+#: booking_app/models.py:564
 msgid "Any error message if the email failed to send."
 msgstr ""
 "Qualquer mensagem de erro se a mensagem de correio eletrónico não for "
 "enviada."
 
-#: booking_app/models.py:558
+#: booking_app/models.py:571
 msgid "Email Log"
 msgstr "Registo de correio eletrónico"
 
-#: booking_app/models.py:559
+#: booking_app/models.py:572
 msgid "Email Logs"
 msgstr "Registos de correio eletrónico"
 
-#: booking_app/views.py:62
+#: booking_app/views.py:66
 msgid "For your security, you must change your password before proceeding."
 msgstr ""
 "Para sua segurança, deve alterar a sua palavra-passe antes de prosseguir."
 
-#: booking_app/views.py:64
+#: booking_app/views.py:68
 #, python-brace-format
 msgid "You are now logged in as {username}."
 msgstr "Iniciou sessão como {username}."
 
-#: booking_app/views.py:67 booking_app/views.py:69
+#: booking_app/views.py:71 booking_app/views.py:73
 msgid "Invalid username or password."
 msgstr "Nome de utilizador ou password inválidos."
 
-#: booking_app/views.py:77
+#: booking_app/views.py:81
 msgid "You have successfully logged out."
 msgstr "Terminou a sessão com sucesso."
 
-#: booking_app/views.py:138 templates/vehicle_list.html:5
+#: booking_app/views.py:142 templates/vehicle_list.html:5
 msgid "Vehicle List"
 msgstr "Lista de Veículos"
 
-#: booking_app/views.py:157 booking_app/views.py:754
+#: booking_app/views.py:161 booking_app/views.py:763
 #: templates/vehicle_detail.html:10
 msgid "Vehicle Details"
 msgstr "Detalhes do Veículo"
 
-#: booking_app/views.py:198
+#: booking_app/views.py:206
 msgid "Your booking request has been submitted successfully!"
 msgstr "O seu pedido de reserva foi submetido com sucesso!"
 
-#: booking_app/views.py:201 booking_app/views.py:508 booking_app/views.py:524
-#: booking_app/views.py:1069
+#: booking_app/views.py:209 booking_app/views.py:517 booking_app/views.py:533
+#: booking_app/views.py:1078
 msgid "Please correct the errors below."
 msgstr "Por favor, corrija os erros abaixo."
 
-#: booking_app/views.py:223
+#: booking_app/views.py:232
 msgid "You do not have permission to view this booking."
 msgstr "Não tem permissão para ver esta reserva."
 
-#: booking_app/views.py:225 templates/admin/admin_email_template_form.html:101
+#: booking_app/views.py:234 templates/admin/admin_email_template_form.html:101
 #: templates/booking_detail.html:4 templates/booking_detail.html:12
 #: templates/group_booking_detail.html:12
 msgid "Booking Details"
 msgstr "Detalhes da Reserva"
 
-#: booking_app/views.py:253
+#: booking_app/views.py:262
 msgid "You do not have permission to access or manage this booking."
 msgstr "Não tem permissão para aceder ou gerir esta reserva."
 
-#: booking_app/views.py:273 booking_app/views.py:400
+#: booking_app/views.py:282 booking_app/views.py:409
 msgid ""
 "This is the first trip for this APV. Initial KM set to 0. Please verify and "
 "update if necessary."
@@ -873,7 +907,7 @@ msgstr ""
 "Esta é a primeira viagem para este APV. KM inicial definido como 0. Por "
 "favor, verifique e actualize se necessário."
 
-#: booking_app/views.py:276 booking_app/views.py:403
+#: booking_app/views.py:285 booking_app/views.py:412
 msgid ""
 "Booking is now awaiting final kilometers. Please enter the final reading to "
 "complete."
@@ -881,50 +915,50 @@ msgstr ""
 "A reserva está agora a aguardar os quilómetros finais. Por favor, introduza "
 "a leitura final para concluir."
 
-#: booking_app/views.py:282 booking_app/views.py:409
+#: booking_app/views.py:291 booking_app/views.py:418
 msgid "APV Booking has been approved successfully."
 msgstr "A reserva APV foi aprovada com êxito."
 
-#: booking_app/views.py:288 booking_app/views.py:415
+#: booking_app/views.py:297 booking_app/views.py:424
 #, python-brace-format
 msgid "Booking {booking.pk} approved. Status is now 'Pending Contract'."
 msgstr "Reserva {booking.pk} aprovada. O estado é agora “Contrato pendente”."
 
-#: booking_app/views.py:294 booking_app/views.py:421
+#: booking_app/views.py:303 booking_app/views.py:430
 #, python-brace-format
 msgid "Booking {booking.pk} has been confirmed with the uploaded contract."
 msgstr "A reserva {booking.pk} foi confirmada com o contrato carregado."
 
-#: booking_app/views.py:300 booking_app/views.py:427
+#: booking_app/views.py:309 booking_app/views.py:436
 msgid "Cancelled by management."
 msgstr "Reserva cancelada pelo Manager"
 
-#: booking_app/views.py:303 booking_app/views.py:430
+#: booking_app/views.py:312 booking_app/views.py:439
 #, python-brace-format
 msgid "Booking {booking.pk} has been cancelled by management."
 msgstr "A reserva {booking.pk} foi cancelada pela administração."
 
-#: booking_app/views.py:309 booking_app/views.py:436
+#: booking_app/views.py:318 booking_app/views.py:445
 #, python-brace-format
 msgid "Booking {booking.pk} has been marked as completed."
 msgstr "A reserva {booking.pk} foi marcada como concluída."
 
-#: booking_app/views.py:320
+#: booking_app/views.py:329
 msgid ""
 "The booking was modified and has been returned to 'Pending' status for re-"
 "approval."
 msgstr ""
 "A reserva foi modificada e voltou ao estado «Pendente» para nova aprovação."
 
-#: booking_app/views.py:325
+#: booking_app/views.py:334
 msgid "Your booking has been updated successfully."
 msgstr "A sua reserva foi atualizada com sucesso."
 
-#: booking_app/views.py:330 booking_app/views.py:452
+#: booking_app/views.py:339 booking_app/views.py:461
 msgid "Error updating booking. Please check the form."
 msgstr "Erro ao atualizar a reserva. Por favor, verifique o formulário."
 
-#: booking_app/views.py:332 booking_app/views.py:454
+#: booking_app/views.py:341 booking_app/views.py:463
 msgid ""
 "You do not have permission to update this booking's details or its status "
 "prevents it."
@@ -932,77 +966,77 @@ msgstr ""
 "Não tem permissão para atualizar os detalhes desta reserva ou o seu estado "
 "não o permite."
 
-#: booking_app/views.py:377
+#: booking_app/views.py:386
 msgid "You do not have permission to manage this booking."
 msgstr "Não tem permissão para gerir esta reserva."
 
-#: booking_app/views.py:447
+#: booking_app/views.py:456
 msgid "Booking has been updated successfully."
 msgstr "A reserva foi atualizada com sucesso."
 
-#: booking_app/views.py:478
+#: booking_app/views.py:487
 msgid "This booking cannot be cancelled."
 msgstr "Esta reserva não pode ser cancelada."
 
-#: booking_app/views.py:484
+#: booking_app/views.py:493
 msgid "Cancelled by user."
 msgstr "Reserva cancelada pelo utilizador"
 
-#: booking_app/views.py:487
+#: booking_app/views.py:496
 msgid "Booking cancelled successfully."
 msgstr "Reserva cancelada com sucesso."
 
-#: booking_app/views.py:505
+#: booking_app/views.py:514
 msgid "Your personal data was successfully updated!"
 msgstr "Os seus dados pessoais foram atualizados com sucesso!"
 
-#: booking_app/views.py:521
+#: booking_app/views.py:530
 msgid "Your password was successfully updated!"
 msgstr "A sua password foi atualizada com sucesso!"
 
-#: booking_app/views.py:563 templates/base.html:42
+#: booking_app/views.py:572 templates/base.html:42
 msgid "Group Dashboard"
 msgstr "Painel do grupo"
 
-#: booking_app/views.py:586
+#: booking_app/views.py:595
 msgid "You do not have permission to view this group booking."
 msgstr "Não tem permissão para ver esta reserva de grupo."
 
-#: booking_app/views.py:592 templates/group_booking_detail.html:4
+#: booking_app/views.py:601 templates/group_booking_detail.html:4
 msgid "Group Booking Details"
 msgstr "Detalhes da Reserva de Grupo"
 
-#: booking_app/views.py:629
+#: booking_app/views.py:638
 msgid "Group Reports & Charts"
 msgstr "Relatórios e gráficos do grupo"
 
-#: booking_app/views.py:674
+#: booking_app/views.py:683
 msgid "Group Bookings Calendar"
 msgstr "Calendário de reservas do grupo"
 
-#: booking_app/views.py:687 templates/admin/admin_dashboard.html:4
+#: booking_app/views.py:696 templates/admin/admin_dashboard.html:4
 #: templates/admin/admin_dashboard.html:8 templates/base.html:47
 msgid "Admin Dashboard"
 msgstr "Painel de Administração"
 
-#: booking_app/views.py:699
+#: booking_app/views.py:708
 msgid "Vehicle created successfully!"
 msgstr "Veículo criado com sucesso!"
 
-#: booking_app/views.py:702
+#: booking_app/views.py:711
 msgid "Error creating vehicle. Please check the form."
 msgstr "Erro ao criar veículo. Por favor, verifique o formulário."
 
-#: booking_app/views.py:705 templates/admin/admin_vehicle_create.html:5
+#: booking_app/views.py:714 templates/admin/admin_vehicle_create.html:5
 #: templates/admin/admin_vehicle_create.html:13
 msgid "Create New Vehicle"
 msgstr "Criar Novo Veículo"
 
-#: booking_app/views.py:716
+#: booking_app/views.py:725
 msgid "Vehicle updated successfully!"
 msgstr "Veículo atualizado com sucesso!"
 
-#: booking_app/views.py:728
+#: booking_app/views.py:737
 #, python-brace-format
 msgid ""
 "Vehicle '{vehicle_to_delete.license_plate}' cannot be deleted because it has "
@@ -1011,22 +1045,22 @@ msgstr ""
 "O veículo '{vehicle_to_delete.license_plate}' não pode ser eliminado porque "
 "tem reservas associadas."
 
-#: booking_app/views.py:733
+#: booking_app/views.py:742
 #, python-brace-format
 msgid "Vehicle '{vehicle_to_delete.license_plate}' deleted successfully!"
 msgstr "Veículo '{vehicle_to_delete.license_plate}' eliminado com sucesso!"
 
-#: booking_app/views.py:736
+#: booking_app/views.py:745
 #, python-brace-format
 msgid "Confirm Delete Vehicle: {vehicle_to_delete.license_plate}"
 msgstr "Confirmar Eliminação do Veículo: {vehicle_to_delete.license_plate}"
 
-#: booking_app/views.py:746 templates/admin/admin_vehicle_list.html:7
+#: booking_app/views.py:755 templates/admin/admin_vehicle_list.html:7
 #: templates/admin/admin_vehicle_list.html:13
 msgid "Manage Vehicles"
 msgstr "Gerir Veículos"
 
-#: booking_app/views.py:772
+#: booking_app/views.py:781
 #, python-brace-format
 msgid ""
 "User '{user.username}' created successfully. You can now send their "
@@ -1035,36 +1069,36 @@ msgstr ""
 "O utilizador '{user.username}' foi criado com sucesso. Agora pode enviar as "
 "suas credenciais ou uma palavra-passe temporária."
 
-#: booking_app/views.py:777
+#: booking_app/views.py:786
 msgid "Error creating user. Please check the form for errors."
 msgstr "Erro ao criar utilizador. Por favor, verifique os erros no formulário."
 
-#: booking_app/views.py:783 templates/admin/admin_user_create.html:5
+#: booking_app/views.py:792 templates/admin/admin_user_create.html:5
 #: templates/admin/admin_user_create.html:13
 #: templates/admin/admin_user_list.html:15
 msgid "Create New User"
 msgstr "Criar Novo Utilizador"
 
-#: booking_app/views.py:795 templates/admin/admin_user_list.html:6
+#: booking_app/views.py:804 templates/admin/admin_user_list.html:6
 #: templates/admin/admin_user_list.html:12
 msgid "Manage Users"
 msgstr "Gerir Utilizadores"
 
-#: booking_app/views.py:807
+#: booking_app/views.py:816
 #, python-brace-format
 msgid "User '{user_to_edit.username}' updated successfully!"
 msgstr "Utilizador '{user_to_edit.username}' atualizado com sucesso!"
 
-#: booking_app/views.py:810
+#: booking_app/views.py:819
 msgid "Error updating user. Please check the form."
 msgstr "Erro ao atualizar o utilizador. Por favor, verifique o formulário."
 
-#: booking_app/views.py:813 templates/admin/admin_user_edit.html:5
+#: booking_app/views.py:822 templates/admin/admin_user_edit.html:5
 #: templates/admin/admin_user_edit.html:13
 msgid "Edit User"
 msgstr "Editar Utilizador"
 
-#: booking_app/views.py:828
+#: booking_app/views.py:837
 #, python-brace-format
 msgid ""
 "Password for user '{user_to_reset.username}' has been reset successfully!"
@@ -1072,56 +1106,56 @@ msgstr ""
 "A password para o utilizador '{user_to_reset.username}' foi redefinida com "
 "sucesso!"
 
-#: booking_app/views.py:831
+#: booking_app/views.py:840
 msgid "Error resetting password. Please check the form."
 msgstr "Erro ao redefinir a password. Por favor, verifique o formulário."
 
-#: booking_app/views.py:849
+#: booking_app/views.py:858
 #, python-brace-format
 msgid "Login credentials have been sent to {user_to_notify.email}."
 msgstr ""
 "As credenciais de início de sessão foram enviadas para "
 "{user_to_notify.email}."
 
-#: booking_app/views.py:866
+#: booking_app/views.py:875
 #, python-brace-format
 msgid "A temporary password has been sent to {user_to_reset.email}."
 msgstr "Foi enviada uma palavra-passe temporária para {user_to_reset.email}."
 
-#: booking_app/views.py:876
+#: booking_app/views.py:885
 msgid "Location created successfully!"
 msgstr "Localização criada com sucesso!"
 
-#: booking_app/views.py:879
+#: booking_app/views.py:888
 msgid "Error creating location. Please check the form."
 msgstr "Erro ao criar localização. Por favor, verifique o formulário."
 
-#: booking_app/views.py:882 templates/admin/admin_location_create.html:5
+#: booking_app/views.py:891 templates/admin/admin_location_create.html:5
 #: templates/admin/admin_location_create.html:13
 #: templates/admin/admin_location_list.html:13
 msgid "Create New Location"
 msgstr "Criar Nova Localização"
 
-#: booking_app/views.py:891 templates/admin/admin_location_list.html:4
+#: booking_app/views.py:900 templates/admin/admin_location_list.html:4
 #: templates/admin/admin_location_list.html:10
 msgid "Manage Locations"
 msgstr "Gerir Localizações"
 
-#: booking_app/views.py:902
+#: booking_app/views.py:911
 #, python-brace-format
 msgid "Location '{location_to_edit.name}' updated successfully!"
 msgstr "Localização '{location_to_edit.name}' atualizada com sucesso!"
 
-#: booking_app/views.py:905
+#: booking_app/views.py:914
 msgid "Error updating location. Please correct the errors below."
 msgstr "Erro ao atualizar a localização. Por favor, corrija os erros abaixo."
 
-#: booking_app/views.py:908
+#: booking_app/views.py:917
 #, python-brace-format
 msgid "Edit Location: {location_to_edit.name}"
 msgstr "Editar Localização: {location_to_edit.name}"
 
-#: booking_app/views.py:917
+#: booking_app/views.py:926
 #, python-brace-format
 msgid ""
 "Location '{location_to_delete.name}' cannot be deleted because it is used in "
@@ -1130,131 +1164,174 @@ msgstr ""
 "A localização '{location_to_delete.name}' não pode ser eliminada porque é "
 "usada em reservas existentes."
 
-#: booking_app/views.py:921
+#: booking_app/views.py:930
 #, python-brace-format
 msgid "Location '{location_to_delete.name}' deleted successfully!"
 msgstr "Localização '{location_to_delete.name}' eliminada com sucesso!"
 
-#: booking_app/views.py:924
+#: booking_app/views.py:933
 #, python-brace-format
 msgid "Confirm Delete Location: {location_to_delete.name}"
 msgstr "Confirmar Eliminação da Localização: {location_to_delete.name}"
 
-#: booking_app/views.py:934 templates/admin/admin_dashboard.html:36
+#: booking_app/views.py:943 templates/admin/admin_dashboard.html:36
 #: templates/admin/admin_group_list.html:4
 #: templates/admin/admin_group_list.html:10
 msgid "Manage Groups"
 msgstr "Gerir Grupos"
 
-#: booking_app/views.py:944
+#: booking_app/views.py:953
 msgid "Group created successfully!"
 msgstr "Grupo criado com sucesso!"
 
-#: booking_app/views.py:947
+#: booking_app/views.py:956
 msgid "Error creating group. Please check the form."
 msgstr "Erro ao criar grupo. Por favor, verifique o formulário."
 
-#: booking_app/views.py:950 templates/admin/admin_group_list.html:13
+#: booking_app/views.py:959 templates/admin/admin_group_list.html:13
 msgid "Create New Group"
 msgstr "Criar Novo Grupo"
 
-#: booking_app/views.py:961
+#: booking_app/views.py:970
 #, python-brace-format
 msgid "Group '{group_to_edit.name}' updated successfully!"
 msgstr "Grupo '{group_to_edit.name}' atualizado com sucesso!"
 
-#: booking_app/views.py:964
+#: booking_app/views.py:973
 msgid "Error updating group. Please check the form."
 msgstr "Erro ao atualizar o grupo. Por favor, verifique o formulário."
 
-#: booking_app/views.py:967
+#: booking_app/views.py:976
 #, python-brace-format
 msgid "Edit Group: {group_to_edit.name}"
 msgstr "Editar Grupo: {group_to_edit.name}"
 
-#: booking_app/views.py:976
+#: booking_app/views.py:985
 #, python-brace-format
 msgid "Group '{group_to_delete.name}' deleted successfully!"
 msgstr "Grupo '{group_to_delete.name}' eliminado com sucesso!"
 
-#: booking_app/views.py:979
+#: booking_app/views.py:988
 #, python-brace-format
 msgid "Confirm Delete Group: {group_to_delete.name}"
 msgstr "Confirmar Eliminação do Grupo: {group_to_delete.name}"
 
-#: booking_app/views.py:986 templates/admin/admin_dashboard.html:83
+#: booking_app/views.py:995 templates/admin/admin_dashboard.html:83
 msgid "Manage Email Templates"
 msgstr "Gerir Templates de Email"
 
-#: booking_app/views.py:994
+#: booking_app/views.py:1003
 #, python-brace-format
 msgid "Edit Email Template: {template.name}"
 msgstr "Editar Template de Email: {template.name}"
 
-#: booking_app/views.py:997
+#: booking_app/views.py:1006
 msgid "Create New Email Template"
 msgstr "Criar Novo Template de Email"
 
-#: booking_app/views.py:1002 booking_app/views.py:1065
+#: booking_app/views.py:1011 booking_app/views.py:1074
 msgid "created"
 msgstr "criado"
 
-#: booking_app/views.py:1002 booking_app/views.py:1065
+#: booking_app/views.py:1011 booking_app/views.py:1074
 msgid "updated"
 msgstr "atualizado"
 
-#: booking_app/views.py:1003
+#: booking_app/views.py:1012
 #, python-brace-format
 msgid "Email template '{instance.name}' {action} successfully!"
 msgstr "Template de email '{instance.name}' {action} com sucesso!"
 
-#: booking_app/views.py:1006
+#: booking_app/views.py:1015
 msgid "Error processing template. Please check the form."
 msgstr "Erro ao processar o template. Por favor, verifique o formulário."
 
-#: booking_app/views.py:1030
+#: booking_app/views.py:1039
 #, python-brace-format
 msgid "Test email for '{template.name}' sent to {request.user.email}."
 msgstr ""
 "E-mail de teste para ‘{template.name}’ enviado para {request.user.email}."
 
-#: booking_app/views.py:1032
+#: booking_app/views.py:1041
 #, python-brace-format
 msgid "Failed to send test email. Error: {e}"
 msgstr "Falha no envio da mensagem de correio eletrónico de teste. Erro: {e}"
 
-#: booking_app/views.py:1042
+#: booking_app/views.py:1051
 msgid "Email Sending Logs"
 msgstr "Registos de envio de correio eletrónico"
 
-#: booking_app/views.py:1049 templates/admin/admin_dashboard.html:98
+#: booking_app/views.py:1058 templates/admin/admin_dashboard.html:98
 msgid "Manage Distribution Lists"
 msgstr "Gerir listas de distribuição"
 
-#: booking_app/views.py:1057
+#: booking_app/views.py:1066
 msgid "Edit Distribution List"
 msgstr "Editar lista de distribuição"
 
-#: booking_app/views.py:1060
+#: booking_app/views.py:1069
 msgid "Create Distribution List"
 msgstr "Criar lista de distribuição"
 
-#: booking_app/views.py:1066
+#: booking_app/views.py:1075
 #, python-brace-format
 msgid "Distribution list has been {action} successfully!"
 msgstr "A lista de distribuição foi {action} com êxito!"
 
-#: booking_app/views.py:1081
+#: booking_app/views.py:1090
 msgid "Distribution list deleted successfully!"
 msgstr "Lista de distribuição eliminada com êxito!"
 
-#: booking_app/views.py:1083
+#: booking_app/views.py:1092
 msgid "Confirm Delete Distribution List"
 msgstr "Confirmar Eliminar lista de distribuição"
 
-#: booking_app/views.py:1094
+#: booking_app/views.py:1103
 msgid "Automation settings updated successfully."
 msgstr "Definições de automatização atualizadas com sucesso."
+
+#: booking_app/views.py:1153
+msgid "CRC code is required."
+msgstr "É necessário o código CRC."
+
+#: booking_app/views.py:1170
+msgid "Company not found or CRC is invalid."
+msgstr "Empresa não encontrada ou CRC inválido."
+
+#: booking_app/views.py:1175
+msgid "Could not find the details table on the page."
+msgstr "Não foi possível encontrar a tabela de detalhes na página."
+
+#: booking_app/views.py:1179
+msgid "Could not find the details cell on the page."
+msgstr "Não foi possível encontrar a célula de detalhes na página."
+
+#: booking_app/views.py:1208
+msgid "Could not parse all required company details from the page."
+msgstr ""
+"Não foi possível analisar todos os detalhes necessários da empresa na página."
+
+#: booking_app/views.py:1211
+#, python-brace-format
+msgid "Server responded with status {response.status_code}"
+msgstr ""
+
+#: booking_app/views.py:1214
+#, python-brace-format
+msgid "An error occurred: {e}"
+msgstr ""
+
+#: booking_app/views.py:1243
+msgid "Country code and VAT number are required."
+msgstr ""
+
+#: booking_app/views.py:1263
+msgid "Invalid VAT number for the selected country."
+msgstr ""
+
+#: booking_app/views.py:1270
+msgid "Could not connect to the VIES service."
+msgstr ""
 
 #: templates/admin/admin_automation_settings.html:23
 msgid "Pending Booking Reminders"
@@ -1268,15 +1345,15 @@ msgstr ""
 "Configurações para enviar lembretes automáticos para reservas que estão "
 "pendentes há muito tempo."
 
-#: templates/admin/admin_automation_settings.html:35
+#: templates/admin/admin_automation_settings.html:39
+msgid "Save Settings"
+msgstr "Guardar Alterações"
+
+#: templates/admin/admin_automation_settings.html:40
 #: templates/admin/admin_email_log_list.html:12
 #: templates/group_calendar.html:11 templates/group_reports.html:10
 msgid "Back to Dashboard"
 msgstr "Voltar ao Painel de Administração"
-
-#: templates/admin/admin_automation_settings.html:36
-msgid "Save Settings"
-msgstr "Guardar Alterações"
 
 #: templates/admin/admin_dashboard.html:17
 msgid "User Management"
@@ -1623,6 +1700,12 @@ msgid ""
 msgstr ""
 "O veículo precisa de transporte? Se for necessário, consulte o suporte (se "
 "necessário)."
+
+#: templates/admin/admin_email_template_form.html:118
+#, fuzzy
+#| msgid "The end date of the booking."
+msgid "End Location of previous booking"
+msgstr "A data de término da reserva."
 
 #: templates/admin/admin_email_template_form.html:120
 #: templates/booking_detail.html:57 templates/group_booking_detail.html:55
@@ -2102,13 +2185,55 @@ msgstr "Reservar Veículo"
 msgid "Book"
 msgstr "Reservar"
 
-#: templates/book_vehicle.html:20
-msgid "This vehicle is available for booking on or after"
-msgstr "Este veículo está disponível para reserva a partir de"
-
-#: templates/book_vehicle.html:72
+#: templates/book_vehicle.html:99
 msgid "The end date must be on or after the start date."
 msgstr "A data final deve ser igual ou posterior à data de início."
+
+#: templates/book_vehicle.html:167
+msgid "Verify VAT"
+msgstr ""
+
+#: templates/book_vehicle.html:209
+msgid "Please enter a VAT number first."
+msgstr ""
+
+#: templates/book_vehicle.html:229
+msgid "Verifying VAT number..."
+msgstr ""
+
+#: templates/book_vehicle.html:237
+msgid "VAT number is valid."
+msgstr ""
+
+#: templates/book_vehicle.html:246
+msgid "Invalid VAT number."
+msgstr ""
+
+#: templates/book_vehicle.html:252
+msgid "An error occurred during VAT verification."
+msgstr ""
+
+#: templates/book_vehicle.html:266
+msgid "Verify CRC"
+msgstr ""
+
+#: templates/book_vehicle.html:275
+#, fuzzy
+#| msgid "Client Company Registration Code"
+msgid "Please enter a Company Registration Code first."
+msgstr "Código Certidão Permanente"
+
+#: templates/book_vehicle.html:279
+msgid "Looking up company..."
+msgstr ""
+
+#: templates/book_vehicle.html:295
+msgid "Company found:"
+msgstr ""
+
+#: templates/book_vehicle.html:310
+msgid "An unexpected error occurred. Please try again."
+msgstr ""
 
 #: templates/booking_detail.html:13
 msgid "Back to My Bookings"
@@ -2694,6 +2819,18 @@ msgstr "Reservar Agora"
 #: templates/vehicle_list.html:70
 msgid "No vehicles found matching the criteria."
 msgstr "Nenhum veículo encontrado que corresponda aos critérios."
+
+#~ msgid "Permanent registration certificate code"
+#~ msgstr "Certidão permanente de cliente"
+
+#~ msgid "Booking Approved by Manager"
+#~ msgstr "Reserva aprovado pelo Manager"
+
+#~ msgid "APV Booking Approved by Manager"
+#~ msgstr "Reserva de APV aprovada pelo gestor"
+
+#~ msgid "This vehicle is available for booking on or after"
+#~ msgstr "Este veículo está disponível para reserva a partir de"
 
 #, python-format
 #~ msgid ""
