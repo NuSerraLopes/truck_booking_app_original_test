@@ -1,6 +1,8 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\views.py
 import json
 import os
+import platform
+import shutil
 import subprocess
 from io import BytesIO
 
@@ -1249,8 +1251,13 @@ def generate_and_save_contract_view(request, booking_pk):
     temp_docx_path = os.path.join(temp_dir, f'temp_contract_{booking.pk}.docx')
     doc.save(temp_docx_path)
 
-    # --- 3. Convert the .docx to PDF using LibreOffice ---
     try:
+
+        if platform.system() == 'Windows':
+            soffice_path = r"C:\Program Files\LibreOffice\program\soffice.exe"
+        else:
+            soffice_path = shutil.which('soffice') or 'soffice'
+
         soffice_path = r"C:\Program Files\LibreOffice\program\soffice.exe"
 
         subprocess.run(
