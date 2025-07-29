@@ -78,6 +78,7 @@
                                             <a href="{{ booking.contract_document.url }}" class="btn btn-primary btn-sm" target="_blank">{% translate "View Contract" %}</a>
                                         {% else %}
                                             <a href="{% url 'booking_app:group_booking_update' booking.pk %}?upload_only=true" class="btn btn-warning btn-sm">{% translate "Upload Contract" %}</a>
+                                            <a href="{% url 'booking_app:generate_word_contract' booking.pk %}" class="btn btn-success">{% translate "Generate Word Contract" %}</a>
                                         {% endif %}
                                     </span>
                                 </li>

@@ -131,10 +131,10 @@
                     {% endif %}
                 </div>
                 <div class="card-footer text-end">
-                    {% if booking.status == 'pending' or booking.status == 'pending_contract' or booking.status == 'confirmed' %}
-                        <a href="{% url 'booking_app:update_booking' booking.pk %}" class="btn btn-primary">{% translate "Manage Booking" %}</a>
-                    {% else %}
+                    {% if booking.status == 'completed' or booking.status == 'cancelled' %}
                         <p class="text-muted mb-0">{% translate "This booking is finalized and cannot be modified." %}</p>
+                    {% else %}
+                        <a href="{% url 'booking_app:update_booking' booking.pk %}" class="btn btn-primary">{% translate "Manage Booking" %}</a>
                     {% endif %}
                 </div>
             </div>

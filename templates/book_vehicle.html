@@ -46,6 +46,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const crcMessageDiv = document.getElementById('crc-lookup-message');
     const vatMessageDiv = document.getElementById('vat-lookup-message');
 
+    // --- GET SETTING FROM DJANGO ---
+    const crcIsMandatory = {{ crc_is_mandatory|yesno:"true,false" }};
+
     // --- STATE MANAGEMENT ---
     let isCrcVerified = false;
     let isVatVerified = false;
@@ -360,14 +363,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- INITIAL STATE ---
     function initializeForm() {
-        toggleFields(identityFields, false);
-        toggleFields(contactFields, false);
-        toggleFields(bookingFields, false);
-        endDateInput.disabled = true;
+        if (crcIsMandatory) {
+            toggleContactFields(false);
+            toggleBookingFields(false);
+            setFieldsReadOnly([companyNameInput, addressInput], false);
+        } else {
+            toggleContactFields(true);
+            toggleBookingFields(true);
+            endDateInput.disabled = true;
+        }
         validateFormState();
     }
 
     initializeForm();
+
+    if (mainForm) {
+        mainForm.addEventListener('submit', function() {
+            // Before submitting, re-enable all fields so their values are sent
+            toggleFields(fieldsToToggle, true);
+        });
+    }
 });
 </script>
 {% endblock %}

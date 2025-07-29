@@ -1,9 +1,15 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\views.py
 import json
+import os
+import subprocess
+from io import BytesIO
+
 import requests
 import re
 from bs4 import BeautifulSoup
-from django.http import JsonResponse
+from django.conf import settings
+from django.core.files.base import ContentFile
+from django.http import JsonResponse, HttpResponse
 from django.utils.crypto import get_random_string
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator
@@ -22,6 +28,9 @@ from django.db.models import Q, Max, Count
 from datetime import date, timedelta
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
+from docxtpl import DocxTemplate
+from pypdf import PdfWriter
+
 from .forms import UserCreateForm, VehicleCreateForm, LocationCreateForm, BookingForm, UpdateUserForm, \
     LocationUpdateForm, VehicleEditForm, GroupForm, EmailTemplateForm, DistributionListForm, AutomationSettingsForm, \
     BookingFilterForm
@@ -195,7 +204,7 @@ def book_vehicle_view(request, vehicle_pk):
         for booking in all_bookings
     ]
     if request.method == 'POST':
-        form = BookingForm(request.POST, vehicle=vehicle, is_create_page=True)
+        form = BookingForm(request.POST, vehicle=vehicle, is_create_page=True, crc_is_mandatory=crc_is_mandatory)
         if form.is_valid():
             booking = form.save(commit=False)
             booking.user = request.user
@@ -208,7 +217,7 @@ def book_vehicle_view(request, vehicle_pk):
         else:
             messages.error(request, _('Please correct the errors below.'))
     else:
-        form = BookingForm(vehicle=vehicle, is_create_page=True)
+        form = BookingForm(vehicle=vehicle, is_create_page=True, crc_is_mandatory=crc_is_mandatory)
     context = {
         'form': form, 'vehicle': vehicle,
         'next_booking_start_date': next_booking.start_date if next_booking else None,
@@ -234,134 +243,80 @@ def booking_detail_view(request, booking_pk):
     context = {'booking': booking, 'page_title': _("Booking Details")}
     return render(request, 'booking_detail.html', context)
 
+
 @login_required
 def update_booking_view(request, booking_pk):
+    """
+    A simplified view for a user to update their own booking.
+    Handles reverting confirmed bookings and completing bookings with final KM.
+    """
     booking = get_object_or_404(Booking, pk=booking_pk)
     user = request.user
-    is_admin = user.groups.filter(name='Admin').exists()
-    is_booking_admin = user.groups.filter(name='Booking Admin').exists()
-    is_sd_group = user.groups.filter(name='sd').exists()
-    is_tl_heavy_group = user.groups.filter(name='tlheavy').exists()
-    is_tl_light_group = user.groups.filter(name='tllight').exists()
-    is_tlapv_member = user.groups.filter(name='tlapv').exists()
-    can_manage_booking_status = (
-        is_admin or is_sd_group or
-        (is_tl_heavy_group and booking.vehicle.vehicle_type == 'HEAVY') or
-        (is_tl_light_group and booking.vehicle.vehicle_type == 'LIGHT') or
-        (is_tlapv_member and booking.vehicle.vehicle_type == 'APV')
-    )
-    can_access_page = (user == booking.user) or can_manage_booking_status or is_booking_admin
-    can_update_form_fields = (
-        (user == booking.user) or can_manage_booking_status or is_booking_admin
-    ) and booking.status not in ['cancelled', 'completed', 'pending_final_km']
+
+    if user != booking.user:
+        messages.error(request, _("You do not have permission to access this booking."))
+        return redirect('booking_app:my_bookings')
+
+    can_update_form_fields = booking.status not in ['confirmed', 'cancelled', 'completed']
 
     if booking.status == 'confirmed' and timezone.now().date() < booking.start_date:
         can_update_form_fields = True
 
-    if not can_access_page:
-        messages.error(request, _("You do not have permission to access or manage this booking."))
-        return redirect('booking_app:my_bookings')
-
-    is_apv_booking = booking.vehicle.vehicle_type == 'APV'
-    can_approve_apv = is_apv_booking and booking.status == 'pending' and can_manage_booking_status
-    can_approve = not is_apv_booking and booking.status == 'pending' and can_manage_booking_status
-    can_confirm_contract = not is_apv_booking and booking.status == 'pending_contract' and booking.contract_document and can_manage_booking_status
-    can_request_final_km = is_apv_booking and booking.status == 'confirmed' and can_manage_booking_status
-    can_complete_apv_booking = is_apv_booking and booking.status == 'pending_final_km' and booking.final_km is not None and can_manage_booking_status
-    can_cancel_by_manager = booking.status in ['pending', 'pending_contract', 'confirmed'] and can_manage_booking_status
-    can_complete_booking = not is_apv_booking and booking.status == 'confirmed' and can_manage_booking_status
+    if booking.status == 'pending_final_km':
+        can_update_form_fields = True
 
     if request.method == 'POST':
-        action = request.POST.get('action')
-        if action == 'request_final_km' and can_request_final_km:
-            last_booking = Booking.objects.filter(
-                vehicle=booking.vehicle, status='completed', final_km__isnull=False
-            ).order_by('-end_date').first()
-            booking.initial_km = last_booking.final_km if last_booking else 0
-            if not last_booking:
-                messages.warning(request, _("This is the first trip for this APV. Initial KM set to 0. Please verify and update if necessary."))
-            booking.status = 'pending_final_km'
-            booking.save()
-            messages.info(request, _("Booking is now awaiting final kilometers. Please enter the final reading to complete."))
-            return redirect(request.path_info)
-        elif action == 'approve_apv' and can_approve_apv:
-            booking.status = 'confirmed'
-            booking.save()
-            send_booking_notification('apv_booking_approved', booking_instance=booking)
-            messages.success(request, _("APV Booking has been approved successfully."))
-            return redirect(request.path_info)
-        elif action == 'approve' and can_approve:
-            booking.status = 'pending_contract'
-            booking.save()
-            send_booking_notification('booking_awaiting_contract', booking_instance=booking)
-            messages.success(request, _(f"Booking {booking.pk} approved. Status is now 'Pending Contract'."))
-            return redirect(request.path_info)
-        elif action == 'confirm_with_contract' and can_confirm_contract:
-            booking.status = 'confirmed'
-            booking.save()
-            send_booking_notification('booking_approved', booking_instance=booking)
-            messages.success(request, _(f"Booking {booking.pk} has been confirmed with the uploaded contract."))
-            return redirect('booking_app:group_dashboard')
-        elif action == 'cancel_by_manager' and can_cancel_by_manager:
-            booking.status = 'cancelled'
-            booking.cancelled_by = request.user
-            booking.cancellation_time = timezone.now()
-            booking.cancellation_reason = _("Cancelled by management.")
-            booking.save()
-            send_booking_notification('booking_canceled_by_manager', booking_instance=booking)
-            messages.success(request, _(f"Booking {booking.pk} has been cancelled by management."))
-            return redirect('booking_app:group_dashboard')
-        elif action == 'complete' and can_complete_booking:
-            booking.status = 'completed'
-            booking.save()
-            send_booking_notification('booking_completed', booking_instance=booking)
-            messages.success(request, _(f"Booking {booking.pk} has been marked as completed."))
-            return redirect('booking_app:group_dashboard')
-        else:
-            can_submit_form = can_update_form_fields or (is_apv_booking and booking.status == 'pending_final_km')
-            if can_submit_form:
-                form = BookingForm(request.POST, request.FILES, instance=booking, vehicle=booking.vehicle)
-                if form.is_valid():
-                    updated_booking = form.save(commit=False)
-                    if booking.status == 'confirmed' and timezone.now().date() < booking.start_date and form.has_changed():
-                        updated_booking.status = 'pending'
-                        messages.info(request,
-                                      _("The booking was modified and has been returned to 'Pending' status for re-approval."))
-                        send_booking_notification('booking_reverted', booking_instance=updated_booking)
-                    if can_complete_apv_booking:
-                        updated_booking.status = 'completed'
-                    updated_booking.save()
-                    messages.success(request, _("Your booking has been updated successfully."))
-                    if updated_booking.status == 'completed':
-                        return redirect('booking_app:group_dashboard')
-                    return redirect(request.path_info)
-                else:
-                    messages.error(request, _("Error updating booking. Please check the form."))
-            else:
-                messages.error(request, _("You do not have permission to update this booking's details or its status prevents it."))
+        if can_update_form_fields:
+            form = BookingForm(request.POST, request.FILES, instance=booking, vehicle=booking.vehicle)
+            if form.is_valid():
+                updated_booking = form.save(commit=False)
+
+                # Logic to revert a modified confirmed booking to pending
+                if booking.status == 'confirmed' and timezone.now().date() < booking.start_date and form.has_changed():
+                    updated_booking.status = 'pending'
+                    messages.info(request,
+                                  _("The booking was modified and has been returned to 'Pending' status for re-approval."))
+                    send_booking_notification('booking_reverted', booking_instance=updated_booking)
+
+                # Logic to complete a booking when final KM is added
+                elif booking.status == 'pending_final_km' and form.cleaned_data.get('final_km') is not None:
+                    updated_booking.status = 'completed'
+
+                updated_booking.save()
+                form.save_m2m()  # Save many-to-many fields
+                messages.success(request, _("Your booking has been updated successfully."))
+
+                # If booking is now complete, redirect to the list view
+                if updated_booking.status == 'completed':
+                    return redirect('booking_app:my_bookings')
+
+                # Otherwise, reload the current page to show changes
                 return redirect(request.path_info)
+            else:
+                messages.error(request, _("Error updating booking. Please check the form."))
+        else:
+            messages.error(request, _("This booking cannot be modified in its current state."))
+            return redirect(request.path_info)
     else:
         form = BookingForm(instance=booking, vehicle=booking.vehicle)
-        can_edit_now = can_update_form_fields or (is_apv_booking and booking.status == 'pending_final_km')
-        if not can_edit_now:
+        if not can_update_form_fields:
             for field in form.fields.values():
                 field.widget.attrs['readonly'] = 'readonly'
-                field.widget.attrs['disabled'] = 'disabled'
+
     context = {
-        'form': form, 'booking': booking, 'is_apv_booking': is_apv_booking,
-        'can_approve_apv': can_approve_apv, 'can_approve': can_approve,
-        'can_confirm_contract': can_confirm_contract, 'can_request_final_km': can_request_final_km,
-        'can_cancel_by_manager': can_cancel_by_manager, 'can_complete_booking': can_complete_booking,
+        'form': form,
+        'booking': booking,
         'can_update_form_fields': can_update_form_fields,
     }
     return render(request, 'update_booking.html', context)
+
 
 @login_required
 @user_passes_test(is_group_leader, login_url='booking_app:home')
 def group_booking_update_view(request, booking_pk):
     """
     A dedicated view for managers to update bookings from the group dashboard.
-    Includes a special 'upload_only' mode for contracts.
+    Handles reverting confirmed bookings to pending if they are modified.
     """
     booking = get_object_or_404(Booking, pk=booking_pk)
     user = request.user
@@ -375,10 +330,10 @@ def group_booking_update_view(request, booking_pk):
     is_tlapv_member = user.groups.filter(name='tlapv').exists()
 
     can_manage_booking_status = (
-        is_admin or is_sd_group or
-        (is_tl_heavy_group and booking.vehicle.vehicle_type == 'HEAVY') or
-        (is_tl_light_group and booking.vehicle.vehicle_type == 'LIGHT') or
-        (is_tlapv_member and booking.vehicle.vehicle_type == 'APV')
+            is_admin or is_sd_group or
+            (is_tl_heavy_group and booking.vehicle.vehicle_type == 'HEAVY') or
+            (is_tl_light_group and booking.vehicle.vehicle_type == 'LIGHT') or
+            (is_tlapv_member and booking.vehicle.vehicle_type == 'APV')
     )
     can_access_page = can_manage_booking_status or is_booking_admin
 
@@ -386,84 +341,85 @@ def group_booking_update_view(request, booking_pk):
         messages.error(request, _("You do not have permission to manage this booking."))
         return redirect('booking_app:group_dashboard')
 
-    # --- Determine if this is an "upload only" request ---
-    upload_only = request.GET.get('upload_only') == 'true'
+    # --- Determine form and action permissions ---
+    can_update_form_fields = (
+                                     can_manage_booking_status or is_booking_admin
+                             ) and booking.status not in ['confirmed', 'cancelled', 'completed']
 
-    # --- Action permissions ---
+    # Allow editing of confirmed bookings that have not yet started
+    if booking.status == 'confirmed' and timezone.now().date() < booking.start_date:
+        can_update_form_fields = True
+
     is_apv_booking = booking.vehicle.vehicle_type == 'APV'
     can_approve_apv = is_apv_booking and booking.status == 'pending' and can_manage_booking_status
     can_approve = not is_apv_booking and booking.status == 'pending' and can_manage_booking_status
     can_confirm_contract = not is_apv_booking and booking.status == 'pending_contract' and booking.contract_document and can_manage_booking_status
-    can_request_final_km = is_apv_booking and booking.status == 'confirmed' and can_manage_booking_status
-    can_complete_apv_booking = is_apv_booking and booking.status == 'pending_final_km' and booking.final_km is not None and can_manage_booking_status
     can_cancel_by_manager = booking.status in ['pending', 'pending_contract', 'confirmed'] and can_manage_booking_status
-    can_complete_booking = not is_apv_booking and booking.status == 'confirmed' and can_manage_booking_status
-    can_update_form_fields = (can_manage_booking_status or is_booking_admin) and booking.status not in ['confirmed', 'cancelled', 'completed', 'pending_final_km']
 
     if request.method == 'POST':
         action = request.POST.get('action')
-        if action == 'request_final_km' and can_request_final_km:
-            last_booking = Booking.objects.filter(vehicle=booking.vehicle, status='completed', final_km__isnull=False).order_by('-end_date').first()
-            booking.initial_km = last_booking.final_km if last_booking else 0
-            if not last_booking:
-                messages.warning(request, _("This is the first trip for this APV. Initial KM set to 0. Please verify and update if necessary."))
-            booking.status = 'pending_final_km'
-            booking.save()
-            messages.info(request, _("Booking is now awaiting final kilometers. Please enter the final reading to complete."))
-            return redirect(request.path_info)
-        elif action == 'approve_apv' and can_approve_apv:
-            booking.status = 'confirmed'
-            booking.save()
-            send_booking_notification('apv_booking_approved', booking_instance=booking)
-            messages.success(request, _("APV Booking has been approved successfully."))
-            return redirect(request.path_info)
-        elif action == 'approve' and can_approve:
-            booking.status = 'pending_contract'
-            booking.save()
-            send_booking_notification('booking_awaiting_contract', booking_instance=booking)
-            messages.success(request, _(f"Booking {booking.pk} approved. Status is now 'Pending Contract'."))
-            return redirect(request.path_info)
-        elif action == 'confirm_with_contract' and can_confirm_contract:
-            booking.status = 'confirmed'
-            booking.save()
-            send_booking_notification('booking_approved', booking_instance=booking)
-            messages.success(request, _(f"Booking {booking.pk} has been confirmed with the uploaded contract."))
-            return redirect('booking_app:group_dashboard')
-        elif action == 'cancel_by_manager' and can_cancel_by_manager:
-            booking.status = 'cancelled'
-            booking.cancelled_by = user
-            booking.cancellation_time = timezone.now()
-            booking.cancellation_reason = _("Cancelled by management.")
-            booking.save()
-            send_booking_notification('booking_canceled_by_manager', booking_instance=booking)
-            messages.success(request, _(f"Booking {booking.pk} has been cancelled by management."))
-            return redirect('booking_app:group_dashboard')
-        elif action == 'complete' and can_complete_booking:
-            booking.status = 'completed'
-            booking.save()
-            send_booking_notification('booking_completed', booking_instance=booking)
-            messages.success(request, _(f"Booking {booking.pk} has been marked as completed."))
-            return redirect('booking_app:group_dashboard')
-        else:
-            can_submit_form = can_update_form_fields or (is_apv_booking and booking.status == 'pending_final_km')
+        if action:
+            if action == 'approve_apv' and can_approve_apv:
+                booking.status = 'confirmed'
+                booking.save()
+                send_booking_notification('apv_booking_approved', booking_instance=booking)
+                messages.success(request, _("APV Booking has been approved successfully."))
+                return redirect(request.path_info)
+            elif action == 'approve' and can_approve:
+                booking.status = 'pending_contract'
+                booking.save()
+                send_booking_notification('booking_awaiting_contract', booking_instance=booking)
+                messages.success(request, _(f"Booking {booking.pk} approved. Status is now 'Pending Contract'."))
+                return redirect(request.path_info)
+            elif action == 'confirm_with_contract' and can_confirm_contract:
+                booking.status = 'confirmed'
+                booking.save()
+                send_booking_notification('booking_approved', booking_instance=booking)
+                messages.success(request, _(f"Booking {booking.pk} has been confirmed with the uploaded contract."))
+                return redirect('booking_app:group_dashboard')
+            elif action == 'cancel_by_manager' and can_cancel_by_manager:
+                booking.status = 'cancelled'
+                booking.cancelled_by = user
+                booking.cancellation_time = timezone.now()
+                booking.cancellation_reason = _("Cancelled by management.")
+                booking.save()
+                send_booking_notification('booking_canceled_by_manager', booking_instance=booking)
+                messages.success(request, _(f"Booking {booking.pk} has been cancelled by management."))
+                return redirect('booking_app:group_dashboard')
+
+        else:  # Form submission (Save Changes or Complete)
+            can_submit_form = can_update_form_fields or (booking.status == 'pending_final_km')
             if can_submit_form:
-                form = BookingForm(request.POST, request.FILES, instance=booking, vehicle=booking.vehicle, upload_only=upload_only)
+                form = BookingForm(request.POST, request.FILES, instance=booking, vehicle=booking.vehicle)
                 if form.is_valid():
                     updated_booking = form.save(commit=False)
-                    if can_complete_apv_booking:
+
+                    if booking.status == 'confirmed' and timezone.now().date() < booking.start_date and form.has_changed():
+                        updated_booking.status = 'pending'
+                        messages.info(request,
+                                      _("The booking was modified and has been returned to 'Pending' status for re-approval."))
+                        send_booking_notification('booking_reverted', booking_instance=updated_booking)
+                    elif booking.status == 'pending_final_km' and form.cleaned_data.get('final_km') is not None:
                         updated_booking.status = 'completed'
+
                     updated_booking.save()
-                    messages.success(request, _("Booking has been updated successfully."))
+                    form.save_m2m()
+                    messages.success(request, _("Your booking has been updated successfully."))
+
                     if updated_booking.status == 'completed':
                         return redirect('booking_app:group_dashboard')
                     return redirect(request.path_info)
                 else:
                     messages.error(request, _("Error updating booking. Please check the form."))
             else:
-                messages.error(request, _("You do not have permission to update this booking's details or its status prevents it."))
+                messages.error(request,
+                               _("You do not have permission to update this booking's details or its status prevents it."))
                 return redirect(request.path_info)
     else:
-        form = BookingForm(instance=booking, vehicle=booking.vehicle, upload_only=upload_only)
+        form = BookingForm(instance=booking, vehicle=booking.vehicle)
+        if not can_update_form_fields and booking.status != 'pending_final_km':
+            for field in form.fields.values():
+                field.widget.attrs['readonly'] = 'readonly'
 
     context = {
         'form': form,
@@ -472,11 +428,9 @@ def group_booking_update_view(request, booking_pk):
         'can_approve_apv': can_approve_apv,
         'can_approve': can_approve,
         'can_confirm_contract': can_confirm_contract,
-        'can_request_final_km': can_request_final_km,
         'can_cancel_by_manager': can_cancel_by_manager,
-        'can_complete_booking': can_complete_booking,
         'can_update_form_fields': can_update_form_fields,
-        'upload_only': upload_only,
+        'upload_only': False,  # This view doesn't use the upload_only GET parameter
     }
     return render(request, 'group_booking_update.html', context)
 
@@ -1268,3 +1222,75 @@ def validate_vat_view(request):
 
     except requests.exceptions.RequestException:
         return JsonResponse({'valid': False, 'error': _('Could not connect to the VIES service.')}, status=503)
+
+@login_required
+def generate_and_save_contract_view(request, booking_pk):
+    """
+    Generates a contract from a .docx template, converts it to PDF,
+    merges it with a static PDF, and saves the final result to the booking.
+    """
+    booking = get_object_or_404(Booking, pk=booking_pk)
+
+    # --- 1. Define File Paths ---
+    template_dir = os.path.join(settings.BASE_DIR, 'document_templates')
+    docx_template_path = os.path.join(template_dir, 'contract_template.docx')
+    static_pdf_path = os.path.join(template_dir, 'terms_and_conditions.pdf')
+
+    # Create a temporary directory for processing files if it doesn't exist
+    temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
+    os.makedirs(temp_dir, exist_ok=True)
+
+    # --- 2. Render the .docx Template ---
+    doc = DocxTemplate(docx_template_path)
+    context = {'booking': booking}
+    doc.render(context)
+
+    # Save the rendered docx to a temporary file
+    temp_docx_path = os.path.join(temp_dir, f'temp_contract_{booking.pk}.docx')
+    doc.save(temp_docx_path)
+
+    # --- 3. Convert the .docx to PDF using LibreOffice ---
+    try:
+        soffice_path = r"C:\Program Files\LibreOffice\program\soffice.exe"
+
+        subprocess.run(
+            [soffice_path, '--headless', '--convert-to', 'pdf', temp_docx_path, '--outdir', temp_dir],
+            check=True, timeout=15
+        )
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
+        # If it still fails, it means the soffice_path is incorrect or LibreOffice is not installed.
+        error_message = _(
+            "Could not find or run the LibreOffice converter. Please ensure it is installed and the path in the view is correct.")
+        messages.error(request, f"{error_message} ({e})")
+        return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
+
+    temp_pdf_path = os.path.join(temp_dir, f'temp_contract_{booking.pk}.pdf')
+
+    # --- 4. Merge the new PDF with the static PDF ---
+    merger = PdfWriter()
+    try:
+        # Add the newly generated contract
+        merger.append(temp_pdf_path)
+        # Add the terms and conditions
+        merger.append(static_pdf_path)
+
+        # Write the final merged PDF to an in-memory buffer
+        pdf_buffer = BytesIO()
+        merger.write(pdf_buffer)
+        pdf_buffer.seek(0)
+    finally:
+        merger.close()
+
+    # --- 5. Save the Merged PDF to the Booking's contract_document Field ---
+    final_pdf_filename = f'contract_booking_{booking.pk}_merged.pdf'
+    # Use ContentFile to wrap the in-memory buffer for Django's FileField
+    booking.contract_document.save(final_pdf_filename, ContentFile(pdf_buffer.read()), save=True)
+
+    # --- 6. Clean up temporary files ---
+    if os.path.exists(temp_docx_path):
+        os.remove(temp_docx_path)
+    if os.path.exists(temp_pdf_path):
+        os.remove(temp_pdf_path)
+
+    messages.success(request, _("Contract has been generated and attached to the booking successfully."))
+    return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)

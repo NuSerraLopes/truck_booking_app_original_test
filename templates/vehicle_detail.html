@@ -24,12 +24,16 @@
                     {% endif %}
                 </div>
                 <div class="col-lg-7">
-                    <h2 class="mb-3">{{ vehicle.model }}</h2>
+                    <h2 class="mb-3">{{ vehicle.license_plate }}</h2>
 
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item px-0 d-flex justify-content-between">
                             <strong>{% translate "License Plate" %}:</strong>
-                            <span>{{ vehicle.license_plate }}</span>
+                            <span>{{ vehicle.model }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>{% translate "Vehicle Type" %}:</strong>
+                            <span>{{ vehicle.chassis }}</span>
                         </li>
                         <li class="list-group-item px-0 d-flex justify-content-between">
                             <strong>{% translate "Vehicle Type" %}:</strong>

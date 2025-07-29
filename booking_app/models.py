@@ -155,10 +155,21 @@ class Vehicle(models.Model):
         ('LIGHT', 'LIGHT'),
         ('APV', 'APV'),
     ]
-    license_plate = models.CharField(max_length=15, unique=True)
-    vehicle_type = models.CharField(max_length=50, choices=VEHICLE_TYPES)
-    is_available = models.BooleanField(default=True)
-    model = models.CharField(_("Model Name"), max_length=100, blank=True, default="N/A")
+    license_plate = models.CharField(max_length=15, unique=True,help_text=_("License Plate of the vehicle."))
+    vehicle_type = models.CharField(max_length=50, choices=VEHICLE_TYPES,help_text=_("Vehicle Type (LIGHT, HEAVY, APV)."))
+    is_available = models.BooleanField(default=True,help_text=_("Is Vehicle Available."))
+    model = models.CharField(_("Model Name"), max_length=100, blank=True, default="N/A",help_text=_("The Model of the vehicle."))
+    is_electric = models.BooleanField(default=False,help_text=_("Is Vehicle Eletric."))
+    viaverde_id = models.CharField(max_length=100, blank=True, null=True,help_text=_("ID of the ViaVerde Identifier."))
+    vehicle_km = models.CharField(max_length=100, blank=True, null=True,help_text=_("The KM of the vehicle."))
+    chassis = models.CharField(
+        _("Chassis Number"),
+        max_length=100,
+        unique=True,
+        blank=True,
+        null=True,
+        help_text=_("The unique chassis number of the vehicle.")
+    )
     picture = models.ImageField(
         _("Picture"),
         upload_to='vehicle_pics/',
@@ -239,7 +250,7 @@ class Booking(models.Model):
     customer_email = models.EmailField(blank=True, null=True)
     customer_phone = models.CharField(max_length=20, blank=True, null=True)
     client_tax_number = models.CharField(max_length=50, blank=False, verbose_name=_("Client Tax Number"))
-    client_company_registration = models.CharField(max_length=100, blank=False,
+    client_company_registration = models.CharField(max_length=100, blank=True, null=True,
                                                    verbose_name=_("Client CRC"))
 
     customer_address = models.TextField(
@@ -405,6 +416,7 @@ class EmailTemplate(models.Model):
             ('booking_completed', _('Booking Completed')),
             ('booking_pending_reminder', _('Booking Pending Reminder')),
             ('transport_status_changed', _('Booking Transport Status Changed')),
+            ('booking_ended_pending_km', _('Booking Ended Pending KM')),
         )),
         ('Manager Actions', (
             ('booking_approved', _('Booking Approved')),
@@ -502,7 +514,7 @@ class AutomationSettings(models.Model):
 
     require_crc_verification = models.BooleanField(
         _("Require Company Verification via CRC"),
-        default=True,
+        default=False,
         help_text=_(
             "If checked, users must successfully verify a company's CRC before they can fill out the rest of the booking form.")
     )

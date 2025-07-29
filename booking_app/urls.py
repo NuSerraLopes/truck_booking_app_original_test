@@ -22,9 +22,9 @@ urlpatterns = [
     path('my-bookings/', views.my_bookings_view, name='my_bookings'),
     path('my-bookings/api/', views.my_bookings_api_view, name='my_bookings_api'),
     path('my-bookings/<int:booking_pk>/', views.booking_detail_view, name='bookings_detail'),
-    # The 'my_group_bookings' URL has been removed.
     path('bookings/update/<int:booking_pk>/', views.update_booking_view, name='update_booking'),
     path('bookings/cancel/<int:booking_pk>/', views.cancel_booking_view, name='cancel_booking'),
+    path('bookings/<int:booking_pk>/generate-word-contract/', views.generate_and_save_contract_view, name='generate_word_contract'),
 
     # User Profile Management URLs
     path('my-account/', views.my_account_view, name='my_account'),

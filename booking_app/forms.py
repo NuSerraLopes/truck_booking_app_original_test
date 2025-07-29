@@ -61,6 +61,7 @@ class BookingForm(forms.ModelForm):
         self.vehicle = kwargs.pop('vehicle', None)
         is_create_page = kwargs.pop('is_create_page', False)
         upload_only = kwargs.pop('upload_only', False)
+        crc_is_mandatory = kwargs.pop('crc_is_mandatory', False)
         super().__init__(*args, **kwargs)
 
         if self.instance and self.instance.pk:
@@ -68,28 +69,39 @@ class BookingForm(forms.ModelForm):
         else:
             self.initial_contract_document = None
 
-        # Make customer_address non-writable by default
+        if crc_is_mandatory:
+            self.fields['client_company_registration'].required = True
+        else:
+            self.fields['client_company_registration'].required = False
+
         self.fields['customer_address'].widget.attrs['readonly'] = True
         self.fields['customer_address'].widget.attrs['disabled'] = True
 
         if self.vehicle and self.vehicle.vehicle_type == 'APV':
             self.fields['motive'].required = True
             self.fields['motive'].label = _("Motive (Required for APV)")
-            if self.instance and self.instance.status == 'pending_final_km':
-                self.fields['final_km'].required = True
-            else:
-                self.fields['final_km'].widget = forms.HiddenInput()
-                self.fields['final_km'].required = False
         else:
             self.fields['motive'].widget = forms.HiddenInput()
             self.fields['motive'].required = False
+
+        if self.instance and self.instance.status == 'pending_final_km':
+            self.fields['final_km'].required = True
+        else:
+            self.fields['final_km'].widget = forms.HiddenInput()
+            self.fields['final_km'].required = False
+
+        if self.instance and self.instance.status == 'pending_final_km':
+            self.fields['final_km'].required = True
+            for field_name, field in self.fields.items():
+                if field_name != 'final_km':
+                    field.widget.attrs['readonly'] = 'readonly'
+        else:
             self.fields['final_km'].widget = forms.HiddenInput()
             self.fields['final_km'].required = False
 
         if upload_only:
             for field_name, field in self.fields.items():
                 if field_name != 'contract_document':
-                    field.widget.attrs['disabled'] = 'disabled'
                     field.widget.attrs['readonly'] = 'readonly'
 
         self.helper = FormHelper()
@@ -132,56 +144,44 @@ class BookingForm(forms.ModelForm):
 
     @transaction.atomic
     def save(self, commit=True):
-        # Logic for clearing the contract document
         if self.data.get("contract_document-clear") and self.initial_contract_document:
             self.initial_contract_document.delete(save=False)
 
         original_needs_transport = self.instance.needs_transport if self.instance.pk else False
-
         booking = super().save(commit=False)
-        vehicle_for_check = self.vehicle if self.vehicle else booking.vehicle
 
+        if booking.final_km is not None:
+            vehicle = booking.vehicle
+            vehicle.vehicle_km = booking.final_km
+            vehicle.save(update_fields=['vehicle_km'])
+
+        vehicle_for_check = self.vehicle if self.vehicle else booking.vehicle
         previous_booking = Booking.objects.filter(
-            vehicle=vehicle_for_check,
-            end_date__lt=booking.start_date
+            vehicle=vehicle_for_check, end_date__lt=booking.start_date
         ).order_by('-end_date').first()
 
-        if previous_booking:
-            booking.needs_transport = (previous_booking.end_location != booking.start_location)
-        else:
-            booking.needs_transport = False
+        booking.needs_transport = (
+                    previous_booking.end_location != booking.start_location) if previous_booking else False
 
         if booking.needs_transport != original_needs_transport:
-            context = {}
-            if previous_booking:
-                context['previous_end_location'] = previous_booking.end_location
-            send_booking_notification(
-                'transport_status_changed',
-                booking_instance=booking,
-                context_data=context
-            )
+            context = {'previous_end_location': previous_booking.end_location if previous_booking else None}
+            send_booking_notification('transport_status_changed', booking_instance=booking, context_data=context)
 
         if commit:
             booking.save()
             self.save_m2m()
 
         next_booking = Booking.objects.filter(
-            vehicle=vehicle_for_check,
-            start_date__gt=booking.end_date
+            vehicle=vehicle_for_check, start_date__gt=booking.end_date
         ).order_by('start_date').first()
 
         if next_booking:
             original_next_needs_transport = next_booking.needs_transport
             next_booking.needs_transport = (booking.end_location != next_booking.start_location)
-
             if next_booking.needs_transport != original_next_needs_transport:
                 context = {'previous_end_location': booking.end_location}
-                send_booking_notification(
-                    'transport_status_changed',
-                    booking_instance=next_booking,
-                    context_data=context
-                )
-
+                send_booking_notification('transport_status_changed', booking_instance=next_booking,
+                                          context_data=context)
             next_booking.save(update_fields=['needs_transport'])
 
         return booking
@@ -189,6 +189,9 @@ class BookingForm(forms.ModelForm):
     def clean_start_date(self):
         start_date = self.cleaned_data.get('start_date')
         tomorrow = date.today() + timedelta(days=1)
+        if self.instance and self.instance.pk and self.instance.status == 'pending_final_km':
+            return start_date
+
         if start_date and start_date < tomorrow:
             raise ValidationError(
                 _("Booking date cannot be today or in the past. Please select tomorrow or a future date."),
@@ -206,24 +209,20 @@ class BookingForm(forms.ModelForm):
             raise ValidationError(_("End date must be after start date."))
 
         if self.vehicle and start_date and end_date:
+            # UPDATED: 'pending_final_km' is now a potential conflict for all vehicle types
             if self.vehicle.vehicle_type == 'APV':
                 unavailable_statuses = ['pending', 'confirmed', 'pending_final_km']
             else:
-                unavailable_statuses = ['pending', 'pending_contract', 'confirmed']
+                unavailable_statuses = ['pending', 'pending_contract', 'confirmed', 'pending_final_km']
 
             new_booking_start_buffer = subtract_business_days(start_date, 3)
             new_booking_end_buffer = add_business_days(end_date, 3)
-
             conflicting_bookings = Booking.objects.filter(
-                vehicle=self.vehicle,
-                status__in=unavailable_statuses,
-                start_date__lte=new_booking_end_buffer,
-                end_date__gte=new_booking_start_buffer,
+                vehicle=self.vehicle, status__in=unavailable_statuses,
+                start_date__lte=new_booking_end_buffer, end_date__gte=new_booking_start_buffer
             )
-
             if self.instance and self.instance.pk:
                 conflicting_bookings = conflicting_bookings.exclude(pk=self.instance.pk)
-
             if conflicting_bookings.exists():
                 conflict = conflicting_bookings.first()
                 raise ValidationError(
@@ -235,7 +234,7 @@ class BookingForm(forms.ModelForm):
                 )
 
         if self.vehicle and self.vehicle.vehicle_type == 'APV':
-            if not motive and not self.instance.pk:  # Only require motive on creation
+            if not motive and not self.instance.pk:
                 self.add_error('motive', _("This field is required for APV bookings."))
 
         if self.instance and self.instance.initial_km is not None and final_km is not None:
@@ -341,18 +340,22 @@ class UserCreateForm(forms.ModelForm):
 class VehicleCreateForm(forms.ModelForm):
     class Meta:
         model = Vehicle
-        fields = ['license_plate', 'vehicle_type', 'model', 'picture', 'current_location',
-                  'insurance_document','registration_document','next_maintenance_date',
+        fields = ['license_plate', 'vehicle_type', 'model','is_electric','viaverde_id','chassis', 'picture', 'current_location',
+                  'insurance_document','registration_document','next_maintenance_date','vehicle_km',
                   ]
         labels = {
             'license_plate': _('License Plate'),
             'vehicle_type': _('Vehicle Type'),
             'model': _('Model Name'),
+            'is_electric': _('Is Electric'),
+            'viaverde_id': _('Viaverde ID'),
+            'chassis': _('Chassis Number'),
             'picture': _('Vehicle Picture'),
             'current_location': _('Current Location'),
             'insurance_document': _('Insurance'),
             'registration_document': _('Registration'),
             'next_maintenance_date': _('Next Maintenance Date'),
+            'vehicle_km': _('Vehicle Km'),
         }
 
         widgets = {
@@ -369,27 +372,44 @@ class VehicleCreateForm(forms.ModelForm):
                 Column('model', css_class='form-group col-md-6 mb-3'),
             ),
             Row(
+                Column('chassis', css_class='form-group col-md-6 mb-3'),
+                Column('viaverde_id', css_class='form-group col-md-6 mb-3'),
+            ),
+            Row(
                 Column('vehicle_type', css_class='form-group col-md-6 mb-3'),
                 Column('current_location', css_class='form-group col-md-6 mb-3'),
             ),
+            Row(
+                Column('vehicle_km', css_class='form-group col-md-6 mb-3'),
+            ),
+            'is_electric',
             'picture',
+            'registration_document',
+            'insurance_document',
         )
 
 
 class VehicleEditForm(forms.ModelForm):
     class Meta:
         model = Vehicle
-        fields = [
-            'license_plate',
-            'vehicle_type',
-            'model',
-            'picture',
-            'current_location',
-            'is_available',
-            'insurance_document',
-            'registration_document',
-            'next_maintenance_date',
-        ]
+        fields = ['license_plate', 'vehicle_type', 'model', 'is_electric', 'viaverde_id', 'chassis', 'picture',
+                  'current_location', 'insurance_document', 'registration_document', 'next_maintenance_date',
+                  'vehicle_km',
+                  ]
+        labels = {
+            'license_plate': _('License Plate'),
+            'vehicle_type': _('Vehicle Type'),
+            'model': _('Model Name'),
+            'is_electric': _('Is Electric'),
+            'viaverde_id': _('Viaverde ID'),
+            'chassis': _('Chassis Number'),
+            'picture': _('Vehicle Picture'),
+            'current_location': _('Current Location'),
+            'insurance_document': _('Insurance'),
+            'registration_document': _('Registration'),
+            'next_maintenance_date': _('Next Maintenance Date'),
+            'vehicle_km': _('Vehicle Km'),
+        }
         widgets = {
             'picture': forms.FileInput(),
             'next_maintenance_date': forms.DateInput(attrs={'type': 'date'}),
@@ -398,7 +418,7 @@ class VehicleEditForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # --- Store the initial file info BEFORE anything happens ---
+        # Store the initial file info for deletion logic
         if self.instance and self.instance.pk:
             self.initial_insurance = self.instance.insurance_document
             self.initial_registration = self.instance.registration_document
@@ -406,12 +426,31 @@ class VehicleEditForm(forms.ModelForm):
             self.initial_insurance = None
             self.initial_registration = None
 
-        # Your styling loop
-        for field_name, field in self.fields.items():
-            if isinstance(field.widget, (forms.TextInput, forms.Select, forms.ClearableFileInput, forms.FileInput)):
-                field.widget.attrs.update({'class': 'form-control'})
-            elif isinstance(field.widget, forms.CheckboxInput):
-                field.widget.attrs.update({'class': 'form-check-input'})
+        # --- UPDATED: Use Crispy Forms for layout ---
+        self.helper = FormHelper()
+        self.helper.form_tag = False  # Assuming the <form> tag is in your template
+        self.helper.layout = Layout(
+            Row(
+                Column('license_plate', css_class='form-group col-md-6 mb-3'),
+                Column('model', css_class='form-group col-md-6 mb-3'),
+            ),
+            Row(
+                Column('chassis', css_class='form-group col-md-6 mb-3'),
+                Column('viaverde_id', css_class='form-group col-md-6 mb-3'),
+            ),
+            Row(
+                Column('vehicle_type', css_class='form-group col-md-6 mb-3'),
+                Column('current_location', css_class='form-group col-md-6 mb-3'),
+            ),
+            Row(
+                Column('vehicle_km', css_class='form-group col-md-6 mb-3'),
+                Column('next_maintenance_date', css_class='form-group col-md-6 mb-3'),
+            ),
+            'is_electric',
+            'picture',
+            'registration_document',
+            'insurance_document',
+        )
 
     def has_changed(self):
         """Checks if the form has changed, including 'clear' checkboxes."""
@@ -598,10 +637,8 @@ class BookingFilterForm(forms.Form):
             ('confirmed', _('Confirmed / Upcoming')),
             ('completed', _('Completed')),
             ('cancelled', _('Cancelled')),
+            ('pending_final_km', _('Pending Final KM')),
         ]
-
-        if user and user.groups.filter(name='tlapv').exists():
-            choices.insert(4, ('pending_final_km', _('Pending Final KM')))
 
         # Set the choices for the status field
         self.fields['status'].choices = choices

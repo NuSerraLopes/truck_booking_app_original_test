@@ -10,9 +10,7 @@
         <div class="col-md-8 col-lg-7">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <h1 class="card-title text-center mb-4">
-                        {% translate "Edit Vehicle" %}: {{ vehicle.license_plate }}
-                    </h1>
+                    <h1 class="card-title text-center mb-4">{% translate "Edit Vehicle" %}: {{ vehicle.license_plate }}</h1>
 
                     <form method="post" enctype="multipart/form-data">
                         {% csrf_token %}
@@ -38,7 +36,7 @@
                             {% endif %}
                         </div>
 
-                        {{ form.as_p }}
+                        {% crispy form %}
 
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <button type="submit" class="btn btn-success">{% translate "Save Changes" %}</button>

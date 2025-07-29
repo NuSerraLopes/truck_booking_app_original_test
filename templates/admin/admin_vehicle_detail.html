@@ -27,9 +27,10 @@
                 </div>
 
                 <div class="col-lg-8">
-                    <h2>{{ vehicle.model }}</h2>
+                    <h2>{{ vehicle.license_plate }}</h2>
                     <ul class="list-group list-group-flush">
-                        <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "License Plate" %}:</strong> <span>{{ vehicle.license_plate }}</span></li>
+                        <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "License Plate" %}:</strong> <span>{{ vehicle.model }}</span></li>
+                        <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "License Plate" %}:</strong> <span>{{ vehicle.chassis }}</span></li>
                         <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Type" %}:</strong> <span>{{ vehicle.get_vehicle_type_display }}</span></li>
                         <li class="list-group-item px-0 d-flex justify-content-between align-items-center"><strong>{% translate "Is Available" %}:</strong>
                             <span>
