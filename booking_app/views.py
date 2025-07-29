@@ -1258,8 +1258,6 @@ def generate_and_save_contract_view(request, booking_pk):
         else:
             soffice_path = shutil.which('soffice') or 'soffice'
 
-        soffice_path = r"C:\Program Files\LibreOffice\program\soffice.exe"
-
         subprocess.run(
             [soffice_path, '--headless', '--convert-to', 'pdf', temp_docx_path, '--outdir', temp_dir],
             check=True, timeout=15
