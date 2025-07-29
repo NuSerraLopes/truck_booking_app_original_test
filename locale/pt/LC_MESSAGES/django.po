@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-07-28 18:11+0100\n"
-"PO-Revision-Date: 2025-07-28 18:52+0100\n"
+"POT-Creation-Date: 2025-07-29 09:29+0100\n"
+"PO-Revision-Date: 2025-07-29 09:36+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: pt\n"
@@ -64,20 +64,16 @@ msgid "Customer Phone"
 msgstr "Telefone do Cliente"
 
 #: booking_app/forms.py:48 booking_app/models.py:246
-#, fuzzy
-#| msgid "Customer Name"
 msgid "Customer Address"
-msgstr "Nome do Cliente"
+msgstr "Morada do Cliente"
 
 #: booking_app/forms.py:49 booking_app/models.py:241
 msgid "Client Tax Number"
 msgstr "Número de Contribuinte do Cliente"
 
 #: booking_app/forms.py:50 booking_app/models.py:243
-#, fuzzy
-#| msgid "Client Name"
 msgid "Client CRC"
-msgstr "Nome do Cliente"
+msgstr "CRC do Cliente"
 
 #: booking_app/forms.py:51 templates/booking_detail.html:37
 #: templates/cancel_booking.html:27 templates/group_booking_detail.html:35
@@ -310,10 +306,8 @@ msgid "Send Reminder After (Days)"
 msgstr "Enviar lembrete após (dias)"
 
 #: booking_app/forms.py:569
-#, fuzzy
-#| msgid "Client Company Registration Code"
 msgid "Require Company Verification (CRC)"
-msgstr "Código Certidão Permanente"
+msgstr "Necessário Código Certidão Permanente"
 
 #: booking_app/forms.py:572 booking_app/models.py:495
 msgid ""
@@ -619,10 +613,8 @@ msgid "Booking Pending Reminder"
 msgstr "Lembrete de reserva pendente"
 
 #: booking_app/models.py:407
-#, fuzzy
-#| msgid "Booking Status"
 msgid "Booking Transport Status Changed"
-msgstr "Estado da Reserva"
+msgstr "Estado de transporte da reserva alterou"
 
 #: booking_app/models.py:410
 msgid "Booking Approved"
@@ -1314,24 +1306,24 @@ msgstr ""
 #: booking_app/views.py:1211
 #, python-brace-format
 msgid "Server responded with status {response.status_code}"
-msgstr ""
+msgstr "O servidor respondeu com o estado {response.status_code}"
 
 #: booking_app/views.py:1214
 #, python-brace-format
 msgid "An error occurred: {e}"
-msgstr ""
+msgstr "Ocorreu um erro: {e}"
 
 #: booking_app/views.py:1243
 msgid "Country code and VAT number are required."
-msgstr ""
+msgstr "É necessário indicar o código do país e o NIF."
 
 #: booking_app/views.py:1263
 msgid "Invalid VAT number for the selected country."
-msgstr ""
+msgstr "NIF inválido para o país selecionado."
 
 #: booking_app/views.py:1270
 msgid "Could not connect to the VIES service."
-msgstr ""
+msgstr "Não foi possível estabelecer ligação com o serviço VIES."
 
 #: templates/admin/admin_automation_settings.html:23
 msgid "Pending Booking Reminders"
@@ -1702,10 +1694,8 @@ msgstr ""
 "necessário)."
 
 #: templates/admin/admin_email_template_form.html:118
-#, fuzzy
-#| msgid "The end date of the booking."
 msgid "End Location of previous booking"
-msgstr "A data de término da reserva."
+msgstr "Local de destino da reserva anterior"
 
 #: templates/admin/admin_email_template_form.html:120
 #: templates/booking_detail.html:57 templates/group_booking_detail.html:55
@@ -2191,49 +2181,51 @@ msgstr "A data final deve ser igual ou posterior à data de início."
 
 #: templates/book_vehicle.html:167
 msgid "Verify VAT"
-msgstr ""
+msgstr "Verificar NIF"
 
 #: templates/book_vehicle.html:209
 msgid "Please enter a VAT number first."
-msgstr ""
+msgstr "Por favor, introduza primeiro um NIF."
 
 #: templates/book_vehicle.html:229
 msgid "Verifying VAT number..."
-msgstr ""
+msgstr "A verificar o NIF..."
 
-#: templates/book_vehicle.html:237
+#: templates/book_vehicle.html:244
+msgid "VAT number is valid. But no company name provided"
+msgstr "O NIF é válido. Mas não foi fornecido o nome da empresa."
+
+#: templates/book_vehicle.html:251
 msgid "VAT number is valid."
-msgstr ""
+msgstr "O NIF é válido."
 
-#: templates/book_vehicle.html:246
+#: templates/book_vehicle.html:261
 msgid "Invalid VAT number."
-msgstr ""
+msgstr "O NIF é inválido."
 
-#: templates/book_vehicle.html:252
+#: templates/book_vehicle.html:268
 msgid "An error occurred during VAT verification."
-msgstr ""
+msgstr "Ocorreu um erro durante a verificação do NIF."
 
-#: templates/book_vehicle.html:266
+#: templates/book_vehicle.html:282
 msgid "Verify CRC"
-msgstr ""
+msgstr "Verificar CRC"
 
-#: templates/book_vehicle.html:275
-#, fuzzy
-#| msgid "Client Company Registration Code"
+#: templates/book_vehicle.html:291
 msgid "Please enter a Company Registration Code first."
-msgstr "Código Certidão Permanente"
-
-#: templates/book_vehicle.html:279
-msgid "Looking up company..."
-msgstr ""
+msgstr "Introduza Código Certidão Permanente primeiro"
 
 #: templates/book_vehicle.html:295
-msgid "Company found:"
-msgstr ""
+msgid "Looking up company..."
+msgstr "Pesquisando empresa..."
 
-#: templates/book_vehicle.html:310
+#: templates/book_vehicle.html:311
+msgid "Company found:"
+msgstr "Empresa encontrada:"
+
+#: templates/book_vehicle.html:326
 msgid "An unexpected error occurred. Please try again."
-msgstr ""
+msgstr "Ocorreu um erro inesperado. Por favor, tente novamente."
 
 #: templates/booking_detail.html:13
 msgid "Back to My Bookings"
