@@ -417,6 +417,7 @@ class EmailTemplate(models.Model):
             ('booking_pending_reminder', _('Booking Pending Reminder')),
             ('transport_status_changed', _('Booking Transport Status Changed')),
             ('booking_ended_pending_km', _('Booking Ended Pending KM')),
+            ('contract_generated', _('Contract Generated')),
         )),
         ('Manager Actions', (
             ('booking_approved', _('Booking Approved')),
