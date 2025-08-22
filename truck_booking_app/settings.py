@@ -37,6 +37,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'rest_framework',
+    'rest_framework_simplejwt',
     'booking_app',
     'crispy_forms',
     'crispy_bootstrap5',
@@ -172,16 +174,16 @@ LOGIN_URL = 'login'
 #EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 # You can also set a default 'from' email address for your application
-DEFAULT_FROM_EMAIL = 'geral@nulopes.me'
-SERVER_EMAIL = 'geral@nulopes.me'
+#DEFAULT_FROM_EMAIL = 'geral@nulopes.me'
+#SERVER_EMAIL = 'geral@nulopes.me'
 
 # If you later switch to a real SMTP server, you would configure it like this:
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp-pt.securemail.pro'
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'geral@nulopes.me'
-EMAIL_HOST_PASSWORD = '1990NunoLopes!!'
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+#EMAIL_HOST = 'smtp-pt.securemail.pro'
+#EMAIL_PORT = 465
+#EMAIL_USE_SSL = True
+#EMAIL_HOST_USER = 'geral@nulopes.me'
+#EMAIL_HOST_PASSWORD = '1990NunoLopes!!'
 
 # Media files (for user-uploaded content)
 MEDIA_URL = '/media/'
@@ -224,3 +226,17 @@ LOGGING = {
         },
     },
 }
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
+}
+
+# Credentials for sending email via the MS Graph API (loaded from .env file)
+MS_GRAPH_TENANT_ID = os.environ.get('MS_GRAPH_TENANT_ID')
+MS_GRAPH_CLIENT_ID = os.environ.get('MS_GRAPH_CLIENT_ID')
+MS_GRAPH_CLIENT_SECRET = os.environ.get('MS_GRAPH_CLIENT_SECRET')
+
+# The "From" address must be the same user account that you granted Mail.Send permissions to in Azure
+MS_GRAPH_SENDER_EMAIL = os.environ.get('MS_GRAPH_SENDER_EMAIL')
