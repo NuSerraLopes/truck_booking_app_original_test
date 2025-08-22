@@ -25,7 +25,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.urls import reverse
-from django.db.models import Q, Max, Count, Prefetch
+from django.db.models import Q, Max, Count, Prefetch, Subquery, OuterRef, F, Case, When, Exists, Value, BooleanField
 from datetime import date, timedelta
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
@@ -35,9 +35,10 @@ from pypdf import PdfWriter
 from .forms import UserCreateForm, VehicleCreateForm, LocationCreateForm, BookingForm, UpdateUserForm, \
     LocationUpdateForm, VehicleEditForm, GroupForm, EmailTemplateForm, DistributionListForm, AutomationSettingsForm, \
     BookingFilterForm
-from .models import Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings, EmailLog
+from .models import Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings, EmailLog, Client
 from .utils import add_business_days, send_booking_notification, subtract_business_days
-from django.db.models.functions import TruncMonth
+from django.db.models.functions import TruncMonth, Coalesce
+
 
 # --- Permission Checks ---
 
@@ -119,19 +120,30 @@ def logout_user(request):
 
 @login_required
 def vehicle_list_view(request, group_name=None):
-    # <-- REFACTOR: Use prefetch_related to avoid N+1 database queries
-    # This fetches all relevant bookings for all vehicles in a single extra query.
-    today = date.today()
-    relevant_bookings_prefetch = Prefetch(
-        'bookings',
-        queryset=Booking.objects.filter(
-            status__in=['pending', 'confirmed'],
-            end_date__gte=today
-        ).order_by('start_date'),
-        to_attr='relevant_bookings'
-    )
-    vehicles_qs = Vehicle.objects.prefetch_related(relevant_bookings_prefetch)
+    # --- 1. Sorting Logic ---
+    sort_by = request.GET.get('sort', 'license_plate')
+    direction = request.GET.get('dir', 'asc')
 
+    valid_sort_fields = ['license_plate', 'model', 'vehicle_type', 'current_location', 'next_available']
+    if sort_by not in valid_sort_fields:
+        sort_by = 'license_plate'
+
+    # --- 2. Efficient "Next Available" Calculation ---
+    today = date.today()
+    latest_end_date_subquery = Booking.objects.filter(
+        vehicle=OuterRef('pk'),
+        status__in=['pending', 'confirmed']
+    ).values('vehicle').annotate(
+        max_end=Max('end_date')
+    ).values('max_end')
+
+    vehicles_qs = Vehicle.objects.select_related('current_location').annotate(
+        latest_end_date=Coalesce(Subquery(latest_end_date_subquery), today)
+    ).annotate(
+        next_available=F('latest_end_date')
+    )
+
+    # --- 3. Filtering by Vehicle Group (This logic was missing) ---
     all_groups = Group.objects.all().order_by('name')
     effective_group_for_filter = None
     if group_name:
@@ -143,48 +155,47 @@ def vehicle_list_view(request, group_name=None):
             if normalized_user_group_name in ['light', 'tllight', 'heavy', 'tlheavy']:
                 effective_group_for_filter = normalized_user_group_name
                 break
+
     if effective_group_for_filter:
         if effective_group_for_filter in ['light', 'tllight']:
             vehicles_qs = vehicles_qs.filter(vehicle_type='LIGHT')
         elif effective_group_for_filter in ['heavy', 'tlheavy']:
             vehicles_qs = vehicles_qs.filter(vehicle_type='HEAVY')
 
-    vehicles_with_availability = []
-    tomorrow = today + timedelta(days=1)
+    # --- 4. Apply Sorting ---
+    if sort_by == 'current_location':
+        order_by_field = 'current_location__name'
+    else:
+        order_by_field = sort_by
 
-    # The loop now uses the prefetched 'relevant_bookings' attribute
-    for vehicle in vehicles_qs.order_by('vehicle_type', 'model', 'license_plate'):
-        # No database hit here, it uses the prefetched data
-        relevant_bookings = vehicle.relevant_bookings
+    if direction == 'desc':
+        order_by_field = f'-{order_by_field}'
 
-        slots = []
-        next_start = tomorrow
-        if not relevant_bookings:
-            slots.append({'start': tomorrow, 'end': None})
+    vehicles_qs = vehicles_qs.order_by(order_by_field)
+
+    # --- 5. Pagination ---
+    paginator = Paginator(vehicles_qs, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    # --- 6. Final Processing in Python ---
+    vehicles_on_page = []
+    for vehicle in page_obj:
+        if vehicle.latest_end_date >= today:
+            vehicle.display_next_available = add_business_days(vehicle.latest_end_date, 3)
         else:
-            first_booking = relevant_bookings[0]
-            if first_booking.start_date <= today:
-                next_start = add_business_days(first_booking.end_date, 3)
-            for booking in relevant_bookings:
-                gap_end = subtract_business_days(booking.start_date, 3)
-                if next_start <= gap_end:
-                    slots.append({'start': next_start, 'end': gap_end})
-                potential_next_start = add_business_days(booking.end_date, 3)
-                if potential_next_start > next_start:
-                    next_start = potential_next_start
-            slots.append({'start': next_start, 'end': None})
-        if slots and slots[0]['start'] <= tomorrow:
-            vehicle.is_available_now = True
-        else:
-            vehicle.is_available_now = False
-        vehicle.availability_slots = slots
-        vehicles_with_availability.append(vehicle)
+            vehicle.display_next_available = None
+        vehicles_on_page.append(vehicle)
 
     context = {
-        'vehicles': vehicles_with_availability,
+        'vehicles': page_obj,
+        'vehicles_on_page': vehicles_on_page,
         'all_groups': all_groups,
         'selected_group': group_name,
-        'page_title': _("Vehicle List"),
+        'page_title': _("Vehicle Fleet"),
+        'current_sort': sort_by,
+        'current_dir': direction,
+        'opposite_dir': 'desc' if direction == 'asc' else 'asc',
     }
     return render(request, 'vehicle_list.html', context)
 
@@ -242,9 +253,19 @@ def book_vehicle_view(request, vehicle_pk):
     if request.method == 'POST':
         form = BookingForm(request.POST, vehicle=vehicle, is_create_page=True, crc_is_mandatory=crc_is_mandatory)
         if form.is_valid():
+            tax_number = form.cleaned_data['client_tax_number']
+            client, created = Client.objects.update_or_create(
+                tax_number=tax_number,
+                defaults={
+                    'name': form.cleaned_data['client_name'],
+                    'address': form.cleaned_data.get('client_address', '')
+                }
+            )
+
             booking = form.save(commit=False)
             booking.user = request.user
             booking.vehicle = vehicle
+            booking.client = client
             booking.status = 'pending'
             booking.save()
             send_booking_notification('booking_created', booking_instance=booking)
@@ -678,14 +699,78 @@ def vehicle_delete_view(request, pk):
         context = {'vehicle_obj': vehicle_to_delete, 'page_title': _(f"Confirm Delete Vehicle: {vehicle_to_delete.license_plate}")}
         return render(request, 'admin/admin_vehicle_delete.html', context)
 
+
 @login_required
 @user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_vehicle_list_view(request):
-    vehicles = Vehicle.objects.all()
-    paginator = Paginator(vehicles, 10)
-    page = request.GET.get('page')
-    vehicles = paginator.get_page(page)
-    context = {'vehicles': vehicles, 'page_title': _("Manage Vehicles")}
+    # --- Get Filter and Sort Parameters ---
+    filter_by = request.GET.get('filter_by')
+    filter_value = request.GET.get('filter_value', '').strip()
+    sort_by = request.GET.get('sort', 'license_plate')
+    direction = request.GET.get('dir', 'asc')
+
+    valid_sort_fields = ['license_plate', 'model', 'vehicle_type', 'annotated_is_available', 'current_location']
+    if sort_by not in valid_sort_fields:
+        sort_by = 'license_plate'
+
+    # --- Base Queryset and Annotations ---
+    today = timezone.now().date()
+    active_booking = Booking.objects.filter(
+        vehicle=OuterRef('pk'), status__in=['confirmed', 'on_going'],
+        start_date__lte=today, end_date__gte=today
+    )
+    vehicles_qs = Vehicle.objects.select_related('current_location').annotate(
+        annotated_is_available=Case(
+            When(Exists(active_booking), then=Value(False)),
+            default=Value(True), output_field=BooleanField()
+        ),
+        current_customer=Subquery(active_booking.values('customer_name')[:1])
+    )
+
+    # --- Dynamic Filtering Logic ---
+    if filter_value:
+        if filter_by == 'license_plate':
+            vehicles_qs = vehicles_qs.filter(license_plate__icontains=filter_value)
+        elif filter_by == 'model':
+            vehicles_qs = vehicles_qs.filter(model__icontains=filter_value)
+        elif filter_by == 'vehicle_type':
+            vehicles_qs = vehicles_qs.filter(vehicle_type=filter_value)
+        elif filter_by == 'annotated_is_available':
+            is_available = (filter_value == 'yes')
+            vehicles_qs = vehicles_qs.filter(annotated_is_available=is_available)
+        elif filter_by == 'current_customer':
+            vehicles_qs = vehicles_qs.filter(current_customer__icontains=filter_value)
+        elif filter_by == 'current_location':
+            vehicles_qs = vehicles_qs.filter(current_location__name__icontains=filter_value)
+
+        elif not filter_by:
+            vehicles_qs = vehicles_qs.filter(
+                Q(license_plate__icontains=filter_value) |
+                Q(model__icontains=filter_value) |
+                Q(current_customer__icontains=filter_value) |
+                Q(current_location__name__icontains=filter_value)
+            )
+
+    # --- Apply Sorting ---
+    order_by_field = 'current_location__name' if sort_by == 'current_location' else sort_by
+    if direction == 'desc':
+        order_by_field = f'-{order_by_field}'
+    vehicles_qs = vehicles_qs.order_by(order_by_field)
+
+    # --- Pagination ---
+    paginator = Paginator(vehicles_qs, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'vehicles': page_obj,
+        'page_title': _("Manage Vehicles"),
+        'current_sort': sort_by,
+        'current_dir': direction,
+        'opposite_dir': 'desc' if direction == 'asc' else 'asc',
+        'vehicle_type_choices': Vehicle.VEHICLE_TYPE_CHOICES,
+        'all_locations': Location.objects.all(),
+    }
     return render(request, 'admin/admin_vehicle_list.html', context)
 
 @login_required
@@ -1298,3 +1383,19 @@ def generate_and_save_contract_view(request, booking_pk):
 
     messages.success(request, _("Contract has been generated and attached to the booking successfully."))
     return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
+
+
+@login_required
+@user_passes_test(is_group_leader, login_url='booking_app:home')
+def client_booking_history_view(request, tax_number):
+    client = get_object_or_404(Client, tax_number=tax_number)
+
+    # Use the reverse relationship 'bookings' to get all bookings for this client
+    client_bookings = client.bookings.all().order_by('-start_date')
+
+    context = {
+        'client': client,
+        'bookings': client_bookings,
+        'page_title': _(f"Booking History for {client.name}")
+    }
+    return render(request, 'client_booking_history.html', context)

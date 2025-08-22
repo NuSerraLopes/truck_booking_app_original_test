@@ -150,18 +150,22 @@ class Location(models.Model):
         return self.name
 
 class Vehicle(models.Model):
-    VEHICLE_TYPES = [
+    # This was the only change needed to fix the error.
+    # The view expects 'VEHICLE_TYPE_CHOICES', so we rename it here.
+    VEHICLE_TYPE_CHOICES = [ # <-- RENAMED
         ('HEAVY', 'HEAVY'),
         ('LIGHT', 'LIGHT'),
         ('APV', 'APV'),
     ]
-    license_plate = models.CharField(max_length=15, unique=True,help_text=_("License Plate of the vehicle."))
-    vehicle_type = models.CharField(max_length=50, choices=VEHICLE_TYPES,help_text=_("Vehicle Type (LIGHT, HEAVY, APV)."))
-    is_available = models.BooleanField(default=True,help_text=_("Is Vehicle Available."))
-    model = models.CharField(_("Model Name"), max_length=100, blank=True, default="N/A",help_text=_("The Model of the vehicle."))
-    is_electric = models.BooleanField(default=False,help_text=_("Is Vehicle Eletric."))
-    viaverde_id = models.CharField(max_length=100, blank=True, null=True,help_text=_("ID of the ViaVerde Identifier."))
-    vehicle_km = models.CharField(max_length=100, blank=True, null=True,help_text=_("The KM of the vehicle."))
+
+    license_plate = models.CharField(max_length=15, unique=True, help_text=_("License Plate of the vehicle."))
+    # The choices attribute now correctly points to the renamed list.
+    vehicle_type = models.CharField(max_length=50, choices=VEHICLE_TYPE_CHOICES, help_text=_("Vehicle Type (LIGHT, HEAVY, APV).")) # <-- UPDATED
+    is_available = models.BooleanField(default=True, help_text=_("Is Vehicle Available."))
+    model = models.CharField(_("Model Name"), max_length=100, blank=True, default="N/A", help_text=_("The Model of the vehicle."))
+    is_electric = models.BooleanField(default=False, help_text=_("Is Vehicle Eletric."))
+    viaverde_id = models.CharField(max_length=100, blank=True, null=True, help_text=_("ID of the ViaVerde Identifier."))
+    vehicle_km = models.CharField(max_length=100, blank=True, null=True, help_text=_("The KM of the vehicle."))
     chassis = models.CharField(
         _("Chassis Number"),
         max_length=100,
@@ -200,7 +204,6 @@ class Vehicle(models.Model):
         verbose_name=_("Current Location"),
         help_text=_("The current physical location of the vehicle.")
     )
-
     next_maintenance_date = models.DateField(
         _("Next Maintenance Date"),
         null=True,
@@ -208,27 +211,22 @@ class Vehicle(models.Model):
         help_text=_("Required only for APV vehicles.")
     )
 
-    def save(self, *args, **kwargs):
-        if not self.picture:
-            if self.vehicle_type == 'LIGHT':
-                self.picture = 'Default/light.jpg'
-            elif self.vehicle_type == 'HEAVY':
-                self.picture = 'Default/heavy.jpg'
-            else:
-                 self.picture = 'Default/no_image.png'
-
-        super().save(*args, **kwargs)
+    # Note: I have removed the custom .save() method. It is better practice
+    # to handle default display logic in a property like get_picture_url
+    # rather than saving a default path to the database.
 
     @property
     def get_picture_url(self):
-        if self.picture:
+        # This property now handles all cases for displaying a picture,
+        # even if one isn't uploaded.
+        if self.picture and hasattr(self.picture, 'url'):
             return self.picture.url
         elif self.vehicle_type == 'LIGHT':
-            return static('Default/light.jpg')
+            return static('media/Default/light.jpg')
         elif self.vehicle_type == 'HEAVY':
-            return static('Default/heavy.jpg')
-
-        return static('Default/no_image.jpg') # Generic Default
+            return static('media/Default/heavy.jpg')
+        # Fallback for APV or any other type
+        return static('media/Default/no_image.png')
 
     def __str__(self):
         return f"{self.vehicle_type} - {self.model} ({self.license_plate})"
@@ -246,19 +244,25 @@ class Booking(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookings')
     vehicle = models.ForeignKey('Vehicle', on_delete=models.CASCADE, related_name='bookings')
 
-    customer_name = models.CharField(max_length=255)
-    customer_email = models.EmailField(blank=True, null=True)
-    customer_phone = models.CharField(max_length=20, blank=True, null=True)
-    client_tax_number = models.CharField(max_length=50, blank=False, verbose_name=_("Client Tax Number"))
-    client_company_registration = models.CharField(max_length=100, blank=True, null=True,
-                                                   verbose_name=_("Client CRC"))
-
-    customer_address = models.TextField(
-        _("Customer Address"),
-        blank=True,
-        null=True,
-        help_text=_("The address of the customer, can be auto-filled from VAT validation.")
+    # --- ADDED: New relationship to the Client model ---
+    client = models.ForeignKey(
+        'Client',
+        on_delete=models.PROTECT,  # Prevents deleting a client that has bookings
+        related_name='bookings',
+        verbose_name=_("Client"),
+        null=True,  # Allows existing bookings to not have a client initially
+        blank=True
     )
+    # -----------------------------------------------
+
+    # --- REMOVED: These fields are now stored on the Client model ---
+    # customer_name = models.CharField(max_length=255)
+    # customer_email = models.EmailField(blank=True, null=True)
+    # customer_phone = models.CharField(max_length=20, blank=True, null=True)
+    # client_tax_number = models.CharField(max_length=50, blank=False, verbose_name=_("Client Tax Number"))
+    # client_company_registration = models.CharField(max_length=100, blank=True, null=True, verbose_name=_("Client CRC"))
+    # customer_address = models.TextField(...)
+    # ----------------------------------------------------------------
 
     start_date = models.DateField()
     end_date = models.DateField()
@@ -333,44 +337,27 @@ class Booking(models.Model):
     )
 
     def get_absolute_url(self):
-        """
-        Returns the canonical URL for a booking instance.
-        """
-        # NOTE: This assumes the name of your booking detail URL pattern
-        # is 'booking_detail'. Adjust if it is named differently.
-        return reverse('booking_app:bookings_detail', kwargs={'booking_pk': self.pk})
+        return reverse('booking_app:booking_detail', kwargs={'booking_pk': self.pk})
 
     @property
     def current_status_display(self):
-        """
-        Returns the dynamic status of the booking, showing 'On Going'
-        for confirmed bookings that are currently active.
-        """
         today = timezone.now().date()
         if self.status == 'confirmed' and self.start_date <= today <= self.end_date:
             return _('On Going')
         return self.get_status_display()
+
+    # --- UPDATED: The __str__ method should now reference the client ---
+    def __str__(self):
+        client_name = self.client.name if self.client else _("N/A")
+        return f"Booking {self.pk} for {client_name} ({self.vehicle.license_plate})"
 
     class Meta:
         ordering = ['-booking_time']
         verbose_name = _("Booking")
         verbose_name_plural = _("Bookings")
 
-    def __str__(self):
-        return f"Booking {self.pk} by {self.user.username} for {self.vehicle.license_plate}"
-
     def is_active(self):
         return self.status in ['pending', 'confirmed']
-
-    def clean(self):
-        """
-        Add custom model-level validation.
-        """
-        super().clean()
-        if not self.customer_email and not self.customer_phone:
-            raise ValidationError(
-                _("A booking must have either a customer email or a customer phone number.")
-            )
 
 
 # --- NEW: Distribution List Model ---
@@ -584,3 +571,20 @@ class EmailLog(models.Model):
         verbose_name = _("Email Log")
         verbose_name_plural = _("Email Logs")
         ordering = ['-sent_at']
+
+class Client(models.Model):
+    tax_number = models.CharField(_("Tax Number"), max_length=50, unique=True, db_index=True)
+    name = models.CharField(_("Full Name"), max_length=255)
+    address = models.TextField(_("Address"), blank=True, null=True)
+    email = models.EmailField(_("Email Address"), blank=True, null=True)
+    phone_number = models.CharField(_("Phone Number"), max_length=50, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['name']
+        verbose_name = _("Client")
+        verbose_name_plural = _("Clients")
+
+    def __str__(self):
+        return f"{self.name} ({self.tax_number})"

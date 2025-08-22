@@ -13,7 +13,6 @@
         </div>
     </div>
 
-    <!-- 👇 NEW: FILTER FORM 👇 -->
     <div class="card shadow-sm mb-4">
         <div class="card-body">
             <form method="get" class="row g-3 align-items-end">
@@ -28,9 +27,7 @@
             </form>
         </div>
     </div>
-    <!-- 👆 END OF FILTER FORM 👆 -->
 
-    <!-- Unified Bookings List -->
     <div class="row mt-4">
         <div class="col-12">
             <div class="card shadow-sm">
@@ -67,7 +64,18 @@
                                             </span>
                                         </td>
                                         <td>{{ booking.vehicle.license_plate }}</td>
-                                        <td>{{ booking.customer_name }}</td>
+
+                                        <td>
+                                            {% if booking.client %}
+                                                {{ booking.client.name }}
+                                                <a href="{% url 'booking_app:client_booking_history' booking.client.tax_number %}" class="btn btn-link btn-sm p-0 ms-1" title="{% translate 'View client history' %}">
+                                                    <small>({% translate "History" %})</small>
+                                                </a>
+                                            {% else %}
+                                                <span class="text-muted fst-italic">{% translate "Legacy Booking" %}</span>
+                                            {% endif %}
+                                        </td>
+
                                         <td>{{ booking.start_date|date:"Y-m-d" }} - {{ booking.end_date|date:"Y-m-d" }}</td>
                                         <td>
                                             {% if booking.vehicle.vehicle_type == 'APV' %}
@@ -84,12 +92,12 @@
                                             {% endif %}
                                         </td>
                                         <td>
-                                            <a href="{% url 'booking_app:group_booking_detail' booking.pk %}" class="btn btn-sm btn-primary">{% translate "Manage" %}</a>
+                                            <a href="{% url 'booking_app:group_booking_update' booking.pk %}" class="btn btn-sm btn-primary">{% translate "Manage" %}</a>
                                         </td>
                                     </tr>
                                 {% empty %}
                                     <tr>
-                                        <td colspan="6" class="text-center text-muted">{% translate "No bookings match the selected filter." %}</td>
+                                        <td colspan="7" class="text-center text-muted">{% translate "No bookings match the selected filter." %}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>

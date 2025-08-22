@@ -21,7 +21,7 @@ urlpatterns = [
     # User's Personal Booking Management URLs
     path('my-bookings/', views.my_bookings_view, name='my_bookings'),
     path('my-bookings/api/', views.my_bookings_api_view, name='my_bookings_api'),
-    path('my-bookings/<int:booking_pk>/', views.booking_detail_view, name='bookings_detail'),
+    path('my-bookings/<int:booking_pk>/', views.booking_detail_view, name='booking_detail'),
     path('bookings/update/<int:booking_pk>/', views.update_booking_view, name='update_booking'),
     path('bookings/cancel/<int:booking_pk>/', views.cancel_booking_view, name='cancel_booking'),
     path('bookings/<int:booking_pk>/generate-word-contract/', views.generate_and_save_contract_view, name='generate_word_contract'),
@@ -37,6 +37,7 @@ urlpatterns = [
     path('group-bookings/update/<int:booking_pk>/', views.group_booking_update_view, name='group_booking_update'),
     path('group-dashboard/reports/', views.group_reports_view, name='group_reports'),
     path('group-dashboard/calendar/', views.group_calendar_view, name='group_calendar'),
+    path('group-dashboard/client-history/<str:tax_number>/', views.client_booking_history_view, name='client_booking_history'),
 
     # Admin Dashboard & Management URLs
     path('admin-dashboard/', views.admin_dashboard_view, name='admin_dashboard'),

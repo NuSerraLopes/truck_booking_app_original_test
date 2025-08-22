@@ -1,78 +1,119 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 {% load i18n %}
 {% load static %}
 
-{% block title %}{% translate "Vehicle List" %}{% endblock %}
+{% block title %}{{ page_title|default:_("Vehicle Fleet") }}{% endblock %}
 
 {% block content %}
-<div class="container my-4">
-    <h1 class="mb-4">{{ page_title }}</h1>
-
-    <div class="table-responsive">
-        <table class="table table-hover table-striped align-middle">
-            <thead class="table-dark">
-                <tr>
-                    <th>{% translate "Picture" %}</th>
-                    <th>{% translate "License Plate" %}</th>
-                    <th>{% translate "Model" %}</th>
-                    <th>{% translate "Type" %}</th>
-                    <th>{% translate "Availability" %}</th>
-                    <th>{% translate "Location" %}</th>
-                    <th>{% translate "Actions" %}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for vehicle in vehicles %}
-                <tr>
-                    <td>
-                        {% if vehicle.picture %}
-                            <img src="{{ vehicle.picture.url }}" alt="{{ vehicle.model }}" class="img-thumbnail" style="width: 80px; height: auto;">
-                        {% else %}
-                            <span class="text-muted small">{% translate "No Image" %}</span>
-                        {% endif %}
-                    </td>
-                    <td>{{ vehicle.license_plate }}</td>
-                    <td>{{ vehicle.model }}</td>
-                    <td>{{ vehicle.get_vehicle_type_display }}</td>
-                    <td>
-                        {% if vehicle.is_available_now %}
-                            <span class="badge bg-success fs-6">{% translate "Available Now" %}</span>
-                        {% else %}
-                            {% with first_slot=vehicle.availability_slots.0 %}
-                                <span class="badge bg-info text-dark">
-                                    {% if first_slot.end %}
-                                        {% blocktrans with start_date=first_slot.start|date:"d/m/Y" end_date=first_slot.end|date:"d/m/Y" %}
-                                        From {{ start_date }} to {{ end_date }}
-                                        {% endblocktrans %}
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-header">
+            <h1 class="h3 mb-0">{{ page_title|default:_("Vehicle Fleet") }}</h1>
+        </div>
+        <div class="card-body">
+            {% if vehicles_on_page %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>{% translate "Picture" %}</th>
+                                <th>
+                                    <a href="?sort=license_plate&dir={% if current_sort == 'license_plate' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
+                                        {% translate "License Plate" %}
+                                        {% if current_sort == 'license_plate' %}{% if current_dir == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=model&dir={% if current_sort == 'model' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
+                                        {% translate "Model" %}
+                                        {% if current_sort == 'model' %}{% if current_dir == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=vehicle_type&dir={% if current_sort == 'vehicle_type' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
+                                        {% translate "Type" %}
+                                        {% if current_sort == 'vehicle_type' %}{% if current_dir == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=next_available&dir={% if current_sort == 'next_available' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
+                                        {% translate "Availability" %}
+                                        {% if current_sort == 'next_available' %}{% if current_dir == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
+                                    </a>
+                                </th>
+                                <th>
+                                    <a href="?sort=current_location&dir={% if current_sort == 'current_location' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
+                                        {% translate "Location" %}
+                                        {% if current_sort == 'current_location' %}{% if current_dir == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
+                                    </a>
+                                </th>
+                                <th class="text-end">{% translate "Actions" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vehicle in vehicles_on_page %}
+                            <tr>
+                                <td>
+                                    {% if vehicle.picture %}
+                                        <img src="{{ vehicle.picture.url }}" alt="{{ vehicle.model }}" class="img-thumbnail" style="width: 80px; height: auto;">
                                     {% else %}
-                                        {% blocktrans with start_date=first_slot.start|date:"d/m/Y" %}
-                                        From {{ start_date }} onwards
-                                        {% endblocktrans %}
+                                        <img src="{% static 'media/Default/no_image.png' %}" alt="{% translate 'No Image' %}" class="img-thumbnail" style="width: 80px; height: auto;">
                                     {% endif %}
-                                </span>
-                            {% endwith %}
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if vehicle.current_location %}
-                            {{ vehicle.current_location.name }}
-                        {% else %}
-                            {% translate "N/A" %}
-                        {% endif %}
-                    </td>
-                    <td class="text-nowrap">
-                        <a href="{% url 'booking_app:vehicle_detail' pk=vehicle.pk %}" class="btn btn-sm btn-info me-1">{% translate "Details" %}</a>
-                        <a href="{% url 'booking_app:book_vehicle' vehicle_pk=vehicle.pk %}" class="btn btn-sm btn-primary">{% translate "Book Now" %}</a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="7" class="text-center">{% translate "No vehicles found matching the criteria." %}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                                </td>
+                                <td><strong>{{ vehicle.license_plate }}</strong></td>
+                                <td>{{ vehicle.model }}</td>
+                                <td>{{ vehicle.get_vehicle_type_display }}</td>
+                                <td>
+                                    {% if vehicle.display_next_available %}
+                                        <span class="badge bg-info text-dark fs-6">
+                                            {{ vehicle.display_next_available|date:"Y-m-d" }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-success fs-6">{% translate "Available Now" %}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ vehicle.current_location.name|default:_("N/A") }}</td>
+                                <td class="text-end text-nowrap">
+                                    <a href="{% url 'booking_app:vehicle_detail' pk=vehicle.pk %}" class="btn btn-sm btn-info me-1">{% translate "Details" %}</a>
+                                    <a href="{% url 'booking_app:book_vehicle' vehicle_pk=vehicle.pk %}" class="btn btn-sm btn-primary">{% translate "Book Now" %}</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
 
+                {% if vehicles.has_other_pages %}
+                <nav aria-label="Vehicle list navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if vehicles.has_previous %}
+                            <li class="page-item"><a class="page-link" href="?page=1&sort={{ current_sort }}&dir={{ current_dir }}">&laquo; {% trans "first" %}</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ vehicles.previous_page_number }}&sort={{ current_sort }}&dir={{ current_dir }}">{% trans "previous" %}</a></li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link">&laquo; {% trans "first" %}</span></li>
+                            <li class="page-item disabled"><span class="page-link">{% trans "previous" %}</span></li>
+                        {% endif %}
+
+                        <li class="page-item active" aria-current="page">
+                            <span class="page-link">{% trans "Page" %} {{ vehicles.number }} {% trans "of" %} {{ vehicles.paginator.num_pages }}</span>
+                        </li>
+
+                        {% if vehicles.has_next %}
+                            <li class="page-item"><a class="page-link" href="?page={{ vehicles.next_page_number }}&sort={{ current_sort }}&dir={{ current_dir }}">{% trans "next" %}</a></li>
+                            <li class="page-item"><a class="page-link" href="?page={{ vehicles.paginator.num_pages }}&sort={{ current_sort }}&dir={{ current_dir }}">{% trans "last" %} &raquo;</a></li>
+                        {% else %}
+                             <li class="page-item disabled"><span class="page-link">{% trans "next" %}</span></li>
+                             <li class="page-item disabled"><span class="page-link">{% trans "last" %} &raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info text-center" role="alert">
+                    {% translate "No vehicles found." %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
 </div>
 {% endblock content %}
