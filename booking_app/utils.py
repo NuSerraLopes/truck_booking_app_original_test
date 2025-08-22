@@ -3,7 +3,8 @@
 import logging
 from datetime import timedelta
 
-import msal  # <-- ADDED for Microsoft Auth
+import msal
+import json
 import requests
 from django.conf import settings
 from django.template import Template, Context
@@ -21,12 +22,16 @@ def get_graph_api_access_token():
     """
     Acquires an access token from Microsoft Identity Platform.
     """
-    # Use credentials from your settings.py
-    authority = f"https://login.microsoftonline.com/{settings.MS_GRAPH_TENANT_ID}"
+    # --- FINAL DEBUGGING STEP: Inspect credentials before use ---
+    client_id = settings.MS_GRAPH_CLIENT_ID
+    client_secret = settings.MS_GRAPH_CLIENT_SECRET
+    tenant_id = settings.MS_GRAPH_TENANT_ID
+
+    authority = f"https://login.microsoftonline.com/{tenant_id}"
     app = msal.ConfidentialClientApplication(
-        client_id=settings.MS_GRAPH_CLIENT_ID,
-        authorities=[authority],
-        client_credential=settings.MS_GRAPH_CLIENT_SECRET,
+        client_id=client_id,
+        authority=authority,
+        client_credential=client_secret,
     )
 
     scopes = ["https://graph.microsoft.com/.default"]
@@ -39,7 +44,10 @@ def get_graph_api_access_token():
     if "access_token" in result:
         return result['access_token']
     else:
-        logger.error(f"Failed to acquire token: {result.get('error_description')}")
+        # Also print the error from MSAL if it fails
+        error_description = result.get("error_description", "No error description from MSAL.")
+        logger.error(f"Failed to acquire token: {error_description}")
+        #print(f"--- MSAL ERROR: {error_description} ---")
         return None
 
 
@@ -119,6 +127,8 @@ def subtract_business_days(from_date, days):
 # UPDATED MAIN EMAIL NOTIFICATION FUNCTION
 # ==============================================================================
 
+# booking_app/utils.py
+
 def send_booking_notification(event_trigger, booking_instance=None, context_data=None, test_email_recipient=None):
     """
     Finds ALL active email templates, builds recipient lists,
@@ -126,7 +136,6 @@ def send_booking_notification(event_trigger, booking_instance=None, context_data
     """
     final_trigger = event_trigger
 
-    # Dynamic Trigger Logic (remains the same)
     if event_trigger in ['booking_created', 'booking_reverted'] and booking_instance:
         vehicle_type = booking_instance.vehicle.vehicle_type.lower()
         final_trigger = f"{vehicle_type}_{event_trigger}"
@@ -137,14 +146,14 @@ def send_booking_notification(event_trigger, booking_instance=None, context_data
         logger.info(f"No active email templates found for event '{final_trigger}'. Skipping email.")
         return
 
-    # Loop through each found template and send an email
     for template_obj in template_list:
-        # Build the recipient list (remains the same)
+        print(f"--- DEBUG: Preparing to send template '{template_obj.name}' for event '{final_trigger}' ---")
         recipient_list = set()
         if test_email_recipient:
             recipient_list.add(test_email_recipient)
         else:
-            if template_obj.send_to_salesperson and booking_instance and booking_instance.user and booking_instance.user.email:
+            if template_obj.send_to_salesperson and booking_instance and booking_instance.user and hasattr(
+                    booking_instance.user, 'email'):
                 recipient_list.add(booking_instance.user.email)
             if template_obj.send_to_groups.exists():
                 for group in template_obj.send_to_groups.all():
@@ -161,17 +170,37 @@ def send_booking_notification(event_trigger, booking_instance=None, context_data
             logger.info(f"Template '{template_obj.name}' for event '{final_trigger}' has no recipients. Skipping.")
             continue
 
-        # Render the email content (remains the same)
-        context = Context({'booking': booking_instance, **(context_data or {})})
-        subject_template = Template(template_obj.subject)
-        body_template = Template(template_obj.body)
-        rendered_subject = subject_template.render(context)
-        rendered_body = body_template.render(context)
         final_recipient_list = list(recipient_list)
+        print(f"--- DEBUG: Final recipient list: {final_recipient_list} ---")
 
-        # --- MODIFIED: Send email using MS Graph API and log the result ---
+        context_dict = {'booking': booking_instance}
+        if context_data:
+            context_dict.update(context_data)
+
+        # --- DEBUG: We will now try to render the templates one by one ---
         try:
-            # Call the new function instead of Django's send_mail
+            print("--- DEBUG: Attempting to render SUBJECT template... ---")
+            context = Context(context_dict)
+            subject_template = Template(template_obj.subject)
+            rendered_subject = subject_template.render(context)
+            print("--- DEBUG: SUBJECT rendered successfully. ---")
+
+            print("--- DEBUG: Attempting to render BODY template... ---")
+            body_template = Template(template_obj.body)
+            rendered_body = body_template.render(context)
+            print("--- DEBUG: BODY rendered successfully. ---")
+
+        except Exception as e:
+            # This will catch the error during rendering and tell us exactly where it failed.
+            print(f"!!!!!!!!!! FATAL ERROR DURING TEMPLATE RENDERING !!!!!!!!!!!")
+            print(f"Error of type {type(e).__name__}: {e}")
+            logger.error(f"CRITICAL: Failed to render template '{template_obj.name}'. Error: {e}")
+            print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+            # Stop execution for this email if rendering fails
+            continue
+
+        # --- Send email using the MS Graph API ---
+        try:
             success, response_message = send_email_with_graph_api(
                 subject=rendered_subject,
                 body=rendered_body,
@@ -184,7 +213,6 @@ def send_booking_notification(event_trigger, booking_instance=None, context_data
                 logger.info(
                     f"Successfully sent email using template '{template_obj.name}' to {', '.join(final_recipient_list)}")
             else:
-                # Log the detailed error from the API
                 for recipient in final_recipient_list:
                     EmailLog.objects.create(recipient=recipient, subject=rendered_subject, status='failed',
                                             error_message=response_message)
@@ -192,7 +220,6 @@ def send_booking_notification(event_trigger, booking_instance=None, context_data
                     f"FAILED to send email using template '{template_obj.name}'. API Error: {response_message}")
 
         except Exception as e:
-            # Catch any other unexpected errors during the process
             error_message = f"An unexpected error occurred: {str(e)}"
             for recipient in final_recipient_list:
                 EmailLog.objects.create(recipient=recipient, subject=rendered_subject, status='failed',

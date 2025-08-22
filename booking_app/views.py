@@ -15,7 +15,6 @@ from django.http import JsonResponse, HttpResponse
 from django.utils.crypto import get_random_string
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.paginator import Paginator
-from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, authenticate, logout, get_user_model
 from django.contrib import messages
@@ -26,7 +25,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.urls import reverse
-from django.db.models import Q, Max, Count
+from django.db.models import Q, Max, Count, Prefetch
 from datetime import date, timedelta
 from django.contrib.auth.forms import SetPasswordForm
 from django.contrib.auth.models import Group
@@ -54,6 +53,30 @@ def is_group_leader(user):
     """Checks if a user is in any of the leader groups or is an Admin/Booking Admin."""
     return user.groups.filter(name__in=['tlheavy', 'tllight', 'tlapv', 'sd']).exists() or \
            (user.is_authenticated and user.is_booking_admin_member)
+
+# --- REFACTOR: Helper function to get manageable vehicle types ---
+def get_managed_vehicle_types(user):
+    """
+    Returns a list of vehicle types a user can manage based on their groups.
+    This reduces code duplication across multiple views.
+    """
+    user_groups = user.groups.values_list('name', flat=True)
+    vehicle_types = []
+
+    if user.is_booking_admin_member:
+        vehicle_types.extend(['LIGHT', 'HEAVY', 'APV'])
+    else:
+        if 'sd' in user_groups:
+            vehicle_types.extend(['LIGHT', 'HEAVY'])
+        if 'tlheavy' in user_groups:
+            vehicle_types.append('HEAVY')
+        if 'tllight' in user_groups:
+            vehicle_types.append('LIGHT')
+        if 'tlapv' in user_groups:
+            vehicle_types.append('APV')
+
+    return list(set(vehicle_types)) # Return unique types
+
 
 # --- Core Views ---
 
@@ -96,7 +119,19 @@ def logout_user(request):
 
 @login_required
 def vehicle_list_view(request, group_name=None):
-    vehicles_qs = Vehicle.objects.all()
+    # <-- REFACTOR: Use prefetch_related to avoid N+1 database queries
+    # This fetches all relevant bookings for all vehicles in a single extra query.
+    today = date.today()
+    relevant_bookings_prefetch = Prefetch(
+        'bookings',
+        queryset=Booking.objects.filter(
+            status__in=['pending', 'confirmed'],
+            end_date__gte=today
+        ).order_by('start_date'),
+        to_attr='relevant_bookings'
+    )
+    vehicles_qs = Vehicle.objects.prefetch_related(relevant_bookings_prefetch)
+
     all_groups = Group.objects.all().order_by('name')
     effective_group_for_filter = None
     if group_name:
@@ -115,14 +150,13 @@ def vehicle_list_view(request, group_name=None):
             vehicles_qs = vehicles_qs.filter(vehicle_type='HEAVY')
 
     vehicles_with_availability = []
-    today = date.today()
     tomorrow = today + timedelta(days=1)
 
+    # The loop now uses the prefetched 'relevant_bookings' attribute
     for vehicle in vehicles_qs.order_by('vehicle_type', 'model', 'license_plate'):
-        relevant_bookings = vehicle.bookings.filter(
-            status__in=['pending', 'confirmed'],
-            end_date__gte=today
-        ).order_by('start_date')
+        # No database hit here, it uses the prefetched data
+        relevant_bookings = vehicle.relevant_bookings
+
         slots = []
         next_start = tomorrow
         if not relevant_bookings:
@@ -323,21 +357,10 @@ def group_booking_update_view(request, booking_pk):
     booking = get_object_or_404(Booking, pk=booking_pk)
     user = request.user
 
-    # --- Permission checks ---
-    is_admin = user.groups.filter(name='Admin').exists()
-    is_booking_admin = user.groups.filter(name='Booking Admin').exists()
-    is_sd_group = user.groups.filter(name='sd').exists()
-    is_tl_heavy_group = user.groups.filter(name='tlheavy').exists()
-    is_tl_light_group = user.groups.filter(name='tllight').exists()
-    is_tlapv_member = user.groups.filter(name='tlapv').exists()
-
-    can_manage_booking_status = (
-            is_admin or is_sd_group or
-            (is_tl_heavy_group and booking.vehicle.vehicle_type == 'HEAVY') or
-            (is_tl_light_group and booking.vehicle.vehicle_type == 'LIGHT') or
-            (is_tlapv_member and booking.vehicle.vehicle_type == 'APV')
-    )
-    can_access_page = can_manage_booking_status or is_booking_admin
+    # --- REFACTOR: Simplified permission checks ---
+    managed_vehicle_types = get_managed_vehicle_types(user)
+    can_manage_booking = booking.vehicle.vehicle_type in managed_vehicle_types
+    can_access_page = can_manage_booking or user.is_booking_admin_member
 
     if not can_access_page:
         messages.error(request, _("You do not have permission to manage this booking."))
@@ -345,7 +368,7 @@ def group_booking_update_view(request, booking_pk):
 
     # --- Determine form and action permissions ---
     can_update_form_fields = (
-                                     can_manage_booking_status or is_booking_admin
+                                     can_manage_booking or user.is_booking_admin_member
                              ) and booking.status not in ['confirmed', 'cancelled', 'completed']
 
     # Allow editing of confirmed bookings that have not yet started
@@ -353,10 +376,10 @@ def group_booking_update_view(request, booking_pk):
         can_update_form_fields = True
 
     is_apv_booking = booking.vehicle.vehicle_type == 'APV'
-    can_approve_apv = is_apv_booking and booking.status == 'pending' and can_manage_booking_status
-    can_approve = not is_apv_booking and booking.status == 'pending' and can_manage_booking_status
-    can_confirm_contract = not is_apv_booking and booking.status == 'pending_contract' and booking.contract_document and can_manage_booking_status
-    can_cancel_by_manager = booking.status in ['pending', 'pending_contract', 'confirmed'] and can_manage_booking_status
+    can_approve_apv = is_apv_booking and booking.status == 'pending' and can_manage_booking
+    can_approve = not is_apv_booking and booking.status == 'pending' and can_manage_booking
+    can_confirm_contract = not is_apv_booking and booking.status == 'pending_contract' and booking.contract_document and can_manage_booking
+    can_cancel_by_manager = booking.status in ['pending', 'pending_contract', 'confirmed'] and can_manage_booking
 
     if request.method == 'POST':
         action = request.POST.get('action')
@@ -432,7 +455,7 @@ def group_booking_update_view(request, booking_pk):
         'can_confirm_contract': can_confirm_contract,
         'can_cancel_by_manager': can_cancel_by_manager,
         'can_update_form_fields': can_update_form_fields,
-        'upload_only': False,  # This view doesn't use the upload_only GET parameter
+        'upload_only': False,
     }
     return render(request, 'group_booking_update.html', context)
 
@@ -497,22 +520,8 @@ def change_password_view(request):
 @login_required
 @user_passes_test(is_group_leader, login_url='booking_app:home')
 def group_dashboard_view(request):
-    user = request.user
-    user_groups = user.groups.values_list('name', flat=True)
-
-    vehicle_types_to_manage = []
-    if user.is_booking_admin_member:
-        vehicle_types_to_manage.extend(['LIGHT', 'HEAVY', 'APV'])
-    else:
-        if 'sd' in user_groups:
-            vehicle_types_to_manage.extend(['LIGHT', 'HEAVY'])
-        if 'tlheavy' in user_groups:
-            vehicle_types_to_manage.append('HEAVY')
-        if 'tllight' in user_groups:
-            vehicle_types_to_manage.append('LIGHT')
-        if 'tlapv' in user_groups:
-            vehicle_types_to_manage.append('APV')
-    vehicle_types_to_manage = list(set(vehicle_types_to_manage))
+    # <-- REFACTOR: Use the new helper function
+    vehicle_types_to_manage = get_managed_vehicle_types(request.user)
 
     filter_form = BookingFilterForm(request.GET, user=request.user)
     selected_status = request.GET.get('status', '')
@@ -535,21 +544,15 @@ def group_dashboard_view(request):
 def group_booking_detail_view(request, booking_pk):
     booking = get_object_or_404(Booking, pk=booking_pk)
     user = request.user
-    is_admin = user.is_admin_member
-    is_booking_admin = user.is_booking_admin_member
-    is_sd_group = user.groups.filter(name='sd').exists()
-    is_tllight_group = user.groups.filter(name='tllight').exists()
-    is_tlheavy_group = user.groups.filter(name='tlheavy').exists()
-    is_tlapv_member = user.groups.filter(name='tlapv').exists()
-    can_view_as_leader = (
-        is_admin or is_sd_group or
-        (is_tllight_group and booking.vehicle.vehicle_type == 'LIGHT') or
-        (is_tlheavy_group and booking.vehicle.vehicle_type == 'HEAVY') or
-        (is_tlapv_member and booking.vehicle.vehicle_type == 'APV')
-    )
-    if not (can_view_as_leader or is_booking_admin):
+
+    # <-- REFACTOR: Simplified permission checks
+    managed_vehicle_types = get_managed_vehicle_types(user)
+    can_view_as_leader = booking.vehicle.vehicle_type in managed_vehicle_types
+
+    if not (can_view_as_leader or user.is_booking_admin_member):
         messages.error(request, _("You do not have permission to view this group booking."))
         return redirect('booking_app:group_dashboard')
+
     can_approve = booking.status == 'pending' and can_view_as_leader
     can_cancel_by_manager = booking.status in ['pending', 'confirmed'] and can_view_as_leader
     context = {
@@ -562,20 +565,7 @@ def group_booking_detail_view(request, booking_pk):
 @user_passes_test(is_group_leader, login_url='booking_app:home')
 def group_reports_view(request):
     user = request.user
-    user_groups = user.groups.values_list('name', flat=True)
-    vehicle_types_to_manage = []
-    if user.is_booking_admin_member:
-        vehicle_types_to_manage.extend(['LIGHT', 'HEAVY', 'APV'])
-    else:
-        if 'sd' in user_groups:
-            vehicle_types_to_manage.extend(['LIGHT', 'HEAVY'])
-        if 'tlheavy' in user_groups:
-            vehicle_types_to_manage.append('HEAVY')
-        if 'tllight' in user_groups:
-            vehicle_types_to_manage.append('LIGHT')
-        if 'tlapv' in user_groups:
-            vehicle_types_to_manage.append('APV')
-    vehicle_types_to_manage = list(set(vehicle_types_to_manage))
+    vehicle_types_to_manage = get_managed_vehicle_types(user)
     twelve_months_ago = timezone.now().date() - timedelta(days=365)
     bookings_per_month = Booking.objects.filter(
         vehicle__vehicle_type__in=vehicle_types_to_manage,
@@ -604,20 +594,7 @@ def group_reports_view(request):
 @user_passes_test(is_group_leader, login_url='booking_app:home')
 def group_calendar_view(request):
     user = request.user
-    user_groups = user.groups.values_list('name', flat=True)
-    vehicle_types_to_manage = []
-    if user.is_booking_admin_member:
-        vehicle_types_to_manage.extend(['LIGHT', 'HEAVY', 'APV'])
-    else:
-        if 'sd' in user_groups:
-            vehicle_types_to_manage.extend(['LIGHT', 'HEAVY'])
-        if 'tlheavy' in user_groups:
-            vehicle_types_to_manage.append('HEAVY')
-        if 'tllight' in user_groups:
-            vehicle_types_to_manage.append('LIGHT')
-        if 'tlapv' in user_groups:
-            vehicle_types_to_manage.append('APV')
-    vehicle_types_to_manage = list(set(vehicle_types_to_manage))
+    vehicle_types_to_manage = get_managed_vehicle_types(user)
     calendar_bookings = Booking.objects.filter(
         vehicle__vehicle_type__in=vehicle_types_to_manage,
         status__in=['pending', 'pending_contract', 'confirmed', 'on_going', 'pending_final_km']
@@ -730,19 +707,14 @@ def user_create_view(request):
     if request.method == 'POST':
         form = UserCreateForm(request.POST, request=request)
         if form.is_valid():
-            # The updated form's save method now creates a user with an unusable password.
             user = form.save(request=request)
-
             messages.success(request,
                              _(f"User '{user.username}' created successfully. You can now send their credentials or a temporary password."))
-
-            # Redirect to the new user's edit/detail page.
             return redirect(reverse('booking_app:admin_user_edit', kwargs={'pk': user.pk}))
         else:
             messages.error(request, _("Error creating user. Please check the form for errors."))
     else:
         form = UserCreateForm(request=request)
-
     context = {
         'form': form,
         'page_title': _("Create New User")
@@ -974,27 +946,65 @@ def admin_email_template_form_view(request, pk=None):
     context = {'form': form, 'template': template, 'page_title': page_title}
     return render(request, 'admin/admin_email_template_form.html', context)
 
+
+# booking_app/views.py
+
 @login_required
 @user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_email_template_test_view(request, pk):
     template = get_object_or_404(EmailTemplate, pk=pk)
-    mock_user = request.user
-    mock_vehicle = Vehicle.objects.first() or {'model': 'Test Model', 'license_plate': 'XX-00-XX'}
-    mock_location = Location.objects.first() or {'name': 'Test Location'}
-    mock_context_data = {
-        'booking': {'pk': 999, 'customer_name': 'Test Client', 'start_date': date.today(), 'end_date': date.today(), 'vehicle': mock_vehicle, 'user': mock_user},
-        'user': mock_user, 'vehicle': mock_vehicle, 'location': mock_location,
+
+    # --- Step 1: Get real base objects to make our mock data realistic ---
+    test_user = request.user
+    test_vehicle = Vehicle.objects.order_by('-pk').first()
+    test_location = Location.objects.order_by('-pk').first()
+
+    # Handle cases where required data for testing doesn't exist
+    if not test_vehicle:
+        messages.error(request, _("Cannot run test: At least one Vehicle must exist in the database."))
+        return redirect('booking_app:admin_email_template_list')
+    if not test_location:
+        messages.error(request, _("Cannot run test: At least one Location must exist in the database."))
+        return redirect('booking_app:admin_email_template_list')
+
+    # --- Step 2: Create a realistic, in-memory Booking object ---
+    # This gives us a complete booking object without saving it to the database.
+    mock_booking = Booking(
+        pk=999,
+        user=test_user,
+        vehicle=test_vehicle,
+        customer_name='Test Customer Name',
+        start_date=date.today(),
+        end_date=date.today() + timedelta(days=5),
+        start_location=test_location,
+        end_location=test_location,
+        status='pending'
+    )
+
+    # --- Step 3: Create a comprehensive context for ANY template ---
+    # This context includes all possible objects a template might need.
+    context_data = {
+        'booking': mock_booking,
+        'user': test_user,
+        'vehicle': test_vehicle,
+        'location': test_location,
+        'temp_password': 'test_password_123',  # For password reset templates
+        'domain': request.get_host(),          # For new user credential templates
     }
+
     try:
         send_booking_notification(
-            template.event_trigger,
-            booking_instance=mock_context_data.get('booking'),
-            context_data=mock_context_data,
+            event_trigger=template.event_trigger,
+            # Pass the mock booking as the primary instance
+            booking_instance=mock_booking,
+            # Pass ALL mock data in the context_data dictionary
+            context_data=context_data,
             test_email_recipient=request.user.email
         )
         messages.success(request, _(f"Test email for '{template.name}' sent to {request.user.email}."))
     except Exception as e:
-        messages.error(request, _(f"Failed to send test email. Error: {e}"))
+        messages.error(request, _(f"Failed to send test email for '{template.name}'. Error: {e}"))
+
     return redirect('booking_app:admin_email_template_list')
 
 @login_required
@@ -1119,13 +1129,10 @@ def get_company_details_view(request):
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
 
-            # --- UPDATED ERROR CHECK ---
-            # Look for the specific error span with id="lblErrorList"
             error_span = soup.find('span', id='lblErrorList')
             if error_span and "Não existe qualquer certidão com esse número." in error_span.get_text():
                 return JsonResponse({'error': _("Company not found or CRC is invalid.")}, status=404)
 
-            # --- PARSING LOGIC (remains the same if no error is found) ---
             details_table = soup.find('table', class_='tabela_matricula')
             if not details_table:
                 return JsonResponse({'error': _("Could not find the details table on the page.")}, status=404)
@@ -1179,7 +1186,6 @@ def get_vies_countries_view(request):
         response = requests.get(api_url, timeout=10)
         if response.status_code == 200:
             data = response.json()
-            # We only need the list of countries
             countries = data.get('countries', [])
             return JsonResponse(countries, safe=False)
         else:
@@ -1193,7 +1199,7 @@ def validate_vat_view(request):
     Receives a VAT number and a country code, and validates it against the VIES REST API.
     """
     vat_number = request.GET.get('vat_number', None)
-    country_code = request.GET.get('country_code', None) # 👈 Now dynamic
+    country_code = request.GET.get('country_code', None)
 
     if not all([vat_number, country_code]):
         return JsonResponse({'error': _('Country code and VAT number are required.')}, status=400)
@@ -1238,7 +1244,6 @@ def generate_and_save_contract_view(request, booking_pk):
     docx_template_path = os.path.join(template_dir, 'contract_template.docx')
     static_pdf_path = os.path.join(template_dir, 'terms_and_conditions.pdf')
 
-    # Create a temporary directory for processing files if it doesn't exist
     temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
     os.makedirs(temp_dir, exist_ok=True)
 
@@ -1247,25 +1252,21 @@ def generate_and_save_contract_view(request, booking_pk):
     context = {'booking': booking}
     doc.render(context)
 
-    # Save the rendered docx to a temporary file
     temp_docx_path = os.path.join(temp_dir, f'temp_contract_{booking.pk}.docx')
     doc.save(temp_docx_path)
 
+    # --- 3. Convert .docx to .pdf using LibreOffice ---
     try:
-
         if platform.system() == 'Windows':
             soffice_path = r"C:\Program Files\LibreOffice\program\soffice.exe"
         else:
             soffice_path = shutil.which('soffice') or 'soffice'
-
         subprocess.run(
             [soffice_path, '--headless', '--convert-to', 'pdf', temp_docx_path, '--outdir', temp_dir],
             check=True, timeout=15
         )
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
-        # If it still fails, it means the soffice_path is incorrect or LibreOffice is not installed.
-        error_message = _(
-            "Could not find or run the LibreOffice converter. Please ensure it is installed and the path in the view is correct.")
+        error_message = _("Could not find or run the LibreOffice converter. Please ensure it is installed and the path in the view is correct.")
         messages.error(request, f"{error_message} ({e})")
         return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
 
@@ -1274,12 +1275,8 @@ def generate_and_save_contract_view(request, booking_pk):
     # --- 4. Merge the new PDF with the static PDF ---
     merger = PdfWriter()
     try:
-        # Add the newly generated contract
         merger.append(temp_pdf_path)
-        # Add the terms and conditions
         merger.append(static_pdf_path)
-
-        # Write the final merged PDF to an in-memory buffer
         pdf_buffer = BytesIO()
         merger.write(pdf_buffer)
         pdf_buffer.seek(0)
@@ -1288,7 +1285,6 @@ def generate_and_save_contract_view(request, booking_pk):
 
     # --- 5. Save the Merged PDF to the Booking's contract_document Field ---
     final_pdf_filename = f'contract_booking_{booking.pk}_merged.pdf'
-    # Use ContentFile to wrap the in-memory buffer for Django's FileField
     booking.contract_document.save(final_pdf_filename, ContentFile(pdf_buffer.read()), save=True)
 
     # --- 6. Clean up temporary files ---
@@ -1296,6 +1292,9 @@ def generate_and_save_contract_view(request, booking_pk):
         os.remove(temp_docx_path)
     if os.path.exists(temp_pdf_path):
         os.remove(temp_pdf_path)
+
+    # <-- NEW: Send notification after the contract is successfully created and saved. -->
+    send_booking_notification('contract_generated', booking_instance=booking)
 
     messages.success(request, _("Contract has been generated and attached to the booking successfully."))
     return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
