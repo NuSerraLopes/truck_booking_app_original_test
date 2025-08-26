@@ -610,8 +610,23 @@ def admin_vehicle_list_view(request):
 @user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_vehicle_detail_view(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
-    upcoming_bookings = vehicle.bookings.filter(end_date__gte=timezone.now().date()).order_by('start_date')
-    context = {'vehicle': vehicle, 'page_title': _("Vehicle Details"), 'upcoming_bookings': upcoming_bookings}
+
+    # --- ADDED: Calculate detailed availability ---
+    availability_slots = vehicle.get_availability_slots()
+    tomorrow = date.today() + timedelta(days=1)
+
+    # This part for the history table remains the same
+    upcoming_bookings = vehicle.bookings.filter(
+        end_date__gte=timezone.now().date()
+    ).select_related('user', 'client').order_by('start_date')
+
+    context = {
+        'vehicle': vehicle,
+        'page_title': _("Admin Vehicle Details"),
+        'upcoming_bookings': upcoming_bookings,
+        'availability_slots': availability_slots,  # <-- Pass new data
+        'tomorrow': tomorrow,  # <-- Pass new data
+    }
     return render(request, 'admin/admin_vehicle_detail.html', context)
 
 
