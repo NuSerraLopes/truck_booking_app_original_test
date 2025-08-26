@@ -11,12 +11,12 @@
             <h1 class="h3 mb-0">{% translate "Manage Vehicles" %}</h1>
         </div>
         <div class="card-body">
-            <form method="GET" action="{% url 'booking_app:admin_vehicle_list' %}" class="mb-4" id="filter-form">
+            <form method="GET" action="{% url 'booking_app:admin_vehicle_list' %}" class="mb-4">
                 <div class="row g-3 align-items-end">
                     <div class="col-md-4">
                         <label for="filter_by" class="form-label">{% translate "Filter By" %}</label>
                         <select name="filter_by" id="filter_by" class="form-select">
-                            <option value="">{% translate "All Text Fields (Plate, Model, Customer, Location)" %}</option>
+                            <option value="">{% translate "All Text Fields (Plate, Model)" %}</option>
                             <option value="license_plate" {% if request.GET.filter_by == 'license_plate' %}selected{% endif %}>{% translate "License Plate" %}</option>
                             <option value="model" {% if request.GET.filter_by == 'model' %}selected{% endif %}>{% translate "Model" %}</option>
                             <option value="vehicle_type" {% if request.GET.filter_by == 'vehicle_type' %}selected{% endif %}>{% translate "Type" %}</option>
@@ -25,24 +25,10 @@
                             <option value="current_location" {% if request.GET.filter_by == 'current_location' %}selected{% endif %}>{% translate "Location" %}</option>
                         </select>
                     </div>
-
-                    <div class="col-md-5" id="filter-value-container">
-                        <label for="text-input" class="form-label">{% translate "Value" %}</label>
-
-                        <input type="text" name="filter_value" class="form-control filter-input" id="text-input" value="{{ request.GET.filter_value }}">
-
-                        <select name="filter_value" class="form-select filter-input" id="type-input" style="display: none;">
-                            {% for value, display in vehicle_type_choices %}
-                                <option value="{{ value }}" {% if request.GET.filter_value == value %}selected{% endif %}>{{ display }}</option>
-                            {% endfor %}
-                        </select>
-
-                        <select name="filter_value" class="form-select filter-input" id="availability-input" style="display: none;">
-                            <option value="yes" {% if request.GET.filter_value == 'yes' %}selected{% endif %}>{% translate "Available" %}</option>
-                            <option value="no" {% if request.GET.filter_value == 'no' %}selected{% endif %}>{% translate "Not Available" %}</option>
-                        </select>
+                    <div class="col-md-5">
+                        <label for="filter_value" class="form-label">{% translate "Value" %}</label>
+                        <input type="text" name="filter_value" id="filter_value" class="form-control" value="{{ request.GET.filter_value|default:'' }}">
                     </div>
-
                     <div class="col-md-3 d-grid d-md-flex gap-2">
                         <button type="submit" class="btn btn-primary w-100">{% translate "Filter" %}</button>
                         <a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-secondary w-100">{% translate "Clear" %}</a>
@@ -57,32 +43,32 @@
                             <tr>
                                 <th>{% translate "Picture" %}</th>
                                 <th>
-                                    <a href="?sort=license_plate&dir={% if current_sort == 'license_plate' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
+                                    <a href="?sort=license_plate&dir={% if current_sort == 'license_plate' %}{{ opposite_dir }}{% else %}asc{% endif %}&{{ request.GET.urlencode | cut:'sort=license_plate' | cut:'dir=asc' | cut:'dir=desc' }}" class="text-white text-decoration-none">
                                         {% translate "License Plate" %}
                                         {% if current_sort == 'license_plate' %}{% if current_dir == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
                                     </a>
                                 </th>
                                 <th>
-                                    <a href="?sort=model&dir={% if current_sort == 'model' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
+                                    <a href="?sort=model&dir={% if current_sort == 'model' %}{{ opposite_dir }}{% else %}asc{% endif %}&{{ request.GET.urlencode | cut:'sort=model' | cut:'dir=asc' | cut:'dir=desc' }}" class="text-white text-decoration-none">
                                         {% translate "Model" %}
                                         {% if current_sort == 'model' %}{% if current_dir == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
                                     </a>
                                 </th>
                                 <th>
-                                    <a href="?sort=vehicle_type&dir={% if current_sort == 'vehicle_type' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
+                                    <a href="?sort=vehicle_type&dir={% if current_sort == 'vehicle_type' %}{{ opposite_dir }}{% else %}asc{% endif %}&{{ request.GET.urlencode | cut:'sort=vehicle_type' | cut:'dir=asc' | cut:'dir=desc' }}" class="text-white text-decoration-none">
                                         {% translate "Type" %}
                                         {% if current_sort == 'vehicle_type' %}{% if current_dir == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
                                     </a>
                                 </th>
                                 <th>
-                                    <a href="?sort=annotated_is_available&dir={% if current_sort == 'annotated_is_available' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
+                                    <a href="?sort=annotated_is_available&dir={% if current_sort == 'annotated_is_available' %}{{ opposite_dir }}{% else %}asc{% endif %}&{{ request.GET.urlencode | cut:'sort=annotated_is_available' | cut:'dir=asc' | cut:'dir=desc' }}" class="text-white text-decoration-none">
                                         {% translate "Available" %}
                                         {% if current_sort == 'annotated_is_available' %}{% if current_dir == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
                                     </a>
                                 </th>
                                 <th>{% translate "Booked By (Customer)" %}</th>
                                 <th>
-                                    <a href="?sort=current_location&dir={% if current_sort == 'current_location' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
+                                    <a href="?sort=current_location&dir={% if current_sort == 'current_location' %}{{ opposite_dir }}{% else %}asc{% endif %}&{{ request.GET.urlencode | cut:'sort=current_location' | cut:'dir=asc' | cut:'dir=desc' }}" class="text-white text-decoration-none">
                                         {% translate "Location" %}
                                         {% if current_sort == 'current_location' %}{% if current_dir == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
                                     </a>
@@ -129,12 +115,15 @@
                     </table>
                 </div>
 
-                 {% if vehicles.has_other_pages %}
-                 <nav aria-label="Vehicle list navigation">
+                <nav aria-label="Vehicle list navigation">
                     <ul class="pagination justify-content-center">
                         {% if vehicles.has_previous %}
-                            <li class="page-item"><a class="page-link" href="?page=1&{{ request.GET.urlencode | cut:'page=1' }}">&laquo; {% trans "first" %}</a></li>
-                            <li class="page-item"><a class="page-link" href="?page={{ vehicles.previous_page_number }}&{{ request.GET.urlencode | cut:vehicles.previous_page_number }}">&laquo; {% trans "previous" %}</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1&sort={{ current_sort }}&dir={{ current_dir }}&filter_by={{ request.GET.filter_by }}&filter_value={{ request.GET.filter_value }}">&laquo; {% trans "first" %}</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ vehicles.previous_page_number }}&sort={{ current_sort }}&dir={{ current_dir }}&filter_by={{ request.GET.filter_by }}&filter_value={{ request.GET.filter_value }}">{% trans "previous" %}</a>
+                            </li>
                         {% else %}
                             <li class="page-item disabled"><span class="page-link">&laquo; {% trans "first" %}</span></li>
                             <li class="page-item disabled"><span class="page-link">{% trans "previous" %}</span></li>
@@ -145,17 +134,20 @@
                         </li>
 
                         {% if vehicles.has_next %}
-                            <li class="page-item"><a class="page-link" href="?page={{ vehicles.next_page_number }}&{{ request.GET.urlencode | cut:vehicles.next_page_number }}">&raquo; {% trans "next" %}</a></li>
-                            <li class="page-item"><a class="page-link" href="?page={{ vehicles.paginator.num_pages }}&{{ request.GET.urlencode | cut:vehicles.paginator.num_pages }}">&raquo; {% trans "last" %}</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ vehicles.next_page_number }}&sort={{ current_sort }}&dir={{ current_dir }}&filter_by={{ request.GET.filter_by }}&filter_value={{ request.GET.filter_value }}">{% trans "next" %}</a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ vehicles.paginator.num_pages }}&sort={{ current_sort }}&dir={{ current_dir }}&filter_by={{ request.GET.filter_by }}&filter_value={{ request.GET.filter_value }}">{% trans "last" %} &raquo;</a>
+                            </li>
                         {% else %}
                              <li class="page-item disabled"><span class="page-link">{% trans "next" %}</span></li>
                              <li class="page-item disabled"><span class="page-link">{% trans "last" %} &raquo;</span></li>
                         {% endif %}
                     </ul>
                 </nav>
-                {% endif %}
             {% else %}
-                <div class="alert alert-info text-center" role="alert">
+                <div class="alert alert-info" role="alert">
                     {% translate "No vehicles found matching your criteria." %}
                 </div>
             {% endif %}
