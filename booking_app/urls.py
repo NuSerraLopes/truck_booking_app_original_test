@@ -84,6 +84,7 @@ urlpatterns = [
 
     # API URLs
     path('api/bookings/', views.booking_api_view, name='booking_api'),
+    path('api/check-client/', views.check_client_in_db_view, name='check_client_in_db'),
     path('api/get-company-details/', views.get_company_details_view, name='get_company_details'),
     path('api/validate-vat/', views.validate_vat_view, name='validate_vat'),
     path('api/get-vies-countries/', views.get_vies_countries_view, name='get_vies_countries'),

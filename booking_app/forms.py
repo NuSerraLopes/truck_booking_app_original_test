@@ -29,14 +29,15 @@ class BootstrapCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
 
 
 class BookingForm(forms.ModelForm):
-    # Unbound fields to capture client data, which will be processed in the view/form save logic
+    # Unbound fields to capture client data
     client_name = forms.CharField(label=_("Client Name"))
     client_tax_number = forms.CharField(label=_("Client Tax Number"))
-    client_address = forms.CharField(label=_("Client Address"), widget=forms.Textarea(attrs={'rows': 3}),
-                                     required=False)
+    client_address = forms.CharField(label=_("Client Address"), widget=forms.Textarea(attrs={'rows': 3}), required=False)
     client_email = forms.EmailField(label=_("Client Email"), required=False)
     client_phone = forms.CharField(label=_("Client Phone"), max_length=20, required=False)
     client_company_registration = forms.CharField(label=_("Client CRC"), max_length=100, required=False)
+    client_id = forms.IntegerField(widget=forms.HiddenInput(), required=False)
+    conflict_resolution = forms.CharField(widget=forms.HiddenInput(), required=False)
 
     class Meta:
         model = Booking
@@ -81,7 +82,7 @@ class BookingForm(forms.ModelForm):
             self.fields['final_km'].required = True
             for field_name, field in self.fields.items():
                 if field_name not in ['final_km', 'client_name', 'client_tax_number', 'client_address', 'client_email',
-                                      'client_phone', 'client_company_registration']:
+                                      'client_phone', 'client_company_registration', 'client_id', 'conflict_resolution']:
                     field.widget.attrs['readonly'] = 'readonly'
         else:
             self.fields['final_km'].widget = forms.HiddenInput()
@@ -94,36 +95,44 @@ class BookingForm(forms.ModelForm):
 
         self.helper = FormHelper()
         self.helper.form_method = 'post'
+        # Using a more explicit layout for robustness
         self.helper.layout = Layout(
             HTML(f'<h5>{_("Client Information")}</h5><hr>'),
-            'client_tax_number',
-            Row(Column('client_name', css_class='form-group col-md-6 mb-0'),
-                Column('client_phone', css_class='form-group col-md-6 mb-0')),
-            'client_email',
-            'client_address',
-            'client_company_registration',
+            Row(Column('client_tax_number', css_class='form-group col-md-12 mb-3')),
+            Row(
+                Column('client_name', css_class='form-group col-md-6 mb-3'),
+                Column('client_phone', css_class='form-group col-md-6 mb-3')
+            ),
+            Row(Column('client_email', css_class='form-group col-md-12 mb-3')),
+            Row(Column('client_address', css_class='form-group col-md-12 mb-3')),
+            Row(Column('client_company_registration', css_class='form-group col-md-12 mb-3')),
+
             HTML(f'<h5 class="mt-4">{_("Booking Details")}</h5><hr>'),
             'motive',
-            Row(Column('start_location', css_class='form-group col-md-6 mb-0'),
-                Column('end_location', css_class='form-group col-md-6 mb-0')),
-            Row(Column('start_date', css_class='form-group col-md-6 mb-0'),
-                Column('end_date', css_class='form-group col-md-6 mb-0')),
+            Row(
+                Column('start_location', css_class='form-group col-md-6 mb-3'),
+                Column('end_location', css_class='form-group col-md-6 mb-3')
+            ),
+            Row(
+                Column('start_date', css_class='form-group col-md-6 mb-3'),
+                Column('end_date', css_class='form-group col-md-6 mb-3')
+            ),
             'contract_document',
             'needs_transport',
             'final_km',
+            'client_id',
+            'conflict_resolution',
         )
 
         if is_create_page:
             self.helper.layout.append(
                 Div(
-                    Submit('submit', _('Submit Booking Request'), css_class='btn btn-primary'),
-                    HTML(
-                        f'<a href="{reverse_lazy("booking_app:vehicle_list")}" class="btn btn-secondary">{_("Back to Vehicle List")}</a>'),
-                    css_class='d-flex justify-content-between mt-4'
+                    Submit('submit', _('Submit Booking Request'), css_class='btn btn-primary mt-4'),
+                    HTML(f'<a href="{reverse_lazy("booking_app:vehicle_list")}" class="btn btn-secondary mt-4">{_("Back to Vehicle List")}</a>'),
+                    css_class='d-flex justify-content-between'
                 )
             )
 
-    # --- OPTIMIZATION: Added validation for client contact info ---
     def clean(self):
         cleaned_data = super().clean()
         client_email = cleaned_data.get('client_email')
@@ -132,7 +141,6 @@ class BookingForm(forms.ModelForm):
         if not client_email and not client_phone:
             raise ValidationError(_("Please provide either a Client Email or a Client Phone Number."))
 
-        # The rest of your existing clean method
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
         final_km = cleaned_data.get('final_km')
@@ -172,7 +180,6 @@ class BookingForm(forms.ModelForm):
                 )
         return cleaned_data
 
-    # --- OPTIMIZATION: Your original save logic is complex and preserved, but notifications are now safer ---
     @transaction.atomic
     def save(self, commit=True):
         if self.data.get("contract_document-clear") and self.initial_contract_document:
@@ -196,7 +203,6 @@ class BookingForm(forms.ModelForm):
 
         if booking.needs_transport != original_needs_transport:
             context = {'previous_end_location': previous_booking.end_location if previous_booking else None}
-            # This ensures the email is only sent if the database transaction succeeds
             transaction.on_commit(
                 lambda: send_booking_notification('transport_status_changed', booking_instance=booking,
                                                   context_data=context)
@@ -215,7 +221,6 @@ class BookingForm(forms.ModelForm):
             next_booking.needs_transport = (booking.end_location != next_booking.start_location)
             if next_booking.needs_transport != original_next_needs_transport:
                 context = {'previous_end_location': booking.end_location}
-                # This ensures the email is only sent if the database transaction succeeds
                 transaction.on_commit(
                     lambda: send_booking_notification('transport_status_changed', booking_instance=next_booking,
                                                       context_data=context)
@@ -226,13 +231,21 @@ class BookingForm(forms.ModelForm):
 
     def clean_start_date(self):
         start_date = self.cleaned_data.get('start_date')
+
         if self.instance and self.instance.pk and self.instance.status == 'pending_final_km':
             return start_date
 
-        if start_date and start_date < timezone.now().date():
+        tomorrow = timezone.now().date() + timedelta(days=1)
+
+        if start_date and start_date < tomorrow:
             raise ValidationError(
-                _("Booking date cannot be in the past. Please select today or a future date."),
-                code='invalid_start_date')
+                _("Booking date cannot be today or in the past. Please select tomorrow or a future date."),
+                code='invalid_start_date_past')
+
+        if start_date and start_date.weekday() >= 5:
+            raise ValidationError(
+                _("Bookings cannot start on a weekend. Please select a business day."),
+                code='invalid_start_date_weekend')
         return start_date
 
 
@@ -304,7 +317,7 @@ class VehicleCreateForm(forms.ModelForm):
         )
 
 
-class VehicleEditForm(VehicleCreateForm):  # Inherits fields and layout
+class VehicleEditForm(VehicleCreateForm):
     class Meta(VehicleCreateForm.Meta):
         widgets = {
             'picture': forms.FileInput(),

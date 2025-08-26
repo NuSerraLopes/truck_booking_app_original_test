@@ -1,67 +1,103 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n static %}
 
-{% block title %}{{ vehicle.model }} ({{ vehicle.license_plate }}){% endblock %}
+{% block title %}{{ page_title }}{% endblock %}
 
 {% block content %}
 <div class="container my-5">
     <div class="card shadow-sm">
-        <div class="card-header">
-            <h1 class="h3 mb-0">{% translate "Vehicle Details" %}</h1>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h1 class="h3 mb-0">{% translate "Vehicle Details" %}: {{ vehicle.license_plate }}</h1>
+            <a href="{% url 'booking_app:vehicle_list' %}" class="btn btn-secondary btn-sm">{% translate "Back to Vehicle List" %}</a>
         </div>
         <div class="card-body">
             <div class="row">
-                <div class="col-lg-5 mb-4 mb-lg-0">
-                    {% if vehicle.picture %}
+                <!-- Image Column -->
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    {% if vehicle.picture and vehicle.picture.url %}
                         <img src="{{ vehicle.picture.url }}" class="img-fluid rounded border" alt="{{ vehicle.model }}">
                     {% else %}
-                        <div class="d-flex align-items-center justify-content-center bg-light rounded border text-muted" style="min-height: 300px;">
-                            <div class="text-center">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" fill="currentColor" class="bi bi-image-fill" viewBox="0 0 16 16"><path d="M.002 3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-12a2 2 0 0 1-2-2V3zm1 9l2.646-2.354a.5.5 0 0 1 .63-.062l2.66 1.773 3.71-3.71a.5.5 0 0 1 .577-.094l1.777 1.947V3a1 1 0 0 0-1-1h-12a1 1 0 0 0-1 1v8z"/></svg>
-                                <p class="mt-2 mb-0">{% translate "No Image Available" %}</p>
-                            </div>
-                        </div>
+                        <img src="{% static 'media/Default/no_image.png' %}" class="img-fluid rounded border" alt="{% translate 'No Image Available' %}">
                     {% endif %}
                 </div>
-                <div class="col-lg-7">
-                    <h2 class="mb-3">{{ vehicle.license_plate }}</h2>
 
+                <!-- Details Column -->
+                <div class="col-lg-8">
+                    <h2 class="mb-3">{{ vehicle.model }}</h2>
                     <ul class="list-group list-group-flush">
                         <li class="list-group-item px-0 d-flex justify-content-between">
                             <strong>{% translate "License Plate" %}:</strong>
-                            <span>{{ vehicle.model }}</span>
+                            <span>{{ vehicle.license_plate }}</span>
                         </li>
                         <li class="list-group-item px-0 d-flex justify-content-between">
-                            <strong>{% translate "Vehicle Type" %}:</strong>
-                            <span>{{ vehicle.chassis }}</span>
+                            <strong>{% translate "Chassis Number" %}:</strong>
+                            <span>{{ vehicle.chassis|default:"N/A" }}</span>
                         </li>
                         <li class="list-group-item px-0 d-flex justify-content-between">
                             <strong>{% translate "Vehicle Type" %}:</strong>
                             <span>{{ vehicle.get_vehicle_type_display }}</span>
                         </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>{% translate "Last Recorded KM" %}:</strong>
+                            <span>{{ vehicle.vehicle_km|default:"N/A" }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>{% translate "ViaVerde ID" %}:</strong>
+                            <span>{{ vehicle.viaverde_id|default:"N/A" }}</span>
+                        </li>
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>{% translate "Electric" %}:</strong>
+                            <span>{% if vehicle.is_electric %}{% translate "Yes" %}{% else %}{% translate "No" %}{% endif %}</span>
+                        </li>
+
+                        <!-- CORRECTED AVAILABILITY LOGIC -->
                         <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                             <strong>{% translate "Availability" %}:</strong>
                             <span>
-                                {% if next_available_date is None %}
-                                    <span class="badge bg-success fs-6">{% translate "Available Now" %}</span>
-                                {% else %}
-                                    <span class="badge bg-info text-dark fs-6">
-                                        {% blocktranslate %}Next Available: {{ next_available_date|date:"F d, Y" }}{% endblocktranslate %}
-                                    </span>
-                                {% endif %}
-                            </span>
-                        </li>
-                        <li class="list-group-item px-0 d-flex justify-content-between">
-                            <strong>{% translate "Current Location" %}:</strong>
-                            <span>
-                                {% if vehicle.current_location %}
-                                    {{ vehicle.current_location.name }}
-                                {% else %}
-                                    {% translate "Not Set" %}
-                                {% endif %}
+                                {% with first_slot=availability_slots.0 %}
+                                    {% if first_slot and first_slot.start <= tomorrow %}
+                                        <span class="badge bg-success fs-6">{% translate "Available Now" %}</span>
+                                    {% elif first_slot %}
+                                        <span class="badge bg-info text-dark fs-6">
+                                            {% translate "Next Available" %}: {{ first_slot.start|date:"d-m-Y" }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-danger fs-6">{% translate "Currently Unavailable" %}</span>
+                                    {% endif %}
+                                {% endwith %}
                             </span>
                         </li>
 
+                        <!-- AVAILABLE SLOTS LIST -->
+                        <li class="list-group-item px-0">
+                            <strong>{% translate "Available Slots" %}:</strong>
+                            <ul class="list-unstyled mt-2">
+                            {% for slot in availability_slots %}
+                                <li>
+                                {% if slot.end %}
+                                    <span class="badge bg-light text-dark mb-1">
+                                    {% blocktrans with start_date=slot.start|date:"d-m-Y" end_date=slot.end|date:"d-m-Y" %}
+                                    From {{ start_date }} to {{ end_date }}
+                                    {% endblocktrans %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark mb-1">
+                                    {% blocktrans with start_date=slot.start|date:"d-m-Y" %}
+                                    From {{ start_date }} onwards
+                                    {% endblocktrans %}
+                                    </span>
+                                {% endif %}
+                                </li>
+                            {% empty %}
+                                <li class="text-muted small">{% translate "No upcoming availability found." %}</li>
+                            {% endfor %}
+                            </ul>
+                        </li>
+
+                        <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>{% translate "Current Location" %}:</strong>
+                            <span>{{ vehicle.current_location.name|default:_("Not Set") }}</span>
+                        </li>
                         <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
                             <strong>{% translate "Insurance Document" %}:</strong>
                             <span>
@@ -82,11 +118,10 @@
                                 {% endif %}
                             </span>
                         </li>
-                        </ul>
+                    </ul>
 
                     <div class="mt-4 pt-3 border-top">
-                        <a href="{% url 'booking_app:vehicle_list' %}" class="btn btn-secondary">{% translate "Back to List" %}</a>
-                        <a href="{% url 'booking_app:book_vehicle' vehicle_pk=vehicle.pk %}" class="btn btn-primary">{% translate "Book This Vehicle" %}</a>
+                        <a href="{% url 'booking_app:book_vehicle' vehicle_pk=vehicle.pk %}" class="btn btn-primary w-100">{% translate "Book This Vehicle" %}</a>
                     </div>
                 </div>
             </div>

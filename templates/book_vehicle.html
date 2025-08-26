@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
-{% load i18n %}
+{% load i18n static %}
 {% load crispy_forms_tags %}
 
 {% block title %}{% translate "Book Vehicle" %}{% endblock %}
 
 {% block content %}
-<link rel="stylesheet" href="/static/css/flatpickr.min.css">
+<link rel="stylesheet" href="{% static 'css/flatpickr.min.css' %}">
 
 <div class="container my-4">
     <div class="row justify-content-center">
@@ -13,11 +13,9 @@
             <div class="card shadow-sm">
                 <div class="card-body">
                     <h1 class="card-title text-center mb-4">{% translate "Book" %} {{ vehicle.model }} ({{ vehicle.license_plate }})</h1>
-
-                    <div id="date-validation-error" class="alert alert-danger" style="display: none;"></div>
-                    <div id="crc-lookup-message" class="alert" style="display: none;"></div>
                     <div id="vat-lookup-message" class="alert" style="display: none;"></div>
-
+                    <div id="crc-lookup-message" class="alert" style="display: none;"></div>
+                    <div id="date-validation-error" class="alert alert-danger" style="display: none;"></div>
                     {% crispy form %}
                 </div>
             </div>
@@ -25,258 +23,212 @@
     </div>
 </div>
 
-<script src="/static/js/flatpickr.min.js"></script>
+<div class="modal fade" id="client-conflict-modal" tabindex="-1" aria-labelledby="clientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="clientModalLabel">{% translate "Client Data Conflict" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="client-modal-body">
+                {% if conflict_data|length == 1 %}
+                    {% with conflict=conflict_data.0 %}
+                        <p>{% translate "The information you submitted conflicts with an existing client for this Tax Number." %}</p>
+                        <h6>{% translate "Detected Changes:" %}</h6>
+                        <ul class="list-group">
+                        {% for field, values in conflict.changes.items %}
+                            <li class="list-group-item">
+                                <strong>{{ field|capfirst }}:</strong>
+                                <span class="text-muted"><del>{{ values.old|default:'empty' }}</del></span> →
+                                <span class="fw-bold text-success">{{ values.new }}</span>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                        <p class="mt-4">{% translate "How would you like to proceed?" %}</p>
+                    {% endwith %}
+                {% else %}
+                    <p>{% translate "Multiple clients exist with this Tax Number. Please choose an action below." %}</p>
+                    <h6>{% translate "Existing Clients:" %}</h6>
+                    {% for conflict in conflict_data %}
+                    <div class="form-check border rounded p-3 mb-2">
+                        <input class="form-check-input" type="radio" name="selected_client_id" id="client_{{ conflict.client.id }}" value="{{ conflict.client.id }}" {% if forloop.first %}checked{% endif %}>
+                        <label class="form-check-label" for="client_{{ conflict.client.id }}">
+                            <strong>{{ conflict.client.name }}</strong><br>
+                            <small class="text-muted">{{ conflict.client.address|default:'No address' }} | {{ conflict.client.email|default:'' }} | {{ conflict.client.phone_number|default:'' }}</small>
+                        </label>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            </div>
+            <div class="modal-footer justify-content-between">
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "Go Back" %}</button>
+                </div>
+                <div>
+                    {% if conflict_data|length == 1 %}
+                        <button type="button" class="btn btn-outline-secondary" onclick="resolveConflict('discard_changes', {{ conflict_data.0.client.id }})">{% translate "Discard My Changes" %}</button>
+                        <button type="button" class="btn btn-primary" onclick="resolveConflict('update_existing', {{ conflict_data.0.client.id }})">{% translate "Update Existing Client" %}</button>
+                    {% else %}
+                        <button type="button" class="btn btn-outline-secondary" onclick="resolveConflict('discard_changes', null)">{% translate "Use Selected Client (No Changes)" %}</button>
+                        <button type="button" class="btn btn-primary" onclick="resolveConflict('update_existing', null)">{% translate "Update Selected Client" %}</button>
+                    {% endif %}
+                     <button type="button" class="btn btn-info" onclick="resolveConflict('create_new', null)">{% translate "Create as New Client" %}</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+<script src="{% static 'js/flatpickr.min.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // --- FORM ELEMENTS ---
+    // --- FORM & MODAL ELEMENTS ---
+    const mainForm = document.querySelector('form');
     const crcInput = document.getElementById('id_client_company_registration');
-    const companyNameInput = document.getElementById('id_customer_name');
+    const nameInput = document.getElementById('id_client_name');
     const nifInput = document.getElementById('id_client_tax_number');
-    const addressInput = document.getElementById('id_customer_address');
+    const addressInput = document.getElementById('id_client_address');
+    const emailInput = document.getElementById('id_client_email');
+    const phoneInput = document.getElementById('id_client_phone');
+    const hiddenClientIdInput = document.getElementById('id_client_id');
+    const hiddenResolutionInput = document.getElementById('id_conflict_resolution');
     const startDateInput = document.getElementById('id_start_date');
     const endDateInput = document.getElementById('id_end_date');
-    const phoneNumberInput = document.getElementById('id_customer_phone');
-    const emailInput = document.getElementById('id_customer_email');
-    const startLocationInput = document.getElementById('id_start_location');
-    const endLocationInput = document.getElementById('id_end_location');
-    const contractInput = document.getElementById('id_contract_document');
     const motiveInput = document.getElementById('id_motive');
     const submitButton = document.querySelector('input[type="submit"]');
     const dateErrorDiv = document.getElementById('date-validation-error');
     const crcMessageDiv = document.getElementById('crc-lookup-message');
     const vatMessageDiv = document.getElementById('vat-lookup-message');
+    const clientModal = new bootstrap.Modal(document.getElementById('client-conflict-modal'));
+    const clientModalLabel = document.getElementById('clientModalLabel');
+    const clientModalBody = document.getElementById('client-modal-body');
+    const clientModalFooter = document.getElementById('client-modal-footer');
 
-    // --- GET SETTING FROM DJANGO ---
-    const crcIsMandatory = {{ crc_is_mandatory|yesno:"true,false" }};
+    // --- SCRIPT TO OPEN MODAL IF A CONFLICT IS DETECTED ON SUBMIT ---
+    {% if show_conflict_modal %}
+        clientModal.show();
+    {% endif %}
 
-    // --- STATE MANAGEMENT ---
-    let isCrcVerified = false;
-    let isVatVerified = false;
+    // --- SCRIPT TO HANDLE USER'S CHOICE FROM THE MODAL ---
+    window.resolveConflict = function(choice, clientId) {
+        if (hiddenResolutionInput) {
+            hiddenResolutionInput.value = choice;
+        }
 
-    // --- HELPER FUNCTIONS ---
-    const identityFields = [companyNameInput, addressInput];
-    const contactFields = [phoneNumberInput, emailInput];
-    const bookingFields = [startDateInput, endDateInput, startLocationInput, endLocationInput, contractInput, motiveInput];
-
-    function toggleFields(fields, enable) {
-        fields.forEach(field => {
-            if (field) {
-                field.disabled = !enable;
+        if (clientId === null) {
+            const selectedRadio = document.querySelector('input[name="selected_client_id"]:checked');
+            if (selectedRadio) {
+                clientId = selectedRadio.value;
+            } else if (choice !== 'create_new') {
+                alert('{% translate "Please select a client." %}');
+                return;
             }
-        });
-    }
-
-    function toggleContactFields(enable) {
-        toggleFields(contactFields, enable);
-    }
-
-    function toggleBookingFields(enable) {
-        toggleFields(bookingFields, enable);
-        if (!enable) {
-            fpStart.clear();
-            fpEnd.clear();
-            endDateInput.disabled = true;
-        }
-    }
-
-    function setFieldsReadOnly(fields, isReadOnly) {
-        fields.forEach(field => {
-            if (field) {
-                field.readOnly = isReadOnly;
-            }
-        });
-    }
-
-    function validateFormState() {
-        let datesAreValid = false;
-        const start = startDateInput.value;
-        const end = endDateInput.value;
-
-        if (start && end) {
-            const startDate = new Date(start + 'T00:00:00');
-            const endDate = new Date(end + 'T00:00:00');
-            if (startDate <= endDate) {
-                datesAreValid = true;
-                dateErrorDiv.style.display = 'none';
-            } else {
-                dateErrorDiv.textContent = "{% translate 'The end date must be on or after the start date.' %}";
-                dateErrorDiv.style.display = 'block';
-            }
-        } else {
-            datesAreValid = false;
         }
 
-        if (submitButton) {
-            submitButton.disabled = !(datesAreValid && (isCrcVerified || isVatVerified));
+        if (hiddenClientIdInput && clientId) {
+            hiddenClientIdInput.value = clientId;
         }
+
+        mainForm.submit();
     }
 
-    // --- FLATICKR DATE PICKER LOGIC ---
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const unavailableRanges = JSON.parse('{{ unavailable_ranges_json|default:"[]"|safe }}');
-    const disabledDates = unavailableRanges.map(range => ({ from: range.start, to: range.end }));
-
-    const fpEnd = flatpickr(endDateInput, {
-        dateFormat: "Y-m-d",
-        minDate: tomorrow,
-        disable: disabledDates,
-        onChange: function() {
-            validateFormState();
-        }
-    });
-
-    const fpStart = flatpickr(startDateInput, {
-        dateFormat: "Y-m-d",
-        minDate: tomorrow,
-        disable: disabledDates,
-        onChange: function(selectedDates) {
-            if (selectedDates[0]) {
-                fpEnd.set('minDate', selectedDates[0]);
-                endDateInput.disabled = false;
-            }
-            validateFormState();
-        }
-    });
-
-    // --- DYNAMIC COUNTRY SELECTOR ---
+    // --- DYNAMIC COUNTRY SELECTOR & VAT BUTTON CREATION ---
     const nifWrapperDiv = document.getElementById('div_id_client_tax_number');
     if (nifInput && nifWrapperDiv) {
         const countrySelect = document.createElement('select');
         countrySelect.id = 'id_country_code';
         countrySelect.className = 'form-select';
         countrySelect.style.flex = '0 0 100px';
-
+        const flagAddon = document.createElement('span');
+        flagAddon.className = 'input-group-text p-1';
         const flagImage = document.createElement('img');
-        flagImage.className = 'input-group-text';
-        flagImage.style.padding = '0.375rem'; // Use standard bootstrap padding
-        flagImage.style.height = 'auto';
+        flagImage.style.width = '28px';
         flagImage.alt = 'Selected country flag';
-
+        flagAddon.appendChild(flagImage);
         const inputGroupWrapper = document.createElement('div');
         inputGroupWrapper.className = 'input-group';
-
-        // Move the original nifInput into the new wrapper
-        nifInput.parentElement.replaceChild(inputGroupWrapper, nifInput);
-        inputGroupWrapper.appendChild(flagImage);
+        nifInput.parentElement.insertBefore(inputGroupWrapper, nifInput);
+        inputGroupWrapper.appendChild(flagAddon);
         inputGroupWrapper.appendChild(countrySelect);
         inputGroupWrapper.appendChild(nifInput);
 
         const verifyNifButtonContainer = document.createElement('div');
         verifyNifButtonContainer.className = 'text-end mt-2';
-        const verifyNifButton = document.createElement('button');
-        verifyNifButton.type = 'button';
-        verifyNifButton.className = 'btn btn-info btn-sm';
-        verifyNifButton.textContent = '{% translate "Verify VAT" %}';
-        verifyNifButtonContainer.appendChild(verifyNifButton);
+        const verifyVatButton = document.createElement('button');
+        verifyVatButton.type = 'button';
+        verifyVatButton.className = 'btn btn-outline-secondary btn-sm';
+        verifyVatButton.textContent = '{% translate "Pre-fill from DB / VIES" %}';
+        verifyNifButtonContainer.appendChild(verifyVatButton);
         nifWrapperDiv.appendChild(verifyNifButtonContainer);
 
         function updateFlag(countryCode) {
-            let flagCode = countryCode.toLowerCase();
-            if (flagCode === 'el') {
-                flagCode = 'gr';
-            } else if (flagCode === 'xi') {
-                flagCode = 'gb';
-            }
+            let flagCode = countryCode ? countryCode.toLowerCase() : '';
+            if (flagCode === 'el') flagCode = 'gr';
+            else if (flagCode === 'xi') flagCode = 'gb';
             flagImage.src = `https://flagcdn.com/w40/${flagCode}.png`;
         }
 
         fetch("{% url 'booking_app:get_vies_countries' %}")
-            .then(response => response.json())
-            .then(countries => {
+            .then(response => response.json()).then(countries => {
                 countries.forEach(country => {
                     const option = document.createElement('option');
                     option.value = country.countryCode;
                     option.textContent = country.countryCode;
-                    if (country.countryCode === 'PT') {
-                        option.selected = true;
-                    }
+                    if (country.countryCode === 'PT') option.selected = true;
                     countrySelect.appendChild(option);
                 });
                 updateFlag(countrySelect.value);
             });
 
-        countrySelect.addEventListener('change', function() {
-            updateFlag(this.value);
-            if (nifInput.value) {
-                verifyVat(nifInput.value);
-            }
-            nifInput.value = '';
-            nifInput.dispatchEvent(new Event('input'));
-        });
-
-        verifyNifButton.addEventListener('click', function() {
-            if (nifInput.value) {
-                verifyVat(nifInput.value);
+        countrySelect.addEventListener('change', () => updateFlag(countrySelect.value));
+        verifyVatButton.addEventListener('click', () => {
+            const taxNumber = nifInput.value.trim();
+            if (taxNumber) {
+                fetch(`{% url 'booking_app:check_client_in_db' %}?tax_number=${taxNumber}`)
+                    .then(response => {
+                        if (response.ok) return response.json();
+                        throw new Error('Client not in DB');
+                    })
+                    .then(data => {
+                        if (data.clients && data.clients.length > 0) {
+                            const client = data.clients[0];
+                            nameInput.value = client.name || '';
+                            addressInput.value = client.address || '';
+                            emailInput.value = client.email || '';
+                            phoneInput.value = client.phone_number || '';
+                            vatMessageDiv.className = 'alert alert-info';
+                            vatMessageDiv.textContent = `{% translate "Pre-filled data for existing client:" %} ${client.name}`;
+                            vatMessageDiv.style.display = 'block';
+                        }
+                    })
+                    .catch(() => {
+                        const countryCode = countrySelect.value;
+                        fetch(`{% url 'booking_app:validate_vat' %}?country_code=${countryCode}&vat_number=${taxNumber}`)
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.valid) {
+                                    nameInput.value = data.company_name || '';
+                                    addressInput.value = (data.address || '').replace(/\\n/g, ', ').trim();
+                                    vatMessageDiv.className = 'alert alert-success';
+                                    vatMessageDiv.textContent = `{% translate "Pre-filled data from VIES." %}`;
+                                    vatMessageDiv.style.display = 'block';
+                                } else {
+                                    vatMessageDiv.className = 'alert alert-warning';
+                                    vatMessageDiv.textContent = data.error || '{% translate "Invalid VAT number." %}';
+                                    vatMessageDiv.style.display = 'block';
+                                }
+                            });
+                    });
             } else {
-                alert('{% translate "Please enter a VAT number first." %}');
+                alert('{% translate "Please enter a Tax Number first." %}');
             }
         });
     }
 
-
-    // --- VAT/NIF VALIDATION LOGIC ---
-    nifInput.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/[^a-zA-Z0-9]/g, '');
-        e.target.value = value.toUpperCase();
-        isVatVerified = false;
-        vatMessageDiv.style.display = 'none';
-        companyNameInput.value = '';
-        addressInput.value = '';
-        validateFormState();
-    });
-
-    function verifyVat(vatNumber) {
-        const countryCode = document.getElementById('id_country_code').value;
-        vatMessageDiv.className = 'alert alert-info';
-        vatMessageDiv.textContent = '{% translate "Verifying VAT number..." %}';
-        vatMessageDiv.style.display = 'block';
-
-        fetch(`{% url 'booking_app:validate_vat' %}?country_code=${countryCode}&vat_number=${vatNumber}`)
-            .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-            .then(data => {
-                var companyName;
-                if (data.valid) {
-                    if (data.company_name === "---") {
-                        vatMessageDiv.className = 'alert alert-success';
-                        vatMessageDiv.textContent = '{% translate "VAT number is valid. But no company name provided" %}';
-                        setFieldsReadOnly(identityFields, false);
-                        toggleFields(identityFields, true);
-                        toggleContactFields(true);
-                        toggleBookingFields(true);
-                    } else {
-                        vatMessageDiv.className = 'alert alert-success';
-                        vatMessageDiv.textContent = `{% translate "VAT number is valid." %} ${data.company_name || ''}`;
-                        isVatVerified = true;
-                        if (!companyNameInput.value) companyNameInput.value = data.company_name || '';
-                        if (!addressInput.value) addressInput.value = (data.address || '').replace(/\\n/g, ', ').replace(/---/g, '').trim();
-                        toggleContactFields(true);
-                        toggleBookingFields(true);
-                        setFieldsReadOnly(identityFields, true);
-                    }
-                } else {
-                    vatMessageDiv.className = 'alert alert-danger';
-                    vatMessageDiv.textContent = data.error || '{% translate "Invalid VAT number." %}';
-                    isVatVerified = false;
-                }
-            })
-            .catch(error => {
-                console.error("VAT fetch failed:", error);
-                vatMessageDiv.className = 'alert alert-danger';
-                vatMessageDiv.textContent = '{% translate "An error occurred during VAT verification." %}';
-                isVatVerified = false;
-            })
-            .finally(() => {
-                validateFormState();
-            });
-    }
-
-    // --- CRC COMPANY LOOKUP LOGIC ---
+    // DYNAMIC BUTTON CREATION: CRC
     const crcWrapperDiv = document.getElementById('div_id_client_company_registration');
     if (crcInput && crcWrapperDiv) {
         const verifyCrcButtonContainer = document.createElement('div');
@@ -284,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const verifyCrcButton = document.createElement('button');
         verifyCrcButton.textContent = '{% translate "Verify CRC" %}';
         verifyCrcButton.type = 'button';
-        verifyCrcButton.className = 'btn btn-sm btn-info';
+        verifyCrcButton.className = 'btn btn-outline-secondary btn-sm';
         verifyCrcButtonContainer.appendChild(verifyCrcButton);
         crcWrapperDiv.appendChild(verifyCrcButtonContainer);
 
@@ -297,92 +249,44 @@ document.addEventListener('DOMContentLoaded', function() {
             crcMessageDiv.className = 'alert alert-info';
             crcMessageDiv.textContent = '{% translate "Looking up company..." %}';
             crcMessageDiv.style.display = 'block';
-            verifyCrcButton.disabled = true;
-            isCrcVerified = false;
-            validateFormState();
             fetch(`{% url 'booking_app:get_company_details' %}?crc=${encodeURIComponent(crcValue)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
-                        crcMessageDiv.className = 'alert alert-danger';
-                        crcMessageDiv.textContent = data.error;
-                        isCrcVerified = false;
-                        toggleContactFields(false);
-                        toggleBookingFields(false);
+                         crcMessageDiv.className = 'alert alert-danger';
+                         crcMessageDiv.textContent = data.error;
                     } else {
                         crcMessageDiv.className = 'alert alert-success';
                         crcMessageDiv.textContent = `{% translate "Company found:" %} ${data.company_name}`;
-                        if (!companyNameInput.value) companyNameInput.value = data.company_name;
-                        if (!nifInput.value) nifInput.value = data.nif;
-                        if (!addressInput.value) addressInput.value = data.address;
-                        isCrcVerified = true;
-                        toggleContactFields(true);
-                        toggleBookingFields(true);
-                        setFieldsReadOnly(identityFields, true);
-                        if (data.nif) {
-                            verifyVat(data.nif);
-                        }
+                        if (nameInput && !nameInput.value) nameInput.value = data.company_name;
+                        if (nifInput && !nifInput.value) nifInput.value = data.nif;
+                        if (addressInput && !addressInput.value) addressInput.value = data.address;
                     }
                 })
-                .catch(error => {
-                    crcMessageDiv.className = 'alert alert-danger';
-                    crcMessageDiv.textContent = '{% translate "An unexpected error occurred. Please try again." %}';
-                    console.error('Fetch error:', error);
-                    isCrcVerified = false;
-                    toggleContactFields(false);
-                    toggleBookingFields(false);
-                })
-                .finally(() => {
-                    verifyCrcButton.disabled = false;
-                    validateFormState();
-                });
-        });
-
-        crcInput.addEventListener('input', function(e) {
-            let value = e.target.value.replace(/\D/g, '').substring(0, 12);
-            if (value.length > 8) {
-                value = value.replace(/(\d{4})(\d{4})(\d{1,4})/, '$1-$2-$3');
-            } else if (value.length > 4) {
-                value = value.replace(/(\d{4})(\d{1,4})/, '$1-$2');
-            }
-            e.target.value = value;
-
-            if (isCrcVerified) {
-                isCrcVerified = false;
-                toggleContactFields(false);
-                toggleBookingFields(false);
-                setFieldsReadOnly(identityFields, false);
-                companyNameInput.value = '';
-                nifInput.value = '';
-                addressInput.value = '';
-                crcMessageDiv.style.display = 'none';
-                validateFormState();
-            }
+                .catch(error => console.error('CRC Fetch error:', error));
         });
     }
 
-    // --- INITIAL STATE ---
-    function initializeForm() {
-        if (crcIsMandatory) {
-            toggleContactFields(false);
-            toggleBookingFields(false);
-            setFieldsReadOnly([companyNameInput, addressInput], false);
-        } else {
-            toggleContactFields(true);
-            toggleBookingFields(true);
-            endDateInput.disabled = true;
-        }
-        validateFormState();
-    }
-
-    initializeForm();
-
-    if (mainForm) {
-        mainForm.addEventListener('submit', function() {
-            // Before submitting, re-enable all fields so their values are sent
-            toggleFields(fieldsToToggle, true);
+    // DATE PICKER LOGIC
+    if (startDateInput && endDateInput) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const unavailableRanges = JSON.parse('{{ unavailable_ranges_json|default:"[]"|safe }}');
+        const disabledDates = [
+            ...unavailableRanges.map(range => ({ from: range.start, to: range.end })),
+            function(date) { return (date.getDay() === 0 || date.getDay() === 6); } // Disable weekends
+        ];
+        const fpEnd = flatpickr(endDateInput, { dateFormat: "Y-m-d", minDate: tomorrow, disable: disabledDates });
+        const fpStart = flatpickr(startDateInput, {
+            dateFormat: "Y-m-d", minDate: tomorrow, disable: disabledDates,
+            onChange: function(selectedDates) {
+                if (selectedDates[0]) {
+                    fpEnd.set('minDate', new Date(selectedDates[0]));
+                    endDateInput.disabled = false;
+                }
+            }
         });
     }
 });
 </script>
-{% endblock %}
+{% endblock scripts %}

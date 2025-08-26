@@ -11,7 +11,7 @@
             <h1 class="h3 mb-0">{{ page_title|default:_("Vehicle Fleet") }}</h1>
         </div>
         <div class="card-body">
-            {% if vehicles_on_page %}
+            {% if vehicles %}
                 <div class="table-responsive">
                     <table class="table table-striped table-hover align-middle">
                         <thead class="table-dark">
@@ -36,10 +36,7 @@
                                     </a>
                                 </th>
                                 <th>
-                                    <a href="?sort=next_available&dir={% if current_sort == 'next_available' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
-                                        {% translate "Availability" %}
-                                        {% if current_sort == 'next_available' %}{% if current_dir == 'asc' %}▲{% else %}▼{% endif %}{% endif %}
-                                    </a>
+                                    {% translate "Availability" %}
                                 </th>
                                 <th>
                                     <a href="?sort=current_location&dir={% if current_sort == 'current_location' %}{{ opposite_dir }}{% else %}asc{% endif %}" class="text-white text-decoration-none">
@@ -51,7 +48,7 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for vehicle in vehicles_on_page %}
+                            {% for vehicle in vehicles %}
                             <tr>
                                 <td>
                                     {% if vehicle.picture %}
@@ -64,12 +61,24 @@
                                 <td>{{ vehicle.model }}</td>
                                 <td>{{ vehicle.get_vehicle_type_display }}</td>
                                 <td>
-                                    {% if vehicle.display_next_available %}
-                                        <span class="badge bg-info text-dark fs-6">
-                                            {{ vehicle.display_next_available|date:"Y-m-d" }}
-                                        </span>
-                                    {% else %}
+                                    {% if vehicle.is_available_now %}
                                         <span class="badge bg-success fs-6">{% translate "Available Now" %}</span>
+                                    {% else %}
+                                        {% with first_slot=vehicle.availability_slots.0 %}
+                                            {% if first_slot %}
+                                            <span class="badge bg-info text-dark fs-6">
+                                                {% if first_slot.end %}
+                                                    {% blocktrans with start_date=first_slot.start|date:"d/m/Y" end_date=first_slot.end|date:"d/m/Y" %}
+                                                    From {{ start_date }} to {{ end_date }}
+                                                    {% endblocktrans %}
+                                                {% else %}
+                                                    {% blocktrans with start_date=first_slot.start|date:"d/m/Y" %}
+                                                    From {{ start_date }} onwards
+                                                    {% endblocktrans %}
+                                                {% endif %}
+                                            </span>
+                                            {% endif %}
+                                        {% endwith %}
                                     {% endif %}
                                 </td>
                                 <td>{{ vehicle.current_location.name|default:_("N/A") }}</td>
