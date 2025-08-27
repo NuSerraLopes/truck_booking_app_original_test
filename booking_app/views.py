@@ -1,5 +1,6 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\views.py
-
+import csv
+import io
 import json
 import os
 import platform
@@ -11,7 +12,9 @@ import requests
 import re
 from bs4 import BeautifulSoup
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
+from django.db import transaction
 from django.http import JsonResponse, HttpResponse, Http404
 from django.utils.crypto import get_random_string
 from django.contrib.sites.shortcuts import get_current_site
@@ -35,7 +38,7 @@ from pypdf import PdfWriter
 
 from .forms import UserCreateForm, VehicleCreateForm, LocationCreateForm, BookingForm, UpdateUserForm, \
     LocationUpdateForm, VehicleEditForm, GroupForm, EmailTemplateForm, DistributionListForm, AutomationSettingsForm, \
-    BookingFilterForm
+    BookingFilterForm, ClientForm, VehicleImportForm
 from .models import Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings, EmailLog, Client
 from .utils import add_business_days, send_booking_notification, subtract_business_days
 from django.db.models.functions import TruncMonth, Coalesce
@@ -529,6 +532,114 @@ def vehicle_create_view(request):
 
 @login_required
 @user_passes_test(is_booking_manager, login_url='booking_app:login_user')
+def download_vehicle_template_view(request):
+    """
+    Generates and serves a CSV template file for importing vehicles.
+    """
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="vehicle_import_template.csv"'
+
+    writer = csv.writer(response)
+    # Define the headers for the CSV template
+    writer.writerow([
+        'license_plate', 'model', 'vehicle_type', 'chassis',
+        'vehicle_km', 'viaverde_id', 'is_electric', 'current_location'
+    ])
+    # Add an example row
+    writer.writerow([
+        'AA-00-BB', 'Tesla Model 3', 'LIGHT', 'ABC123XYZ',
+        '50000', '123456789', 'True', 'Main Warehouse'
+    ])
+    return response
+
+
+@login_required
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
+def import_vehicles_view(request):
+    if request.method == 'POST':
+        form = VehicleImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            csv_file = request.FILES['csv_file']
+
+            # Check if the file is a CSV
+            if not csv_file.name.endswith('.csv'):
+                messages.error(request, _("This is not a CSV file. Please upload a valid .csv file."))
+                return redirect('booking_app:import_vehicles')
+
+            try:
+                # Use atomic transaction to ensure all or no vehicles are imported
+                with transaction.atomic():
+                    # Read CSV file in memory
+                    decoded_file = csv_file.read().decode('utf-8')
+                    io_string = io.StringIO(decoded_file)
+                    reader = csv.DictReader(io_string)
+
+                    vehicles_to_create = []
+                    errors = []
+                    for i, row in enumerate(reader, start=2):  # Start from row 2 for error reporting
+                        license_plate = row.get('license_plate')
+                        if not license_plate:
+                            errors.append(f"Row {i}: Missing license_plate.")
+                            continue
+
+                        # Prepare data for vehicle creation
+                        vehicle_data = {
+                            'license_plate': license_plate,
+                            'model': row.get('model', 'N/A'),
+                            'vehicle_type': row.get('vehicle_type', '').upper(),
+                            'chassis': row.get('chassis'),
+                            'vehicle_km': row.get('vehicle_km'),
+                            'viaverde_id': row.get('viaverde_id'),
+                            'is_electric': row.get('is_electric', '').lower() in ['true', '1', 'yes'],
+                        }
+
+                        # Validate vehicle_type
+                        valid_types = [choice[0] for choice in Vehicle.VEHICLE_TYPE_CHOICES]
+                        if vehicle_data['vehicle_type'] not in valid_types:
+                            errors.append(
+                                f"Row {i}: Invalid vehicle_type '{vehicle_data['vehicle_type']}'. Must be one of {valid_types}.")
+                            continue
+
+                        # Handle ForeignKey for location
+                        location_name = row.get('current_location')
+                        if location_name:
+                            try:
+                                location = Location.objects.get(name__iexact=location_name)
+                                vehicle_data['current_location'] = location
+                            except Location.DoesNotExist:
+                                errors.append(f"Row {i}: Location '{location_name}' does not exist.")
+                                continue
+
+                        vehicles_to_create.append(Vehicle(**vehicle_data))
+
+                    if errors:
+                        raise ValidationError(errors)
+
+                    # Use bulk_create for efficiency, ignoring conflicts on unique fields like license_plate
+                    Vehicle.objects.bulk_create(vehicles_to_create, ignore_conflicts=True)
+
+                    messages.success(request, _(f"Successfully imported {len(vehicles_to_create)} vehicles."))
+                    return redirect('booking_app:admin_vehicle_list')
+
+            except ValidationError as e:
+                # Display validation errors to the user
+                for error in e.messages:
+                    messages.error(request, error)
+            except Exception as e:
+                messages.error(request, _(f"An unexpected error occurred: {e}"))
+
+            return redirect('booking_app:import_vehicles')
+    else:
+        form = VehicleImportForm()
+
+    context = {
+        'form': form,
+        'page_title': _("Import Vehicles from CSV")
+    }
+    return render(request, 'admin/import_vehicles.html', context)
+
+@login_required
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def vehicle_edit_view(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
     if request.method == 'POST':
@@ -994,6 +1105,81 @@ def client_booking_history_view(request, tax_number):
     }
     return render(request, 'client_booking_history.html', context)
 
+
+@login_required
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
+def admin_client_list_view(request):
+    clients = Client.objects.all().order_by('name')
+    paginator = Paginator(clients, 15)  # Show 15 clients per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'clients_page': page_obj,
+        'page_title': _("Manage Clients")
+    }
+    return render(request, 'admin/admin_client_list.html', context)
+
+
+@login_required
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
+def admin_client_create_view(request):
+    if request.method == 'POST':
+        form = ClientForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Client created successfully."))
+            return redirect('booking_app:admin_client_list')
+    else:
+        form = ClientForm()
+
+    context = {
+        'form': form,
+        'page_title': _("Create New Client")
+    }
+    return render(request, 'admin/admin_client_form.html', context)
+
+
+@login_required
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
+def admin_client_update_view(request, pk):
+    client = get_object_or_404(Client, pk=pk)
+    if request.method == 'POST':
+        form = ClientForm(request.POST, instance=client)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _("Client updated successfully."))
+            return redirect('booking_app:admin_client_list')
+    else:
+        form = ClientForm(instance=client)
+
+    context = {
+        'form': form,
+        'page_title': _(f"Edit Client: {client.name}")
+    }
+    return render(request, 'admin/admin_client_form.html', context)
+
+
+@login_required
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
+def admin_client_delete_view(request, pk):
+    client = get_object_or_404(Client, pk=pk)
+
+    # Prevent deleting a client who has bookings
+    if client.bookings.exists():
+        messages.error(request, _("This client cannot be deleted because they have existing bookings."))
+        return redirect('booking_app:admin_client_list')
+
+    if request.method == 'POST':
+        client.delete()
+        messages.success(request, _(f"Client '{client.name}' has been deleted."))
+        return redirect('booking_app:admin_client_list')
+
+    context = {
+        'client': client,
+        'page_title': _("Confirm Deletion")
+    }
+    return render(request, 'admin/admin_client_confirm_delete.html', context)
 
 @login_required
 def check_client_in_db_view(request):

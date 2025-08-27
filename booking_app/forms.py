@@ -14,7 +14,7 @@ from datetime import date, timedelta
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Row, Column, Submit, HTML, Div
 
-from .models import Vehicle, Booking, Location, EmailTemplate, DistributionList, AutomationSettings
+from .models import Vehicle, Booking, Location, EmailTemplate, DistributionList, AutomationSettings, Client
 from .utils import subtract_business_days, add_business_days, send_booking_notification
 
 # Re-assign User model for clarity
@@ -316,6 +316,11 @@ class VehicleCreateForm(forms.ModelForm):
             'is_electric', 'picture', 'registration_document', 'insurance_document'
         )
 
+class VehicleImportForm(forms.Form):
+    csv_file = forms.FileField(
+        label=_("Upload CSV File"),
+        help_text=_("The file must be in CSV format with the correct headers.")
+    )
 
 class VehicleEditForm(VehicleCreateForm):
     class Meta(VehicleCreateForm.Meta):
@@ -412,3 +417,28 @@ class BookingFilterForm(forms.Form):
             ('completed', _('Completed')), ('cancelled', _('Cancelled')),
             ('pending_final_km', _('Pending Final KM')),
         ]
+
+class ClientForm(forms.ModelForm):
+    class Meta:
+        model = Client
+        fields = ['name', 'tax_number', 'address', 'email', 'phone_number']
+        widgets = {
+            'address': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        # Add a submit button to the form's layout
+        self.helper.layout = Layout(
+            'name',
+            'tax_number',
+            'email',
+            'phone_number',
+            'address',
+            Div(
+                Submit('submit', _('Save Client'), css_class='btn btn-primary mt-3'),
+                css_class='d-flex justify-content-end'
+            )
+        )

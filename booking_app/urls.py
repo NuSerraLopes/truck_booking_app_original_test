@@ -59,9 +59,17 @@ urlpatterns = [
     # Admin Vehicle Management URLs
     path('admin-dashboard/vehicles/', views.admin_vehicle_list_view, name='admin_vehicle_list'),
     path('admin-dashboard/vehicles/create/', views.vehicle_create_view, name='admin_vehicle_create'),
+    path('admin-dashboard/vehicles/download-template/', views.download_vehicle_template_view, name='download_vehicle_template'),
+    path('admin-dashboard/vehicles/import/', views.import_vehicles_view, name='import_vehicles'),
     path('admin-dashboard/vehicles/<int:pk>/', views.admin_vehicle_detail_view, name='admin_vehicle_detail'),
     path('admin-dashboard/vehicles/<int:pk>/edit/', views.vehicle_edit_view, name='admin_vehicle_edit'),
     path('admin-dashboard/vehicles/<int:pk>/delete/', views.vehicle_delete_view, name='admin_vehicle_delete'),
+
+    # Admin Client Management URLs
+    path('admin-dashboard/clients/', views.admin_client_list_view, name='admin_client_list'),
+    path('admin-dashboard/clients/create/', views.admin_client_create_view, name='admin_client_create'),
+    path('admin-dashboard/clients/update/<int:pk>/', views.admin_client_update_view, name='admin_client_update'),
+    path('admin-dashboard/clients/delete/<int:pk>/', views.admin_client_delete_view, name='admin_client_delete'),
 
     # Admin Location Management URLs
     path('admin-dashboard/locations/', views.location_list_view, name='admin_location_list'),
