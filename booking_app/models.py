@@ -201,8 +201,50 @@ class Booking(models.Model):
 
 
 class EmailTemplate(models.Model):
-    EVENT_CHOICES = [('booking_created', 'Booking Created'),
-                     ('booking_approved', 'Booking Approved')]  # Add all your choices here
+    EVENT_CHOICES = [
+        ('Booking Events', (
+            ('light_booking_created', _('New LIGHT Vehicle Booking Created')),
+            ('heavy_booking_created', _('New HEAVY Vehicle Booking Created')),
+            ('apv_booking_created', _('New APV Booking Created')),
+            ('light_booking_reverted', _('LIGHT Booking Reverted to Pending')),
+            ('heavy_booking_reverted', _('HEAVY Booking Reverted to Pending')),
+            ('apv_booking_reverted', _('APV Booking Reverted to Pending')),
+            ('booking_canceled_by_manager', _('Booking Canceled by Manager')),
+            ('booking_canceled_by_user', _('Booking Canceled by User')),
+            ('booking_completed', _('Booking Completed')),
+            ('booking_pending_reminder', _('Booking Pending Reminder')),
+            ('transport_status_changed', _('Booking Transport Status Changed')),
+            ('booking_ended_pending_km', _('Booking Ended Pending KM')),
+        )),
+        ('Manager Actions', (
+            ('booking_approved', _('Booking Approved')),
+            ('apv_booking_approved', _('APV Booking Approved')),
+            ('booking_canceled_by_manager', _('Booking Canceled by Manager')),
+            ('send_user_credentials', _('Send User Credentials')),
+            ('send_temporary_password', _('Send Temporary Password')),
+        )),
+        ('User Actions', (
+            ('booking_canceled_by_user', _('Booking Canceled by User')),
+        )),
+        ('Automated Notifications', (
+            ('booking_reminder_7_days', _('Booking Reminder (7 Days Away)')),
+            ('booking_auto_cancelled', _('Booking Auto-Cancelled (Unapproved)')),
+        )),
+        ('Account Management', (
+            ('user_created', _('New User Account Created')),
+            ('password_reset', _('User Password Was Reset')),
+        )),
+        ('Vehicle Management', (
+            ('vehicle_created', _('Vehicle Created')),
+            ('vehicle_updated', _('Vehicle Updated')),
+            ('vehicle_deleted', _('Vehicle Deleted')),
+        )),
+        ('Location Management', (
+            ('location_created', _('Location Created')),
+            ('location_updated', _('Location Updated')),
+            ('location_deleted', _('Location Deleted')),
+        )),
+    ]
     name = models.CharField(max_length=100, unique=True)
     event_trigger = models.CharField(max_length=50, choices=EVENT_CHOICES)
     subject = models.CharField(max_length=255)
