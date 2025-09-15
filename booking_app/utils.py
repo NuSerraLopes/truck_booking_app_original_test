@@ -7,6 +7,7 @@ import msal
 import json
 import requests
 from django.conf import settings
+from django.core.cache import cache
 from django.template import Template, Context
 
 from .models import EmailTemplate, EmailLog
@@ -249,3 +250,64 @@ def check_company_by_crc(crc: str):
     except requests.exceptions.RequestException as e:
         print(f"An error occurred during the request: {e}")
         return False
+
+# ==============================================================================
+# LICENSING CLIENT FUNCTIONS
+# ==============================================================================
+
+# The key we'll use to store the license status in Django's cache
+LICENSE_CACHE_KEY = "license_status_cache"
+
+
+def verify_license_with_server():
+    """
+    Makes an API call to the central license server to verify the key.
+    """
+    try:
+        response = requests.post(
+            f"{settings.LICENSE_SERVER_URL}/api/verify-license",
+            json={
+                "license_key": settings.LICENSE_KEY,
+                "instance_id": settings.INSTANCE_ID,
+            },
+            timeout=10,  # Set a timeout to prevent long waits
+        )
+        response.raise_for_status()  # Raise an exception for bad status codes (4xx or 5xx)
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Could not connect to license server: {e}")
+        # Return a default "invalid" state if the server is unreachable
+        return {"valid": False, "reason": "server_unreachable"}
+
+
+def get_license_status():
+    """
+    Gets the license status, using a cache to avoid frequent API calls.
+    This provides a "grace period" if the license server is temporarily down.
+    """
+    # 1. Try to get the status from the cache first
+    cached_status = cache.get(LICENSE_CACHE_KEY)
+    if cached_status:
+        return cached_status
+
+    # 2. If not in cache, call the license server
+    status = verify_license_with_server()
+
+    # 3. Store the result in the cache for 1 hour (3600 seconds)
+    cache.set(LICENSE_CACHE_KEY, status, 3600)
+
+    return status
+
+
+def is_license_valid():
+    """A simple helper that just returns True or False."""
+    status = get_license_status()
+    return status.get("valid", False)
+
+
+def get_license_tier():
+    """A helper to get the license tier (e.g., 'basic', 'pro')."""
+    status = get_license_status()
+    if status.get("valid"):
+        return status.get("tier", "basic")
+    return None

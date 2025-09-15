@@ -57,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'booking_app.middleware.UserLanguageMiddleware',
+    'booking_app.middleware.LicenseCheckMiddleware',
     'impersonate.middleware.ImpersonateMiddleware',
 ]
 
@@ -192,8 +193,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-APP_VERSION = 'v0.15.7'
-APP_UPDATE_DATE = date(2025, 8, 27)
+APP_VERSION = 'v0.16'
+APP_UPDATE_DATE = date(2025, 9, 15)
 
 IMPERSONATE_PERMISSIONS = 'impersonate.permissions.staff'
 
@@ -240,3 +241,14 @@ MS_GRAPH_CLIENT_SECRET = os.environ.get('MS_GRAPH_CLIENT_SECRET')
 
 # The "From" address must be the same user account that you granted Mail.Send permissions to in Azure
 MS_GRAPH_SENDER_EMAIL = os.environ.get('MS_GRAPH_SENDER_EMAIL')
+
+LICENSE_KEY = os.getenv('LICENSE_KEY')
+LICENSE_SERVER_URL = os.getenv('LICENSE_SERVER_URL')
+INSTANCE_ID = os.getenv('INSTANCE_ID')
+
+# Let Django know it's behind an SSL-offloading proxy
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Trusted CSRF origins for Django >= 4.0 (include scheme)
+CSRF_TRUSTED_ORIGINS = ["https://booking.nulopes.me"]
+USE_X_FORWARDED_HOST = True
