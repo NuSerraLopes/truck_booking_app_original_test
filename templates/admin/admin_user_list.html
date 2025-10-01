@@ -68,7 +68,7 @@
                 </div>
 
                 {% if users.has_other_pages %}
-                    {% include 'partials/_pagination.html' with page_obj=users %}
+                    {% include '_pagination.html' with page_obj=users %}
                 {% endif %}
 
             {% else %}
