@@ -49,6 +49,9 @@ urlpatterns = [
     path('admin-dashboard/users/<uuid:pk>/reset-password/', views.admin_user_reset_password_view, name='admin_user_reset_password'),
     path('admin-dashboard/users/<uuid:pk>/send-credentials/', views.send_credentials_view, name='admin_send_credentials'),
     path('admin-dashboard/users/<uuid:pk>/send-temporary-password/', views.send_temporary_password_view, name='admin_send_temp_password'),
+    path('admin-dashboard/users/inactive/', views.inactive_user_list_view, name='admin_inactive_user_list'),
+    path('admin-dashboard/users/<uuid:pk>/deactivate/', views.user_deactivate_view, name='admin_user_deactivate'),
+    path('admin-dashboard/users/<uuid:pk>/reactivate/', views.user_reactivate_view, name='admin_user_reactivate'),
 
     # Admin Group Management
     path('admin-dashboard/groups/', views.group_list_view, name='admin_group_list'),

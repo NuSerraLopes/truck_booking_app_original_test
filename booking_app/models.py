@@ -3,7 +3,7 @@ import uuid
 
 from django.db import models
 from django.conf import settings
-from django.contrib.auth.models import AbstractUser, Group
+from django.contrib.auth.models import AbstractUser, Group, BaseUserManager
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -23,10 +23,6 @@ def get_registration_upload_path(instance, filename):
 
 def get_contract_upload_path(instance, filename):
     return f'bookings/{instance.pk}/contract/{filename}'
-
-
-# --- REMOVED: This import was causing the circular dependency ---
-# from .utils import add_business_days, subtract_business_days
 
 
 # --- Models ---
@@ -49,6 +45,33 @@ class User(AbstractUser):
     def is_group_leader(self):
         return self.is_booking_admin_member or self.groups.filter(
             name__in=['tlheavy', 'tllight', 'tlapv', 'sd']).exists()
+
+
+# --- START: Added for Inactive User Management ---
+
+class InactiveUserManager(BaseUserManager):
+    """
+    Custom manager for the InactiveUser proxy model.
+    It returns only users who have their `is_active` flag set to False.
+    """
+    def get_queryset(self):
+        return super().get_queryset().filter(is_active=False)
+
+
+class InactiveUser(User):
+    """
+    Proxy model to manage inactive users in the Django admin.
+    This model doesn't create a new database table but provides a separate
+    interface in the admin for users with `is_active=False`.
+    """
+    objects = InactiveUserManager()
+
+    class Meta:
+        proxy = True
+        verbose_name = _('Inactive User')
+        verbose_name_plural = _('Inactive Users')
+
+# --- END: Added for Inactive User Management ---
 
 
 class Location(models.Model):
@@ -89,7 +112,6 @@ class Vehicle(models.Model):
                                              help_text=_("Required only for APV vehicles."))
 
     def get_availability_slots(self):
-        # --- ADDED HERE: Import is moved inside the method to break the circle ---
         from .utils import add_business_days, subtract_business_days
 
         today = date.today()
@@ -205,7 +227,7 @@ class EmailTemplate(models.Model):
         ('Booking Events', (
             ('light_booking_created', _('New LIGHT Vehicle Booking Created')),
             ('heavy_booking_created', _('New HEAVY Vehicle Booking Created')),
-            ('apv_booking_created', _('New APV Booking Created')),
+            ('apv_booking_created', _('New APV Vehicle Booking Created')),
             ('light_booking_reverted', _('LIGHT Booking Reverted to Pending')),
             ('heavy_booking_reverted', _('HEAVY Booking Reverted to Pending')),
             ('apv_booking_reverted', _('APV Booking Reverted to Pending')),

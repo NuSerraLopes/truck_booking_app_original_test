@@ -1,4 +1,3 @@
-# C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\views.py
 import csv
 import io
 import json
@@ -39,7 +38,9 @@ from pypdf import PdfWriter
 from .forms import UserCreateForm, VehicleCreateForm, LocationCreateForm, BookingForm, UpdateUserForm, \
     LocationUpdateForm, VehicleEditForm, GroupForm, EmailTemplateForm, DistributionListForm, AutomationSettingsForm, \
     BookingFilterForm, ClientForm, VehicleImportForm
-from .models import Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings, EmailLog, Client
+# MODIFIED: Imported the InactiveUser proxy model
+from .models import Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings, EmailLog, Client, \
+    InactiveUser
 from .utils import add_business_days, send_booking_notification, subtract_business_days
 from django.db.models.functions import TruncMonth, Coalesce
 
@@ -52,7 +53,7 @@ def is_booking_manager(user): return user.is_authenticated and user.is_booking_a
 
 
 def is_group_leader(user): return user.groups.filter(name__in=['tlheavy', 'tllight', 'tlapv', 'sd']).exists() or (
-            user.is_authenticated and user.is_booking_admin_member)
+        user.is_authenticated and user.is_booking_admin_member)
 
 
 def get_managed_vehicle_types(user):
@@ -638,6 +639,7 @@ def import_vehicles_view(request):
     }
     return render(request, 'admin/import_vehicles.html', context)
 
+
 @login_required
 @user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def vehicle_edit_view(request, pk):
@@ -759,11 +761,17 @@ def user_create_view(request):
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def user_list_view(request):
     User = get_user_model()
-    users = User.objects.all().order_by('username')
+    # MODIFIED: Query now only fetches active users.
+    users = User.objects.filter(is_active=True).order_by('username')
     paginator = Paginator(users, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    return render(request, 'admin/admin_user_list.html', {'users': page_obj})
+    # MODIFIED: Added a page title for clarity.
+    context = {
+        'users': page_obj,
+        'page_title': _("Manage Active Users"),
+    }
+    return render(request, 'admin/admin_user_list.html', context)
 
 
 @login_required
@@ -776,10 +784,80 @@ def admin_user_edit_view(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, _(f"User '{user_to_edit.username}' updated successfully!"))
-            return redirect(reverse('booking_app:admin_user_list'))
+            # MODIFIED: Redirect back to active or inactive list depending on user's status
+            if user_to_edit.is_active:
+                return redirect(reverse('booking_app:admin_user_list'))
+            else:
+                return redirect(reverse('booking_app:admin_inactive_user_list'))
     else:
         form = UpdateUserForm(instance=user_to_edit)
     return render(request, 'admin/admin_user_edit.html', {'form': form, 'user_to_edit': user_to_edit})
+
+
+# --- START: New Views for Inactive User Management ---
+
+@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def user_deactivate_view(request, pk):
+    """
+    Handles the deactivation of a user. Shows a confirmation page on GET.
+    """
+    User = get_user_model()
+    user_to_deactivate = get_object_or_404(User, pk=pk)
+
+    if user_to_deactivate == request.user:
+        messages.error(request, _("You cannot deactivate your own account."))
+        return redirect('booking_app:admin_user_list')
+
+    if request.method == 'POST':
+        user_to_deactivate.is_active = False
+        user_to_deactivate.save(update_fields=['is_active'])
+        messages.success(request, _(f"User '{user_to_deactivate.username}' has been deactivated."))
+        return redirect('booking_app:admin_user_list')
+
+    context = {
+        'user_to_deactivate': user_to_deactivate
+    }
+    return render(request, 'admin/admin_user_confirm_deactivate.html', context)
+
+
+@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def inactive_user_list_view(request):
+    """
+    Lists all users that have been marked as inactive.
+    """
+    # Uses the InactiveUser proxy model to automatically filter for is_active=False
+    users = InactiveUser.objects.all().order_by('username')
+    paginator = Paginator(users, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    context = {
+        'users': page_obj,
+        'page_title': _("Manage Inactive Users")
+    }
+    return render(request, 'admin/admin_inactive_user_list.html', context)
+
+
+@login_required
+@user_passes_test(is_admin, login_url='booking_app:login_user')
+def user_reactivate_view(request, pk):
+    """
+    Handles the reactivation of an inactive user. This is a POST-only action.
+    """
+    User = get_user_model()
+    user_to_reactivate = get_object_or_404(User, pk=pk)
+
+    if request.method == 'POST':
+        user_to_reactivate.is_active = True
+        user_to_reactivate.save(update_fields=['is_active'])
+        messages.success(request, _(f"User '{user_to_reactivate.username}' has been reactivated."))
+
+    # Redirect back to the inactive list regardless of method
+    return redirect('booking_app:admin_inactive_user_list')
+
+
+# --- END: New Views for Inactive User Management ---
 
 
 @login_required

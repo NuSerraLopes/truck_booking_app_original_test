@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Confirm Deactivation" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card shadow">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="mb-0">{% trans "Confirm Deactivation" %}</h3>
+                </div>
+                <div class="card-body">
+                    <p class="lead">
+                        {% blocktrans with username=user_to_deactivate.username %}
+                        Are you sure you want to deactivate the user <strong>{{ username }}</strong>?
+                        {% endblocktrans %}
+                    </p>
+                    <p>
+                        {% trans "This user will no longer be able to log in. You can reactivate them later from the Inactive Users page." %}
+                    </p>
+                    
+                    <form method="post" action="{% url 'booking_app:admin_user_deactivate' user_to_deactivate.pk %}">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times"></i> {% trans "Cancel" %}
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-user-slash"></i> {% trans "Confirm Deactivation" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
