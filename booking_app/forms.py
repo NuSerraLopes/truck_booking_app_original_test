@@ -62,7 +62,7 @@ class BookingForm(forms.ModelForm):
             self.initial['client_tax_number'] = self.instance.client.tax_number
             self.initial['client_address'] = self.instance.client.address
             self.initial['client_email'] = self.instance.client.email
-            self.initial['client_phone'] = self.instance.client.phone
+            self.initial['client_phone'] = self.instance.client.phone_number
 
         if self.instance and self.instance.pk:
             self.initial_contract_document = self.instance.contract_document
