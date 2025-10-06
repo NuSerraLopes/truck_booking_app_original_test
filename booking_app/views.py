@@ -445,15 +445,84 @@ def group_booking_detail_view(request, booking_pk):
 @user_passes_test(is_group_leader, login_url='booking_app:home')
 def group_booking_update_view(request, booking_pk):
     booking = get_object_or_404(Booking, pk=booking_pk)
+
     if request.method == 'POST':
+        action = request.POST.get('action')
+
+        # --- APPROVE ---
+        if action == 'approve':
+            if booking.status == 'pending':
+                booking.status = 'confirmed'
+                booking.save(update_fields=['status'])
+                send_booking_notification('booking_approved', booking_instance=booking)
+                messages.success(request, _("Booking has been approved."))
+            return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
+
+        # --- APPROVE APV ---
+        elif action == 'approve_apv':
+            if booking.vehicle.vehicle_type == 'APV' and booking.status == 'pending':
+                booking.status = 'confirmed'
+                booking.initial_km = booking.vehicle.vehicle_km
+                booking.save(update_fields=['status', 'initial_km'])
+                send_booking_notification('apv_booking_approved', booking_instance=booking)
+                messages.success(request, _("APV booking has been approved."))
+            return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
+
+        # --- CONFIRM WITH CONTRACT ---
+        elif action == 'confirm_with_contract':
+            if booking.status == 'pending_contract' and booking.contract_document:
+                booking.status = 'confirmed'
+                booking.save(update_fields=['status'])
+                send_booking_notification('booking_approved', booking_instance=booking)
+                messages.success(request, _("Booking has been finalized and confirmed."))
+            else:
+                messages.error(request, _("Contract must be uploaded before confirming."))
+            return redirect('booking_app:group_booking_update', booking_pk=booking.pk)
+
+        # --- CANCEL BY MANAGER ---
+        elif action == 'cancel_by_manager':
+            if booking.status in ['pending', 'pending_contract', 'confirmed']:
+                booking.status = 'cancelled'
+                booking.cancellation_reason = _("Cancelled by manager")
+                booking.cancellation_time = timezone.now()
+                booking.cancelled_by = request.user
+                booking.save(update_fields=['status','cancellation_reason','cancellation_time','cancelled_by'])
+                send_booking_notification('booking_canceled_by_manager', booking_instance=booking)
+                messages.success(request, _("Booking has been cancelled."))
+            return redirect('booking_app:group_dashboard')
+
+        # --- REQUEST FINAL KM ---
+        elif action == 'request_final_km':
+            if booking.vehicle.vehicle_type == 'APV' and booking.status == 'confirmed':
+                booking.status = 'pending_final_km'
+                booking.save(update_fields=['status'])
+                send_booking_notification('booking_ended_pending_km', booking_instance=booking)
+                messages.info(request, _("Final KM request has been sent."))
+            return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
+
+        # --- DEFAULT: process form normally ---
         form = BookingForm(request.POST, request.FILES, instance=booking, vehicle=booking.vehicle)
         if form.is_valid():
-            should_redirect, response = _handle_booking_form_submission(request, form, booking.vehicle,
-                                                                        is_new_booking=False)
+            should_redirect, response = _handle_booking_form_submission(
+                request, form, booking.vehicle, is_new_booking=False
+            )
             return response
+
     else:
         form = BookingForm(instance=booking, vehicle=booking.vehicle)
-    context = {'form': form, 'booking': booking}
+
+    context = {
+        'form': form,
+        'booking': booking,
+        # pass flags to template
+        'can_approve': booking.status == 'pending',
+        'can_approve_apv': booking.status == 'pending' and booking.vehicle.vehicle_type == 'APV',
+        'can_confirm_contract': booking.status == 'pending_contract' and booking.contract_document,
+        'can_cancel_by_manager': booking.status in ['pending','pending_contract','confirmed'],
+        'can_update_form_fields': booking.status in ['pending','pending_contract'],
+        'can_request_final_km': booking.vehicle.vehicle_type == 'APV' and booking.status == 'confirmed',
+        'is_apv_booking': booking.vehicle.vehicle_type == 'APV',
+    }
     return render(request, 'group_booking_update.html', context)
 
 

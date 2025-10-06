@@ -300,10 +300,11 @@ def get_license_status():
 
 
 def is_license_valid():
-    """A simple helper that just returns True or False."""
+    """Return True if DEBUG is on, otherwise check real license status."""
+    if getattr(settings, "DEBUG", False):
+        return True
     status = get_license_status()
     return status.get("valid", False)
-
 
 def get_license_tier():
     """A helper to get the license tier (e.g., 'basic', 'pro')."""
