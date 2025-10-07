@@ -1,0 +1,66 @@
+{# templates/admin/admin_user_sessions.html #}
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Sessions for" %} {{ user_to_edit.username }}{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="card shadow-sm">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h1 class="h4 mb-0">
+                {% translate "Sessions for" %} <strong>{{ user_to_edit.username }}</strong>
+            </h1>
+            <div class="btn-toolbar">
+                <a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-secondary">
+                    {% translate "Back to User List" %}
+                </a>
+                <a href="{% url 'booking_app:admin_kill_user_sessions' pk=user_to_edit.pk %}"
+                   class="btn btn-danger ms-2"
+                   onclick="return confirm('{% translate "Are you sure you want to log out this user from all devices?" %}')">
+                    {% translate "Kill User Sessions" %}
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if sessions %}
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>{% translate "Created" %}</th>
+                                <th>{% translate "Last activity" %}</th>
+                                <th>{% translate "Expires" %}</th>
+                                <th>{% translate "IP" %}</th>
+                                <th>{% translate "User agent" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for s in sessions %}
+                            <tr>
+                                <td>{{ s.created_at|default:"-" }}</td>
+                                <td>{{ s.last_activity|default:"-" }}</td>
+                                <td>{{ s.expire_date|date:"Y-m-d H:i" }}</td>
+                                <td>{{ s.ip|default:"-" }}</td>
+                                <td style="max-width: 250px; overflow: hidden; text-overflow: ellipsis;">
+                                    {{ s.user_agent|default:"-" }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info" role="alert">
+                    {% translate "No active sessions found." %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="card-footer text-end">
+            <a href="{% url 'booking_app:admin_user_list' %}" class="btn btn-secondary">
+                {% translate "Back to User List" %}
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

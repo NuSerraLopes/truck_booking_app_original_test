@@ -35,10 +35,15 @@
                         {{ form.groups|as_crispy_field }}
 
                         <div class="mt-5">
-                            <h2 class="h5">{% translate "Password Management" %}</h2>
+                            <h2 class="h5">{% translate "Password & Session Management" %}</h2>
                             <hr>
                             <a href="{% url 'booking_app:admin_send_temp_password' pk=user_to_edit.pk %}" class="btn btn-warning">
                                 {% translate "Send Temporary Password" %}
+                            </a>
+                            <a href="{% url 'booking_app:admin_kill_user_sessions' pk=user_to_edit.pk %}" 
+                               class="btn btn-danger ms-2"
+                               onclick="return confirm('{% translate "Are you sure you want to log this user out from all devices?" %}')">
+                                {% translate "Kill All Sessions" %}
                             </a>
                         </div>
 

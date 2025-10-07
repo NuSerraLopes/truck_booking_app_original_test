@@ -58,6 +58,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'booking_app.middleware.UserLanguageMiddleware',
     'booking_app.middleware.LicenseCheckMiddleware',
+    'booking_app.middleware.SessionActivityMiddleware',
     'impersonate.middleware.ImpersonateMiddleware',
 ]
 
@@ -193,7 +194,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-APP_VERSION = 'v0.17.1'
+APP_VERSION = 'v0.17.2'
 APP_UPDATE_DATE = date(2025, 10, 7)
 
 IMPERSONATE_PERMISSIONS = 'impersonate.permissions.staff'
@@ -252,3 +253,7 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Trusted CSRF origins for Django >= 4.0 (include scheme)
 CSRF_TRUSTED_ORIGINS = ["https://booking.nulopes.me"]
 USE_X_FORWARDED_HOST = True
+
+# Sessions expire after 1 day (in seconds)
+SESSION_COOKIE_AGE = 86400
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False

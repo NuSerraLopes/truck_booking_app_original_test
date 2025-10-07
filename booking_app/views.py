@@ -41,9 +41,11 @@ from .forms import UserCreateForm, VehicleCreateForm, LocationCreateForm, Bookin
 # MODIFIED: Imported the InactiveUser proxy model
 from .models import Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings, EmailLog, Client, \
     InactiveUser, Contract
-from .utils import add_business_days, send_booking_notification, subtract_business_days
+from .utils import add_business_days, send_booking_notification, subtract_business_days, kill_user_sessions, \
+    kill_all_sessions, kill_session_by_key, get_user_sessions, get_last_activity_for_user, is_user_logged_in
 from django.db.models.functions import TruncMonth, Coalesce
 
+User = get_user_model()
 
 # --- Permission Checks ---
 def is_admin(user): return user.is_authenticated and user.is_admin_member
@@ -830,18 +832,32 @@ def user_create_view(request):
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def user_list_view(request):
     User = get_user_model()
-    # MODIFIED: Query now only fetches active users.
-    users = User.objects.filter(is_active=True).order_by('username')
-    paginator = Paginator(users, 10)
+
+    # Fetch only active users, ordered
+    users_qs = User.objects.filter(is_active=True).order_by('username')
+
+    # Pagination
+    paginator = Paginator(users_qs, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    # MODIFIED: Added a page title for clarity.
-    context = {
-        'users': page_obj,
-        'page_title': _("Manage Active Users"),
-    }
-    return render(request, 'admin/admin_user_list.html', context)
 
+    # Enrich users with session info
+    for user in page_obj:
+        user.last_activity = get_last_activity_for_user(user)
+        user.is_logged_in = is_user_logged_in(user)
+
+    context = {
+        "users": page_obj,
+        "page_title": _("Manage Active Users"),
+    }
+    return render(request, "admin/admin_user_list.html", context)
+
+@login_required
+@user_passes_test(is_admin)
+def admin_user_sessions_view(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    sessions = get_user_sessions(user)  # from utils.py
+    return render(request, "admin/admin_user_sessions.html", {"user_to_edit": user, "sessions": sessions})
 
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
@@ -976,6 +992,37 @@ def send_temporary_password_view(request, pk):
     messages.success(request, _(f"A temporary password has been sent to {user_to_reset.email}."))
     return redirect('booking_app:admin_user_edit', pk=pk)
 
+@login_required
+@user_passes_test(is_admin)
+def admin_kill_user_sessions(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    kill_user_sessions(user)
+    messages.success(request, f"All sessions for {user.username} were terminated.")
+    return redirect("booking_app:admin_user_edit", pk=user.pk)
+
+
+@login_required
+@user_passes_test(is_admin)
+def admin_kill_all_sessions(request):
+    kill_all_sessions()
+    messages.success(request, "All user sessions were terminated.")
+    return redirect("booking_app:admin_user_list")
+
+@login_required
+@user_passes_test(is_admin)
+def admin_user_sessions_view(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    sessions = get_user_sessions(user)
+    # convert iso strings to friendly display in template if desired
+    return render(request, "admin/admin_user_sessions.html", {"user_to_edit": user, "sessions": sessions})
+
+@login_required
+@user_passes_test(is_admin)
+def admin_kill_session(request, pk, session_key):
+    user = get_object_or_404(User, pk=pk)
+    kill_session_by_key(session_key)
+    messages.success(request, _("Session terminated."))
+    return redirect("booking_app:admin_user_sessions", pk=user.pk)
 
 @login_required
 @user_passes_test(is_booking_manager, login_url='booking_app:login_user')

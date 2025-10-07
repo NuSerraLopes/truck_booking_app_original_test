@@ -8,6 +8,9 @@ class BookingAppConfig(AppConfig):
     name = 'booking_app'
 
     def ready(self):
+        import booking_app.signals
+
+    def ready(self):
         # This code runs once when the Django server starts.
         # We only perform this strict check in production (when DEBUG=False).
         if not settings.DEBUG:

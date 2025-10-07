@@ -52,6 +52,9 @@ urlpatterns = [
     path('admin-dashboard/users/inactive/', views.inactive_user_list_view, name='admin_inactive_user_list'),
     path('admin-dashboard/users/<uuid:pk>/deactivate/', views.user_deactivate_view, name='admin_user_deactivate'),
     path('admin-dashboard/users/<uuid:pk>/reactivate/', views.user_reactivate_view, name='admin_user_reactivate'),
+    path("admin-dashboard/users/<uuid:pk>/kill-sessions/", views.admin_kill_user_sessions, name="admin_kill_user_sessions"),
+    path("admin-dashboard/users/kill-all-sessions/", views.admin_kill_all_sessions, name="admin_kill_all_sessions"),
+    path("admin-dashboard/users/<uuid:pk>/sessions/", views.admin_user_sessions_view, name="admin_user_sessions"),
 
     # Admin Group Management
     path('admin-dashboard/groups/', views.group_list_view, name='admin_group_list'),

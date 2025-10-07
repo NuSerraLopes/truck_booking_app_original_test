@@ -7,8 +7,10 @@ import msal
 import json
 import requests
 from django.conf import settings
+from django.contrib.sessions.models import Session
 from django.core.cache import cache
 from django.template import Template, Context
+from django.utils import timezone
 
 from .models import EmailTemplate, EmailLog
 
@@ -312,3 +314,66 @@ def get_license_tier():
     if status.get("valid"):
         return status.get("tier", "basic")
     return None
+
+# ==============================================================================
+# KILL CLIENT SESSIONS FUNCTIONS
+# ==============================================================================
+
+def get_user_sessions(user):
+    """
+    Return list of session info dicts for given user.
+    Each dict: {session_key, expire_date, session_data, created_at, last_activity, ip, user_agent}
+    Note: created_at/last_activity/ip/user_agent are present only if you populate them in middleware.
+    """
+    sessions = []
+    qs = Session.objects.filter(expire_date__gt=timezone.now())
+    for s in qs:
+        data = s.get_decoded()
+        if str(user.pk) == str(data.get('_auth_user_id')):
+            info = {
+                "session_key": s.session_key,
+                "expire_date": s.expire_date,
+                "session_data": data,
+                # optional keys populated by middleware:
+                "created_at": data.get('session_created_at'),
+                "last_activity": data.get('last_activity'),
+                "ip": data.get('session_ip'),
+                "user_agent": data.get('session_user_agent'),
+            }
+            sessions.append(info)
+    return sessions
+
+def is_user_logged_in(user):
+    """Return True if there is any non-expired session tied to user."""
+    return len(get_user_sessions(user)) > 0
+
+def kill_session_by_key(session_key):
+    Session.objects.filter(session_key=session_key).delete()
+
+def kill_user_sessions(user):
+    """Delete all sessions for a specific user."""
+    for s in Session.objects.all():
+        data = s.get_decoded()
+        if data.get('_auth_user_id') == str(user.pk):
+            s.delete()
+
+def kill_all_sessions():
+    Session.objects.all().delete()
+
+def get_last_activity_for_user(user):
+    """Return last_activity ISO string (or None) among all sessions of a user."""
+    from django.contrib.sessions.models import Session
+    sessions = Session.objects.filter(expire_date__gt=timezone.now())
+    last_seen = None
+    for s in sessions:
+        data = s.get_decoded()
+        if str(user.pk) == str(data.get('_auth_user_id')):
+            la = data.get("last_activity")
+            if la:
+                try:
+                    ts = timezone.datetime.fromisoformat(la)
+                    if not last_seen or ts > last_seen:
+                        last_seen = ts
+                except Exception:
+                    continue
+    return last_seen
