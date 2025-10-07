@@ -40,7 +40,7 @@ from .forms import UserCreateForm, VehicleCreateForm, LocationCreateForm, Bookin
     BookingFilterForm, ClientForm, VehicleImportForm
 # MODIFIED: Imported the InactiveUser proxy model
 from .models import Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings, EmailLog, Client, \
-    InactiveUser
+    InactiveUser, Contract
 from .utils import add_business_days, send_booking_notification, subtract_business_days
 from django.db.models.functions import TruncMonth, Coalesce
 
@@ -1196,29 +1196,47 @@ def automation_settings_view(request):
 @login_required
 def generate_and_save_contract_view(request, booking_pk):
     booking = get_object_or_404(Booking, pk=booking_pk)
+
+    # --- Create new Contract ---
+    contract = Contract.objects.create(booking=booking)
+
+    # --- Prepare paths ---
     template_dir = os.path.join(settings.BASE_DIR, 'document_templates')
     docx_template_path = os.path.join(template_dir, 'contract_template.docx')
     static_pdf_path = os.path.join(template_dir, 'terms_and_conditions.pdf')
     temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
     os.makedirs(temp_dir, exist_ok=True)
+
+    # --- Render DOCX ---
     doc = DocxTemplate(docx_template_path)
-    context = {'booking': booking}
+    context = {
+        'booking': booking,
+        'contract': contract,  # so {{ contract.formatted_number }} works
+    }
     doc.render(context)
-    temp_docx_path = os.path.join(temp_dir, f'temp_contract_{booking.pk}.docx')
+
+    temp_docx_path = os.path.join(temp_dir, f'temp_contract_{contract.pk}.docx')
     doc.save(temp_docx_path)
+
+    # --- Convert DOCX → PDF ---
     try:
         if platform.system() == 'Windows':
             soffice_path = r"C:\Program Files\LibreOffice\program\soffice.exe"
         else:
             soffice_path = shutil.which('soffice') or 'soffice'
+
         subprocess.run(
             [soffice_path, '--headless', '--convert-to', 'pdf', temp_docx_path, '--outdir', temp_dir],
             check=True, timeout=15
         )
     except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired) as e:
         messages.error(request, f"{_('Could not convert document.')} ({e})")
+        contract.delete()  # cleanup orphan if PDF not generated
         return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
-    temp_pdf_path = os.path.join(temp_dir, f'temp_contract_{booking.pk}.pdf')
+
+    temp_pdf_path = os.path.join(temp_dir, f'temp_contract_{contract.pk}.pdf')
+
+    # --- Merge with T&C ---
     merger = PdfWriter()
     try:
         merger.append(temp_pdf_path)
@@ -1228,13 +1246,26 @@ def generate_and_save_contract_view(request, booking_pk):
         pdf_buffer.seek(0)
     finally:
         merger.close()
-    final_pdf_filename = f'contract_booking_{booking.pk}_merged.pdf'
-    booking.contract_document.save(final_pdf_filename, ContentFile(pdf_buffer.getvalue()), save=True)
-    if os.path.exists(temp_docx_path): os.remove(temp_docx_path)
-    if os.path.exists(temp_pdf_path): os.remove(temp_pdf_path)
+
+    # --- Save final PDF into Contract.file ---
+    final_pdf_filename = f'contract_{contract.formatted_number}.pdf'
+    contract.file.save(final_pdf_filename, ContentFile(pdf_buffer.getvalue()), save=True)
+
+    # --- Clean temp files ---
+    for path in (temp_docx_path, temp_pdf_path):
+        if os.path.exists(path):
+            os.remove(path)
+
+    # --- Notify & redirect ---
     send_booking_notification('contract_generated', booking_instance=booking)
-    messages.success(request, _("Contract has been generated and attached to the booking successfully."))
+    messages.success(
+        request,
+        _("Contract %(number)s has been generated and attached successfully.") % {
+            "number": contract.formatted_number
+        }
+    )
     return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
+
 
 
 @login_required

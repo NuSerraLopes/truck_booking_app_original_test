@@ -32,7 +32,11 @@ class BookingForm(forms.ModelForm):
     # Unbound fields to capture client data
     client_name = forms.CharField(label=_("Client Name"))
     client_tax_number = forms.CharField(label=_("Client Tax Number"))
-    client_address = forms.CharField(label=_("Client Address"), widget=forms.Textarea(attrs={'rows': 3}), required=False)
+    client_address = forms.CharField(
+        label=_("Client Address"),
+        widget=forms.Textarea(attrs={'rows': 3}),
+        required=False
+    )
     client_email = forms.EmailField(label=_("Client Email"), required=False)
     client_phone = forms.CharField(label=_("Client Phone"), max_length=20, required=False)
     client_company_registration = forms.CharField(label=_("Client CRC"), max_length=100, required=False)
@@ -43,7 +47,7 @@ class BookingForm(forms.ModelForm):
         model = Booking
         fields = [
             'start_location', 'end_location', 'start_date', 'end_date',
-            'contract_document', 'final_km', 'motive', 'needs_transport',
+            'final_km', 'motive', 'needs_transport',
         ]
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'}),
@@ -53,21 +57,16 @@ class BookingForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.vehicle = kwargs.pop('vehicle', None)
         is_create_page = kwargs.pop('is_create_page', False)
-        upload_only = kwargs.pop('upload_only', False)
         crc_is_mandatory = kwargs.pop('crc_is_mandatory', False)
         super().__init__(*args, **kwargs)
 
+        # Pre-fill client info if booking has client
         if self.instance and self.instance.pk and self.instance.client:
             self.initial['client_name'] = self.instance.client.name
             self.initial['client_tax_number'] = self.instance.client.tax_number
             self.initial['client_address'] = self.instance.client.address
             self.initial['client_email'] = self.instance.client.email
             self.initial['client_phone'] = self.instance.client.phone_number
-
-        if self.instance and self.instance.pk:
-            self.initial_contract_document = self.instance.contract_document
-        else:
-            self.initial_contract_document = None
 
         if crc_is_mandatory:
             self.fields['client_company_registration'].required = True
@@ -81,21 +80,19 @@ class BookingForm(forms.ModelForm):
         if self.instance and self.instance.status == 'pending_final_km':
             self.fields['final_km'].required = True
             for field_name, field in self.fields.items():
-                if field_name not in ['final_km', 'client_name', 'client_tax_number', 'client_address', 'client_email',
-                                      'client_phone', 'client_company_registration', 'client_id', 'conflict_resolution']:
+                if field_name not in [
+                    'final_km', 'client_name', 'client_tax_number', 'client_address',
+                    'client_email', 'client_phone', 'client_company_registration',
+                    'client_id', 'conflict_resolution'
+                ]:
                     field.widget.attrs['readonly'] = 'readonly'
         else:
             self.fields['final_km'].widget = forms.HiddenInput()
             self.fields['final_km'].required = False
 
-        if upload_only:
-            for field_name, field in self.fields.items():
-                if field_name != 'contract_document':
-                    field.widget.attrs['readonly'] = 'readonly'
-
+        # Crispy Forms layout
         self.helper = FormHelper()
         self.helper.form_method = 'post'
-        # Using a more explicit layout for robustness
         self.helper.layout = Layout(
             HTML(f'<h5>{_("Client Information")}</h5><hr>'),
             Row(Column('client_tax_number', css_class='form-group col-md-12 mb-3')),
@@ -117,7 +114,6 @@ class BookingForm(forms.ModelForm):
                 Column('start_date', css_class='form-group col-md-6 mb-3'),
                 Column('end_date', css_class='form-group col-md-6 mb-3')
             ),
-            'contract_document',
             'needs_transport',
             'final_km',
             'client_id',
@@ -128,7 +124,8 @@ class BookingForm(forms.ModelForm):
             self.helper.layout.append(
                 Div(
                     Submit('submit', _('Submit Booking Request'), css_class='btn btn-primary mt-4'),
-                    HTML(f'<a href="{reverse_lazy("booking_app:vehicle_list")}" class="btn btn-secondary mt-4">{_("Back to Vehicle List")}</a>'),
+                    HTML(f'<a href="{reverse_lazy("booking_app:vehicle_list")}" '
+                         f'class="btn btn-secondary mt-4">{_("Back to Vehicle List")}</a>'),
                     css_class='d-flex justify-content-between'
                 )
             )
@@ -154,15 +151,18 @@ class BookingForm(forms.ModelForm):
             new_booking_start_buffer = subtract_business_days(start_date, 3)
             new_booking_end_buffer = add_business_days(end_date, 3)
             conflicting_bookings = Booking.objects.filter(
-                vehicle=self.vehicle, status__in=unavailable_statuses,
-                start_date__lte=new_booking_end_buffer, end_date__gte=new_booking_start_buffer
+                vehicle=self.vehicle,
+                status__in=unavailable_statuses,
+                start_date__lte=new_booking_end_buffer,
+                end_date__gte=new_booking_start_buffer
             )
             if self.instance and self.instance.pk:
                 conflicting_bookings = conflicting_bookings.exclude(pk=self.instance.pk)
             if conflicting_bookings.exists():
                 conflict = conflicting_bookings.first()
                 raise ValidationError(
-                    _("The selected date range conflicts with an existing booking (ID: %(booking_id)s) for this vehicle from %(start)s to %(end)s.") % {
+                    _("The selected date range conflicts with an existing booking "
+                      "(ID: %(booking_id)s) for this vehicle from %(start)s to %(end)s.") % {
                         'booking_id': conflict.pk,
                         'start': conflict.start_date.strftime('%Y-%m-%d'),
                         'end': conflict.end_date.strftime('%Y-%m-%d'),
@@ -175,17 +175,15 @@ class BookingForm(forms.ModelForm):
         if self.instance and self.instance.initial_km is not None and final_km is not None:
             if final_km <= self.instance.initial_km:
                 raise ValidationError(
-                    _("Final kilometers (%(final)s) must be greater than the initial kilometers (%(initial)s).") %
-                    {'final': final_km, 'initial': self.instance.initial_km}
+                    _("Final kilometers (%(final)s) must be greater than the initial kilometers (%(initial)s).") % {
+                        'final': final_km,
+                        'initial': self.instance.initial_km,
+                    }
                 )
         return cleaned_data
 
     @transaction.atomic
     def save(self, commit=True):
-        if self.data.get("contract_document-clear") and self.initial_contract_document:
-            self.initial_contract_document.delete(save=False)
-
-        original_needs_transport = self.instance.needs_transport if self.instance.pk else False
         booking = super().save(commit=False)
 
         if booking.final_km is not None:
@@ -199,32 +197,20 @@ class BookingForm(forms.ModelForm):
         ).order_by('-end_date').first()
 
         booking.needs_transport = (
-                    previous_booking.end_location != booking.start_location) if previous_booking else False
-
-        if booking.needs_transport != original_needs_transport:
-            context = {'previous_end_location': previous_booking.end_location if previous_booking else None}
-            transaction.on_commit(
-                lambda: send_booking_notification('transport_status_changed', booking_instance=booking,
-                                                  context_data=context)
-            )
+            previous_booking.end_location != booking.start_location
+        ) if previous_booking else False
 
         if commit:
             booking.save()
             self.save_m2m()
 
+        # Update next booking’s transport requirement
         next_booking = Booking.objects.filter(
             vehicle=vehicle_for_check, start_date__gt=booking.end_date
         ).order_by('start_date').first()
 
         if next_booking:
-            original_next_needs_transport = next_booking.needs_transport
             next_booking.needs_transport = (booking.end_location != next_booking.start_location)
-            if next_booking.needs_transport != original_next_needs_transport:
-                context = {'previous_end_location': booking.end_location}
-                transaction.on_commit(
-                    lambda: send_booking_notification('transport_status_changed', booking_instance=next_booking,
-                                                      context_data=context)
-                )
             next_booking.save(update_fields=['needs_transport'])
 
         return booking
@@ -239,13 +225,17 @@ class BookingForm(forms.ModelForm):
 
         if start_date and start_date < tomorrow:
             raise ValidationError(
-                _("Booking date cannot be today or in the past. Please select tomorrow or a future date."),
-                code='invalid_start_date_past')
+                _("Booking date cannot be today or in the past. "
+                  "Please select tomorrow or a future date."),
+                code='invalid_start_date_past'
+            )
 
         if start_date and start_date.weekday() >= 5:
             raise ValidationError(
-                _("Bookings cannot start on a weekend. Please select a business day."),
-                code='invalid_start_date_weekend')
+                _("Bookings cannot start on a weekend. "
+                  "Please select a business day."),
+                code='invalid_start_date_weekend'
+            )
         return start_date
 
 

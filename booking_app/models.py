@@ -1,7 +1,7 @@
 # C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\models.py
 import uuid
 
-from django.db import models
+from django.db import models, transaction
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, Group, BaseUserManager
 from django.urls import reverse
@@ -154,6 +154,7 @@ class Client(models.Model):
     address = models.TextField(_("Address"), blank=True, null=True)
     email = models.EmailField(_("Email Address"), blank=True, null=True)
     phone_number = models.CharField(_("Phone Number"), max_length=50, blank=True, null=True)
+    permanent_registration_number = models.CharField(_("Permanent Registration Number"), max_length=50, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -175,32 +176,68 @@ class Booking(models.Model):
         ('completed', _('Completed')),
         ('cancelled', _('Cancelled')),
     )
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookings')
     vehicle = models.ForeignKey('Vehicle', on_delete=models.CASCADE, related_name='bookings')
-    client = models.ForeignKey('Client', on_delete=models.PROTECT, related_name='bookings', verbose_name=_("Client"),
-                               null=True, blank=True)
+    client = models.ForeignKey(
+        'Client',
+        on_delete=models.PROTECT,
+        related_name='bookings',
+        verbose_name=_("Client"),
+        null=True,
+        blank=True
+    )
     start_date = models.DateField()
     end_date = models.DateField()
     start_location = models.ForeignKey('Location', on_delete=models.CASCADE, related_name='start_bookings')
     end_location = models.ForeignKey('Location', on_delete=models.CASCADE, related_name='end_bookings')
     booking_time = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=20, choices=BOOKING_STATUS_CHOICES, default='pending',
-                              verbose_name=_("Booking Status"))
-    cancelled_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
-                                     related_name='cancelled_bookings', verbose_name=_("Cancelled By"))
+
+    status = models.CharField(
+        max_length=20,
+        choices=BOOKING_STATUS_CHOICES,
+        default='pending',
+        verbose_name=_("Booking Status")
+    )
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='cancelled_bookings',
+        verbose_name=_("Cancelled By")
+    )
     cancellation_reason = models.TextField(blank=True, null=True, verbose_name=_("Cancellation Reason"))
     cancellation_time = models.DateTimeField(null=True, blank=True, verbose_name=_("Cancellation Time"))
-    contract_document = models.FileField(_("Contract"), upload_to=get_contract_upload_path, blank=True, null=True,
-                                         help_text=_("Upload the signed contract to confirm the booking."))
-    initial_km = models.PositiveIntegerField(_("Initial Kilometers"), null=True, blank=True,
-                                             help_text=_("The vehicle's kilometers at the start of the booking."))
-    final_km = models.PositiveIntegerField(_("Final Kilometers"), null=True, blank=True,
-                                           help_text=_("The vehicle's kilometers at the end of the booking."))
-    motive = models.TextField(_("Motive"), blank=True, help_text=_("Required only for APV vehicle bookings."))
-    created_at = models.DateTimeField(_("Created At"), auto_now_add=True,
-                                      help_text=_("The date and time the booking was created."))
-    needs_transport = models.BooleanField(_("Transport Required Before Booking"), default=False, help_text=_(
-        "Indicates if the vehicle needs to be moved from a different location before this booking can start."))
+
+    # Removed old contract_document FileField
+    initial_km = models.PositiveIntegerField(
+        _("Initial Kilometers"),
+        null=True,
+        blank=True,
+        help_text=_("The vehicle's kilometers at the start of the booking.")
+    )
+    final_km = models.PositiveIntegerField(
+        _("Final Kilometers"),
+        null=True,
+        blank=True,
+        help_text=_("The vehicle's kilometers at the end of the booking.")
+    )
+    motive = models.TextField(
+        _("Motive"),
+        blank=True,
+        help_text=_("Required only for APV vehicle bookings.")
+    )
+    created_at = models.DateTimeField(
+        _("Created At"),
+        auto_now_add=True,
+        help_text=_("The date and time the booking was created.")
+    )
+    needs_transport = models.BooleanField(
+        _("Transport Required Before Booking"),
+        default=False,
+        help_text=_("Indicates if the vehicle needs to be moved from a different location before this booking can start.")
+    )
 
     def get_absolute_url(self):
         return reverse('booking_app:booking_detail', kwargs={'booking_pk': self.pk})
@@ -211,6 +248,10 @@ class Booking(models.Model):
         if self.status == 'confirmed' and self.start_date <= today <= self.end_date:
             return _('On Going')
         return self.get_status_display()
+
+    @property
+    def latest_contract(self):
+        return self.contracts.first()
 
     def __str__(self):
         client_name = self.client.name if self.client else _("N/A")
@@ -304,7 +345,41 @@ class AutomationSettings(models.Model):
     enable_pending_reminders = models.BooleanField(default=True)
     reminder_days_pending = models.PositiveIntegerField(default=3)
     require_crc_verification = models.BooleanField(default=False)
+    contract_start_number = models.PositiveIntegerField(default=0)
 
     @classmethod
     def load(cls):
         return cls.objects.get_or_create(pk=1)[0]
+
+class Contract(models.Model):
+    booking = models.ForeignKey("Booking", on_delete=models.CASCADE, related_name="contracts")
+    contract_number = models.PositiveIntegerField(unique=True, editable=False)
+    file = models.FileField(upload_to="contracts/", blank=True, null=True)  # store generated PDF
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    # Optional metadata
+    version = models.PositiveIntegerField(default=1)  # amendments, renewals
+    signed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        if not self.contract_number:
+            # Make number assignment concurrency-safe
+            with transaction.atomic():
+                last_number = (
+                    Contract.objects.select_for_update()
+                    .aggregate(models.Max("contract_number"))["contract_number__max"]
+                    or 0
+                )
+                self.contract_number = last_number + 1
+        super().save(*args, **kwargs)
+
+    @property
+    def formatted_number(self):
+        """Show with prefix, e.g. CA0107"""
+        return f"CA{self.contract_number:04d}"
+
+    def __str__(self):
+        return f"Contract {self.formatted_number} for Booking {self.booking.pk}"

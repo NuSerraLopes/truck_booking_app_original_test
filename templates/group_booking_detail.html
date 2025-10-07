@@ -54,11 +54,11 @@
                         <div class="col-md-6">
                             <h2 class="h5">{% translate "Client Information" %}</h2>
                             <ul class="list-group list-group-flush">
-                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Client Name" %}:</strong> <span>{{ booking.customer_name }}</span></li>
-                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Client Email" %}:</strong> <span>{{ booking.customer_email|default:_("N/A") }}</span></li>
-                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Client Phone" %}:</strong> <span>{{ booking.customer_phone|default:_("N/A") }}</span></li>
-                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Tax Number (NIF)" %}:</strong> <span>{{ booking.client_tax_number }}</span></li>
-                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Company Registration" %}:</strong> <span>{{ booking.client_company_registration }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Client Name" %}:</strong> <span>{{ booking.client.name }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Client Email" %}:</strong> <span>{{ booking.client.email|default:_("N/A") }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Client Phone" %}:</strong> <span>{{ booking.client.phone_number|default:_("N/A") }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Tax Number (NIF)" %}:</strong> <span>{{ booking.client.tax_number }}</span></li>
+                                <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Company Registration" %}:</strong> <span>{{ booking.client.permanent_registration_number | default:_("N/A") }}</span></li>
                                 {% if booking.vehicle.vehicle_type == 'APV' %}
                                     <li class="list-group-item px-0 d-flex justify-content-between"><strong>{% translate "Motive for Booking" %}:</strong> <span>{{ booking.motive|default:_("Not provided.") }}</span></li>
                             {% endif %}
@@ -72,15 +72,27 @@
                             <h3 class="h5">{% translate "Booking Document" %}</h3>
                             <ul class="list-group mb-4">
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    {% translate "Contract Document" %}
-                                    <span>
-                                        {% if booking.contract_document %}
-                                            <a href="{{ booking.contract_document.url }}" class="btn btn-primary btn-sm" target="_blank">{% translate "View Contract" %}</a>
-                                        {% else %}
-                                            <a href="{% url 'booking_app:group_booking_update' booking.pk %}?upload_only=true" class="btn btn-warning btn-sm">{% translate "Upload Contract" %}</a>
-                                            <a href="{% url 'booking_app:generate_word_contract' booking.pk %}" class="btn btn-success">{% translate "Generate Word Contract" %}</a>
-                                        {% endif %}
-                                    </span>
+                                    {% if booking.latest_contract %}
+                                        {% translate "Contract Document" %} {{ booking.latest_contract.formatted_number }}
+                                        <span>
+                                            <a href="{{ booking.latest_contract.file.url }}" 
+                                               class="btn btn-primary btn-sm" target="_blank">
+                                               {% translate "View Contract" %}
+                                            </a>
+                                        </span>
+                                    {% else %}
+                                        {% translate "Contract Document" %}
+                                        <span>
+                                            <a href="{% url 'booking_app:group_booking_update' booking.pk %}?upload_only=true" 
+                                               class="btn btn-warning btn-sm">
+                                               {% translate "Upload Contract" %}
+                                            </a>
+                                            <a href="{% url 'booking_app:generate_word_contract' booking.pk %}" 
+                                               class="btn btn-success btn-sm">
+                                               {% translate "Generate Word Contract" %}
+                                            </a>
+                                        </span>
+                                    {% endif %}
                                 </li>
                             </ul>
                             <h3 class="h5">{% translate "Associated Vehicle Files" %}</h3>
