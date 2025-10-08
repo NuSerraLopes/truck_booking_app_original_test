@@ -1,0 +1,17 @@
+{% load i18n %}
+<div class="table-responsive">
+  <table class="table table-bordered table-sm">
+    <thead class="table-light">
+      <tr>
+        <th>{% translate "Variable" %}</th>
+        <th>{% translate "Description" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>{% templatetag openvariable %} user.username {% templatetag closevariable %}</code></td><td>{% translate "The username of the user." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} user.get_full_name {% templatetag closevariable %}</code></td><td>{% translate "The full name of the user." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} user.email {% templatetag closevariable %}</code></td><td>{% translate "The email address of the user." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} temp_password {% templatetag closevariable %}</code></td><td>{% translate "Generated temporary password (if applicable)." %}</td></tr>
+    </tbody>
+  </table>
+</div>

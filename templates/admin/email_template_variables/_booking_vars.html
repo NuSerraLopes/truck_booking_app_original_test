@@ -1,0 +1,34 @@
+{% load i18n %}
+<div class="table-responsive">
+  <table class="table table-bordered table-sm">
+    <thead class="table-light">
+      <tr>
+        <th>{% translate "Variable" %}</th>
+        <th>{% translate "Description" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td colspan="2" class="text-center fw-bold">{% translate "Booking Details" %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.pk {% templatetag closevariable %}</code></td><td>{% translate "The unique ID of the booking." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.start_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>{% translate "The start date of the booking." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.end_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>{% translate "The end date of the booking." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.start_location.name {% templatetag closevariable %}</code></td><td>{% translate "Pickup location." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.end_location.name {% templatetag closevariable %}</code></td><td>{% translate "Drop-off location." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.motive {% templatetag closevariable %}</code></td><td><strong>({% translate "APV Only" %})</strong> {% translate "Reason for the booking." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.initial_km {% templatetag closevariable %}</code></td><td><strong>({% translate "APV Only" %})</strong> {% translate "Starting kilometers." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.final_km {% templatetag closevariable %}</code></td><td><strong>({% translate "APV Only" %})</strong> {% translate "Final kilometers." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.contract_document.url {% templatetag closevariable %}</code></td><td>{% translate "URL to the signed contract document." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.needs_transport {% templatetag closevariable %}</code></td><td>{% translate "Whether vehicle transport is required." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} previous_end_location.name {% templatetag closevariable %}</code></td><td>{% translate "End Location of previous booking." %}</td></tr>
+
+      <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Client Info" %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.customer_name {% templatetag closevariable %}</code></td><td>{% translate "Client full name." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.customer_email {% templatetag closevariable %}</code></td><td>{% translate "Client email." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.customer_phone {% templatetag closevariable %}</code></td><td>{% translate "Client phone number." %}</td></tr>
+
+      <tr><td colspan="2" class="text-center fw-bold mt-2">{% translate "Salesperson Info" %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.user.get_full_name {% templatetag closevariable %}</code></td><td>{% translate "Salesperson name." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} booking.user.email {% templatetag closevariable %}</code></td><td>{% translate "Salesperson email." %}</td></tr>
+    </tbody>
+  </table>
+</div>

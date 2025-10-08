@@ -130,105 +130,79 @@ def subtract_business_days(from_date, days):
 # UPDATED MAIN EMAIL NOTIFICATION FUNCTION
 # ==============================================================================
 
-# booking_app/utils.py
-
-def send_booking_notification(event_trigger, booking_instance=None, context_data=None, test_email_recipient=None):
+def send_system_notification(event_trigger, context_data=None, test_email_recipient=None):
     """
-    Finds ALL active email templates, builds recipient lists,
-    sends emails via MS Graph API, and logs the attempt.
+    Generic notification sender for ALL system events.
+    - Looks up EmailTemplate by event_trigger
+    - Renders with given context
+    - Sends via Graph API + logs result
     """
-    final_trigger = event_trigger
 
-    if event_trigger in ['booking_created', 'booking_reverted'] and booking_instance:
-        vehicle_type = booking_instance.vehicle.vehicle_type.lower()
-        final_trigger = f"{vehicle_type}_{event_trigger}"
-
-    template_list = EmailTemplate.objects.filter(event_trigger=final_trigger, is_active=True)
+    template_list = EmailTemplate.objects.filter(event_trigger=event_trigger, is_active=True)
 
     if not template_list.exists():
-        logger.info(f"No active email templates found for event '{final_trigger}'. Skipping email.")
+        logger.info(f"No active email templates for event '{event_trigger}'")
         return
 
     for template_obj in template_list:
-        print(f"--- DEBUG: Preparing to send template '{template_obj.name}' for event '{final_trigger}' ---")
         recipient_list = set()
+
         if test_email_recipient:
             recipient_list.add(test_email_recipient)
         else:
-            if template_obj.send_to_salesperson and booking_instance and booking_instance.user and hasattr(
-                    booking_instance.user, 'email'):
-                recipient_list.add(booking_instance.user.email)
+            if template_obj.send_to_salesperson and context_data.get("booking") and hasattr(context_data["booking"], "user"):
+                recipient_list.add(context_data["booking"].user.email)
+
             if template_obj.send_to_groups.exists():
                 for group in template_obj.send_to_groups.all():
                     for user in group.user_set.filter(is_active=True, email__isnull=False):
                         recipient_list.add(user.email)
+
             if template_obj.send_to_users.exists():
                 for user in template_obj.send_to_users.filter(is_active=True, email__isnull=False):
                     recipient_list.add(user.email)
+
             if template_obj.send_to_distribution_lists.exists():
                 for dl in template_obj.send_to_distribution_lists.all():
                     recipient_list.update(dl.get_emails_as_list())
 
         if not recipient_list:
-            logger.info(f"Template '{template_obj.name}' for event '{final_trigger}' has no recipients. Skipping.")
+            logger.info(f"Template '{template_obj.name}' for event '{event_trigger}' has no recipients.")
             continue
 
-        final_recipient_list = list(recipient_list)
-        print(f"--- DEBUG: Final recipient list: {final_recipient_list} ---")
+        context = Context(context_data or {})
+        subject_template = Template(template_obj.subject)
+        body_template = Template(template_obj.body)
 
-        context_dict = {'booking': booking_instance}
-        if context_data:
-            context_dict.update(context_data)
-
-        # --- DEBUG: We will now try to render the templates one by one ---
         try:
-            print("--- DEBUG: Attempting to render SUBJECT template... ---")
-            context = Context(context_dict)
-            subject_template = Template(template_obj.subject)
             rendered_subject = subject_template.render(context)
-            print("--- DEBUG: SUBJECT rendered successfully. ---")
-
-            print("--- DEBUG: Attempting to render BODY template... ---")
-            body_template = Template(template_obj.body)
             rendered_body = body_template.render(context)
-            print("--- DEBUG: BODY rendered successfully. ---")
-
         except Exception as e:
-            # This will catch the error during rendering and tell us exactly where it failed.
-            print(f"!!!!!!!!!! FATAL ERROR DURING TEMPLATE RENDERING !!!!!!!!!!!")
-            print(f"Error of type {type(e).__name__}: {e}")
-            logger.error(f"CRITICAL: Failed to render template '{template_obj.name}'. Error: {e}")
-            print(f"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-            # Stop execution for this email if rendering fails
+            logger.error(f"Template render error for '{template_obj.name}': {e}")
             continue
 
-        # --- Send email using the MS Graph API ---
         try:
             success, response_message = send_email_with_graph_api(
                 subject=rendered_subject,
                 body=rendered_body,
-                recipient_list=final_recipient_list
+                recipient_list=list(recipient_list),
             )
-
-            if success:
-                for recipient in final_recipient_list:
-                    EmailLog.objects.create(recipient=recipient, subject=rendered_subject, status='sent')
-                logger.info(
-                    f"Successfully sent email using template '{template_obj.name}' to {', '.join(final_recipient_list)}")
-            else:
-                for recipient in final_recipient_list:
-                    EmailLog.objects.create(recipient=recipient, subject=rendered_subject, status='failed',
-                                            error_message=response_message)
-                logger.error(
-                    f"FAILED to send email using template '{template_obj.name}'. API Error: {response_message}")
-
+            status = "sent" if success else "failed"
+            for r in recipient_list:
+                EmailLog.objects.create(
+                    recipient=r,
+                    subject=rendered_subject,
+                    status=status,
+                    error_message=None if success else response_message
+                )
         except Exception as e:
-            error_message = f"An unexpected error occurred: {str(e)}"
-            for recipient in final_recipient_list:
-                EmailLog.objects.create(recipient=recipient, subject=rendered_subject, status='failed',
-                                        error_message=error_message)
-            logger.error(
-                f"FAILED to send email using template '{template_obj.name}'. Unexpected Error: {error_message}")
+            for r in recipient_list:
+                EmailLog.objects.create(
+                    recipient=r,
+                    subject=rendered_subject,
+                    status="failed",
+                    error_message=str(e)
+                )
 
 
 # ==============================================================================

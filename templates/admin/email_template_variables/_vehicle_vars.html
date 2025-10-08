@@ -1,0 +1,22 @@
+{% load i18n %}
+<div class="table-responsive">
+  <table class="table table-bordered table-sm">
+    <thead class="table-light">
+      <tr>
+        <th>{% translate "Variable" %}</th>
+        <th>{% translate "Description" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>{% templatetag openvariable %} vehicle.model {% templatetag closevariable %}</code></td><td>{% translate "The model of the vehicle." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} vehicle.license_plate {% templatetag closevariable %}</code></td><td>{% translate "The license plate." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} vehicle.vehicle_type {% templatetag closevariable %}</code></td><td>{% translate "Vehicle type (HEAVY, LIGHT, APV)." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} vehicle.start_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>{% translate "First available booking date." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} vehicle.end_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>{% translate "Last bookable date." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} vehicle.vehicle_value {% templatetag closevariable %}</code></td><td>{% translate "Declared value of the vehicle." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} vehicle.next_maintenance_date|date:"d/m/Y" {% templatetag closevariable %}</code></td><td>{% translate "Next scheduled maintenance date." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} vehicle.insurance_document.url {% templatetag closevariable %}</code></td><td>{% translate "URL to insurance document." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} vehicle.registration_document.url {% templatetag closevariable %}</code></td><td>{% translate "URL to registration document." %}</td></tr>
+    </tbody>
+  </table>
+</div>

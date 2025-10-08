@@ -1,0 +1,17 @@
+{% load i18n %}
+<div class="table-responsive">
+  <table class="table table-bordered table-sm">
+    <thead class="table-light">
+      <tr>
+        <th>{% translate "Variable" %}</th>
+        <th>{% translate "Description" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td><code>{% templatetag openvariable %} location.name {% templatetag closevariable %}</code></td><td>{% translate "The name of the location." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} location.address {% templatetag closevariable %}</code></td><td>{% translate "The address of the location." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} location.city {% templatetag closevariable %}</code></td><td>{% translate "City of the location." %}</td></tr>
+      <tr><td><code>{% templatetag openvariable %} location.country {% templatetag closevariable %}</code></td><td>{% translate "Country of the location." %}</td></tr>
+    </tbody>
+  </table>
+</div>
