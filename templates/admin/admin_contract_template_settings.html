@@ -1,10 +1,523 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
-</head>
-<body>
-$END$
-</body>
-</html>
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/docx-preview@0.4.1/dist/docx-preview.min.css">
+<style>
+    .docx-editable-surface {
+        min-height: 420px;
+        outline: none;
+    }
+
+    .docx-editable-surface:focus-visible {
+        outline: 3px solid var(--bs-primary-border-subtle, rgba(13, 110, 253, 0.35));
+        outline-offset: 2px;
+    }
+
+    .handle-chip {
+        cursor: grab;
+        user-select: none;
+        font-weight: 600;
+    }
+
+    .handle-chip:active {
+        cursor: grabbing;
+    }
+</style>
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-xl-10">
+            <div class="card shadow-sm">
+                <div class="card-body p-4 p-lg-5">
+                    <h1 class="card-title mb-4 text-center">{{ page_title }}</h1>
+
+                    <p class="text-muted">{% translate "Upload a DOCX template for contracts, preview it instantly, and drag placeholder handles directly into the document." %}</p>
+
+                    <form method="post" enctype="multipart/form-data" id="contract-template-form" class="mt-4">
+                        {% csrf_token %}
+                        {{ form.non_field_errors }}
+
+                        <div class="row g-4">
+                            <div class="col-lg-5">
+                                <div class="mb-4">
+                                    <label class="form-label fw-semibold" for="id_template">{% translate "Contract Template (.docx)" %}</label>
+                                    <div class="input-group">
+                                        {{ form.template }}
+                                        <button type="button" class="btn btn-outline-secondary" id="use-default-template">{% translate "Use Default" %}</button>
+                                    </div>
+                                    {% if settings.template %}
+                                        <div class="form-text mt-2">
+                                            {% translate "Current template:" %}
+                                            <a href="{{ template_preview_url }}" target="_blank" rel="noreferrer noopener">{{ settings.template.name|default:_("Download") }}</a>
+                                        </div>
+                                    {% else %}
+                                        <div class="form-text mt-2 text-muted">{% translate "Using bundled default template (document_templates/contract_template.docx)." %}</div>
+                                    {% endif %}
+                                    {% if form.template.errors %}
+                                        <div class="text-danger small">{{ form.template.errors }}</div>
+                                    {% endif %}
+                                </div>
+
+                                {{ form.placeholders_json }}
+                                {{ form.remove_template }}
+                                {{ form.rendered_html }}
+
+                                {% if form.placeholders_json.errors %}
+                                    <div class="alert alert-danger">{{ form.placeholders_json.errors.0 }}</div>
+                                {% endif %}
+
+                                <div class="mb-3">
+                                    <h2 class="h5">{% translate "Placeholder Handles" %}</h2>
+                                    <p class="text-muted small mb-2">
+                                        {% translate "Handles appear in the template as" %}
+                                        <code>&#123;&#123; handle &#125;&#125;</code>
+                                        {% translate "and map to booking or contract attributes." %}
+                                    </p>
+                                    <div class="table-responsive border rounded">
+                                        <table class="table table-sm table-hover align-middle mb-0" id="placeholder-table">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th scope="col">{% translate "Handle" %}</th>
+                                                    <th scope="col">{% translate "Data Path" %}</th>
+                                                    <th scope="col">{% translate "Description" %}</th>
+                                                    <th scope="col" class="text-center" style="width: 56px;">{% translate "Remove" %}</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="placeholder-table-body">
+                                                {% if placeholders %}
+                                                    {% for item in placeholders %}
+                                                        <tr>
+                                                            <td><input type="text" class="form-control form-control-sm" value="{{ item.handle }}" placeholder="client_name"></td>
+                                                            <td><input type="text" class="form-control form-control-sm" value="{{ item.path }}" placeholder="booking.client.name"></td>
+                                                            <td><input type="text" class="form-control form-control-sm" value="{{ item.description }}" placeholder="{% translate "Client full legal name" %}"></td>
+                                                            <td class="text-center">
+                                                                <button type="button" class="btn btn-link text-danger p-0 remove-placeholder" aria-label="{% translate "Remove" %}">&times;</button>
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <tr>
+                                                        <td><input type="text" class="form-control form-control-sm" placeholder="client_name"></td>
+                                                        <td><input type="text" class="form-control form-control-sm" placeholder="booking.client.name"></td>
+                                                        <td><input type="text" class="form-control form-control-sm" placeholder="{% translate "Client full legal name" %}"></td>
+                                                        <td class="text-center">
+                                                            <button type="button" class="btn btn-link text-danger p-0 remove-placeholder" aria-label="{% translate "Remove" %}">&times;</button>
+                                                        </td>
+                                                    </tr>
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-placeholder">{% translate "Add Handle" %}</button>
+                                        <small class="text-muted">{% translate "Available roots:" %} <code>booking</code>, <code>contract</code></small>
+                                    </div>
+                                </div>
+
+                                <div class="card border-0 bg-body-tertiary">
+                                    <div class="card-body py-3">
+                                        <h3 class="h6 mb-3">{% translate "Handles Palette" %}</h3>
+                                        <p class="text-muted small mb-3">{% translate "Drag a handle from this list and drop it on the document preview to place it." %}</p>
+                                        <div id="handle-palette" class="d-flex flex-wrap gap-2"></div>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-info mt-4" role="alert">
+                                    <h3 class="h6">{% translate "Need help with data paths?" %}</h3>
+                                    <p class="mb-1">{% translate "Use dot notation to drill into booking data. For example:" %}</p>
+                                    <ul class="mb-1">
+                                        <li><code>booking.client.name</code> – {% translate "Client name" %}</li>
+                                        <li><code>booking.vehicle.license_plate</code> – {% translate "Vehicle license plate" %}</li>
+                                        <li><code>booking.start_date</code> – {% translate "Booking start date" %}</li>
+                                        <li><code>contract.formatted_number</code> – {% translate "Generated contract number" %}</li>
+                                    </ul>
+                                    <p class="mb-0">{% translate "If a path cannot be resolved the handle will render as empty text." %}</p>
+                                </div>
+                            </div>
+
+                            <div class="col-lg-7">
+                                <div class="card h-100 border-0 shadow-sm">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <span class="fw-semibold">{% translate "Template Preview" %}</span>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-outline-secondary" id="reload-current-template">{% translate "Reload" %}</button>
+                                            <button type="button" class="btn btn-outline-secondary" id="download-current-template">{% translate "Download" %}</button>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <p class="text-muted small">{% translate "Drop handles into the preview to insert placeholders exactly where contract data should merge." %}</p>
+                                        <div class="border rounded bg-white overflow-auto" style="max-height: 600px;">
+                                            <div id="docx-preview" class="docx-preview-surface p-3" data-template-url="{{ template_preview_url }}" data-default-template-url="{{ default_template_preview_url }}">
+                                                <div class="text-center text-muted py-5">{% translate "Loading template preview..." %}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary">{% translate "Cancel" %}</a>
+                            <button type="submit" class="btn btn-primary">{% translate "Save Settings" %}</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/docx-preview@0.4.1/dist/docx-preview.min.js"></script>
+<script>
+(function() {
+    const form = document.getElementById('contract-template-form');
+    const tableBody = document.getElementById('placeholder-table-body');
+    const addButton = document.getElementById('add-placeholder');
+    const placeholdersField = document.getElementById('{{ form.placeholders_json.id_for_label }}');
+    const removeTemplateField = document.getElementById('{{ form.remove_template.id_for_label }}');
+    const renderedHtmlField = document.getElementById('{{ form.rendered_html.id_for_label }}');
+    const defaultButton = document.getElementById('use-default-template');
+    const templateInput = document.getElementById('id_template');
+    const handlePalette = document.getElementById('handle-palette');
+    const previewWrapper = document.getElementById('docx-preview');
+    const reloadButton = document.getElementById('reload-current-template');
+    const downloadButton = document.getElementById('download-current-template');
+
+    const templatePreviewUrl = previewWrapper?.dataset.templateUrl;
+    const defaultTemplatePreviewUrl = previewWrapper?.dataset.defaultTemplateUrl;
+
+    let editableRoot = null;
+    let currentBuffer = null;
+    let isLocalPreview = false;
+    let previewDirty = false;
+
+    function markTemplateDirty() {
+        if (removeTemplateField) {
+            removeTemplateField.value = 'false';
+        }
+        previewDirty = true;
+    }
+
+    function createRow(data = {handle: '', path: '', description: ''}) {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><input type="text" class="form-control form-control-sm" placeholder="client_name" value="${data.handle || ''}"></td>
+            <td><input type="text" class="form-control form-control-sm" placeholder="booking.client.name" value="${data.path || ''}"></td>
+            <td><input type="text" class="form-control form-control-sm" placeholder="{% translate "Client full legal name" %}" value="${data.description || ''}"></td>
+            <td class="text-center"><button type="button" class="btn btn-link text-danger p-0 remove-placeholder" aria-label="{% translate "Remove" %}">&times;</button></td>
+        `;
+        bindRowEvents(row);
+        return row;
+    }
+
+    function bindRowEvents(row) {
+        const removeBtn = row.querySelector('.remove-placeholder');
+        if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+                row.remove();
+                if (!tableBody.children.length) {
+                    tableBody.appendChild(createRow());
+                }
+                buildPalette();
+            });
+        }
+        row.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', () => {
+                buildPalette();
+            });
+        });
+    }
+
+    function serializeRows() {
+        const rows = tableBody.querySelectorAll('tr');
+        const data = [];
+        rows.forEach(row => {
+            const inputs = row.querySelectorAll('input');
+            if (inputs.length >= 3) {
+                const handle = inputs[0].value.trim();
+                const path = inputs[1].value.trim();
+                const description = inputs[2].value.trim();
+                if (handle && path) {
+                    data.push({handle, path, description});
+                }
+            }
+        });
+        placeholdersField.value = JSON.stringify(data);
+    }
+
+    function buildPalette() {
+        if (!handlePalette) {
+            return;
+        }
+        handlePalette.innerHTML = '';
+        const handles = new Set();
+        tableBody.querySelectorAll('tr').forEach(row => {
+            const handleInput = row.querySelector('td:first-child input');
+            if (handleInput) {
+                const value = handleInput.value.trim();
+                if (value) {
+                    handles.add(value);
+                }
+            }
+        });
+
+        if (!handles.size) {
+            const empty = document.createElement('span');
+            empty.className = 'text-muted small';
+            empty.textContent = '{% translate "Add a handle above to enable drag and drop." %}';
+            handlePalette.appendChild(empty);
+            return;
+        }
+
+        handles.forEach(handle => {
+            const chip = document.createElement('span');
+            chip.className = 'badge bg-primary-subtle text-primary handle-chip';
+            chip.textContent = '{% templatetag openvariable %} ' + handle + ' {% templatetag closevariable %}';
+            chip.setAttribute('draggable', 'true');
+            chip.dataset.handle = handle;
+            chip.addEventListener('dragstart', event => {
+                event.dataTransfer.effectAllowed = 'copy';
+                event.dataTransfer.setData('text/x-placeholder-handle', handle);
+                event.dataTransfer.setData('text/plain', handle);
+            });
+            chip.addEventListener('click', () => {
+                insertHandleAtSelection(handle);
+            });
+            handlePalette.appendChild(chip);
+        });
+    }
+
+    function detachEditableListeners(target) {
+        if (!target) {
+            return;
+        }
+        target.removeEventListener('dragover', handleDragOver);
+        target.removeEventListener('drop', handleDrop);
+        target.removeEventListener('input', markTemplateDirty);
+        target.removeEventListener('keyup', markTemplateDirty);
+        target.removeEventListener('paste', markTemplateDirty);
+    }
+
+    function attachEditableListeners(target) {
+        if (!target) {
+            return;
+        }
+        target.addEventListener('dragover', handleDragOver);
+        target.addEventListener('drop', handleDrop);
+        target.addEventListener('input', markTemplateDirty);
+        target.addEventListener('keyup', markTemplateDirty);
+        target.addEventListener('paste', markTemplateDirty);
+    }
+
+    function setEditableRoot(root) {
+        if (!root) {
+            return;
+        }
+        if (editableRoot && editableRoot !== root) {
+            detachEditableListeners(editableRoot);
+        }
+        editableRoot = root;
+        editableRoot.setAttribute('contenteditable', 'true');
+        editableRoot.classList.add('docx-editable-surface');
+        attachEditableListeners(editableRoot);
+    }
+
+    async function renderFromArrayBuffer(buffer, {local = false} = {}) {
+        if (!previewWrapper || !window.docx) {
+            return;
+        }
+
+        currentBuffer = buffer.slice(0);
+        isLocalPreview = local;
+        previewDirty = false;
+
+        previewWrapper.innerHTML = '';
+
+        try {
+            await window.docx.renderAsync(buffer, previewWrapper, undefined, {
+                ignoreWidth: false,
+                ignoreHeight: false,
+                breakPages: false,
+            });
+            const wrapper = previewWrapper.querySelector('.docx-wrapper') || previewWrapper;
+            setEditableRoot(wrapper);
+        } catch (error) {
+            console.error('Failed to render DOCX preview', error);
+            previewWrapper.innerHTML = `<div class="alert alert-danger m-3">{% translate "Unable to render the DOCX preview. Please verify that the file is a valid DOCX document." %}</div>`;
+            editableRoot = null;
+        }
+    }
+
+    async function loadTemplateFromUrl(url) {
+        if (!url) {
+            return;
+        }
+        previewWrapper.innerHTML = `<div class="text-center text-muted py-5">{% translate "Loading template preview..." %}</div>`;
+        try {
+            const response = await fetch(url, {cache: 'no-store'});
+            if (!response.ok) {
+                throw new Error(`Failed to load template (${response.status})`);
+            }
+            const buffer = await response.arrayBuffer();
+            await renderFromArrayBuffer(buffer, {local: false});
+        } catch (error) {
+            console.error(error);
+            previewWrapper.innerHTML = `<div class="alert alert-danger m-3">{% translate "Could not load the template file. Try reloading the page or uploading a new file." %}</div>`;
+        }
+    }
+
+    function handleDragOver(event) {
+        if (event.dataTransfer.types.includes('text/x-placeholder-handle') || event.dataTransfer.types.includes('text/plain')) {
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+        }
+    }
+
+    function caretRangeFromPoint(x, y) {
+        const doc = document;
+        if (doc.caretPositionFromPoint) {
+            const position = doc.caretPositionFromPoint(x, y);
+            if (!position) {
+                return null;
+            }
+            const range = doc.createRange();
+            range.setStart(position.offsetNode, position.offset);
+            return range;
+        }
+        if (doc.caretRangeFromPoint) {
+            return doc.caretRangeFromPoint(x, y);
+        }
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+            return null;
+        }
+        return selection.getRangeAt(0).cloneRange();
+    }
+
+    function insertHandleAtRange(range, handle) {
+        if (!range) {
+            return;
+        }
+        const doc = range.commonAncestorContainer.ownerDocument || document;
+        const textNode = doc.createTextNode('{% templatetag openvariable %} ' + handle + ' {% templatetag closevariable %}');
+        range.deleteContents();
+        range.insertNode(textNode);
+        range.setStartAfter(textNode);
+        range.collapse(true);
+        const selection = window.getSelection();
+        if (selection) {
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+        markTemplateDirty();
+    }
+
+    function insertHandleAtSelection(handle) {
+        if (!editableRoot) {
+            return;
+        }
+        const selection = window.getSelection();
+        let range = null;
+        if (selection && selection.rangeCount > 0) {
+            range = selection.getRangeAt(0).cloneRange();
+        }
+        if (!range) {
+            range = caretRangeFromPoint(editableRoot.getBoundingClientRect().left, editableRoot.getBoundingClientRect().top);
+        }
+        insertHandleAtRange(range, handle);
+    }
+
+    function handleDrop(event) {
+        const handle = event.dataTransfer.getData('text/x-placeholder-handle') || event.dataTransfer.getData('text/plain');
+        if (!handle) {
+            return;
+        }
+        event.preventDefault();
+        const range = caretRangeFromPoint(event.clientX, event.clientY);
+        insertHandleAtRange(range, handle);
+    }
+
+    addButton.addEventListener('click', () => {
+        const newRow = createRow();
+        tableBody.appendChild(newRow);
+        const firstInput = newRow.querySelector('input');
+        if (firstInput) {
+            firstInput.focus();
+        }
+        buildPalette();
+    });
+
+    defaultButton.addEventListener('click', async () => {
+        if (confirm('{% translate "Revert to the bundled template?" %}')) {
+            removeTemplateField.value = 'true';
+            renderedHtmlField.value = '';
+            previewDirty = false;
+            if (templateInput) {
+                templateInput.value = '';
+            }
+            await loadTemplateFromUrl(defaultTemplatePreviewUrl);
+        }
+    });
+
+    reloadButton.addEventListener('click', () => {
+        if (isLocalPreview && currentBuffer) {
+            renderFromArrayBuffer(currentBuffer, {local: true});
+        } else {
+            loadTemplateFromUrl(templatePreviewUrl);
+        }
+    });
+
+    downloadButton.addEventListener('click', () => {
+        if (!currentBuffer) {
+            return;
+        }
+        const blob = new Blob([currentBuffer], {type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'contract_template.docx';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    });
+
+    if (templateInput) {
+        templateInput.addEventListener('change', async event => {
+            const file = event.target.files?.[0];
+            if (!file) {
+                return;
+            }
+            try {
+                const buffer = await file.arrayBuffer();
+                await renderFromArrayBuffer(buffer, {local: true});
+                if (removeTemplateField) {
+                    removeTemplateField.value = 'false';
+                }
+            } catch (error) {
+                console.error('Failed to read selected file', error);
+            }
+        });
+    }
+
+    form.addEventListener('submit', () => {
+        serializeRows();
+        if (removeTemplateField.value !== 'true') {
+            removeTemplateField.value = 'false';
+        }
+        if (editableRoot && previewDirty) {
+            renderedHtmlField.value = editableRoot.innerHTML.trim();
+        } else {
+            renderedHtmlField.value = '';
+        }
+    });
+
+    Array.from(tableBody.querySelectorAll('tr')).forEach(bindRowEvents);
+    buildPalette();
+    loadTemplateFromUrl(templatePreviewUrl);
+})();
+</script>
+{% endblock %}

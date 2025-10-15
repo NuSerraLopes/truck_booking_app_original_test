@@ -95,6 +95,10 @@ urlpatterns = [
     path('admin-dashboard/distribution-lists/edit/<int:pk>/', views.admin_dl_form_view, name='admin_dl_edit'),
     path('admin-dashboard/distribution-lists/delete/<int:pk>/', views.admin_dl_delete_view, name='admin_dl_delete'),
     path('admin-dashboard/settings/', views.automation_settings_view, name='automation_settings'),
+    path('admin-dashboard/contract-template/', views.contract_template_settings_view,
+         name='contract_template_settings'),
+    path('admin-dashboard/contract-template/preview/', views.contract_template_file_view,
+         name='contract_template_file'),
 
     # API URLs
     path('api/bookings/', views.booking_api_view, name='booking_api'),

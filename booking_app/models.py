@@ -333,6 +333,7 @@ class EmailTemplate(models.Model):
             ('light_booking_created', _('New LIGHT Vehicle Booking Created')),
             ('heavy_booking_created', _('New HEAVY Vehicle Booking Created')),
             ('apv_booking_created', _('New APV Vehicle Booking Created')),
+            ('contract_generated', _('New Contract Generated')),
             ('light_booking_reverted', _('LIGHT Booking Reverted to Pending')),
             ('heavy_booking_reverted', _('HEAVY Booking Reverted to Pending')),
             ('apv_booking_reverted', _('APV Booking Reverted to Pending')),
@@ -347,16 +348,28 @@ class EmailTemplate(models.Model):
         ('Manager Actions', (
             ('booking_approved', _('Booking Approved')),
             ('apv_booking_approved', _('APV Booking Approved')),
+        )),
+        ('Admin Actions', (
+            ('user_sessions_terminated', _('User Sessions Terminated')),
+            ('all_sessions_terminated', _('All Sessions Terminated')),
+            ('user_session_terminated', _('User Current Session Terminated')),
+            ('password_reset', _('User Password Was Reset')),
             ('send_user_credentials', _('Send User Credentials')),
             ('send_temporary_password', _('Send Temporary Password')),
         )),
         ('Automated Notifications', (
             ('booking_reminder_7_days', _('Booking Reminder (7 Days Away)')),
             ('booking_auto_cancelled', _('Booking Auto-Cancelled (Unapproved)')),
+            ('automation_settings_updated', _('BAutomation Settings Updated')),
         )),
         ('Account Events', (
             ('user_created', _('New User Account Created')),
-            ('password_reset', _('User Password Was Reset')),
+            ('user_updated', _('User Updated')),
+            ('group_created', _('Group Created')),
+            ('group_updated', _('Group Updated')),
+            ('group_deleted', _('Group Deleted')),
+            ('user_deactivated', _('User Deactivated')),
+            ('user_reactivated', _('User Reactivated')),
         )),
         ('Vehicle Events', (
             ('vehicle_created', _('Vehicle Created')),
@@ -367,6 +380,16 @@ class EmailTemplate(models.Model):
             ('location_created', _('Location Created')),
             ('location_updated', _('Location Updated')),
             ('location_deleted', _('Location Deleted')),
+        )),
+        ('Client Events', (
+            ('client_created', _('Client Created')),
+            ('client_updated', _('Client Updated')),
+            ('client_deleted', _('Client Deleted')),
+        )),
+        ('Distribution List Events', (
+            ('distribution_list_created', _('Distribution List Created')),
+            ('distribution_list_updated', _('Distribution List Updated')),
+            ('distribution_list_deleted', _('Distribution List Deleted')),
         )),
     ]
 
@@ -393,6 +416,21 @@ class DistributionList(models.Model):
 
     def __str__(self): return self.name
 
+class ContractTemplateSettings(models.Model):
+    template = models.FileField(upload_to="contract_templates/", blank=True, null=True)
+    placeholder_map = models.JSONField(default=list, blank=True)
+
+    @classmethod
+    def load(cls):
+        return cls.objects.get_or_create(pk=1)[0]
+
+    def get_template_path(self):
+        from django.conf import settings
+        import os
+
+        if self.template:
+            return self.template.path
+        return os.path.join(settings.BASE_DIR, "document_templates", "contract_template.docx")
 
 class EmailLog(models.Model):
     recipient = models.EmailField()

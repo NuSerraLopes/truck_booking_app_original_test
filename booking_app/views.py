@@ -30,7 +30,7 @@ from django.contrib.auth import get_user_model, login, logout, update_session_au
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.http import HttpResponseForbidden, Http404, JsonResponse, HttpResponse
+from django.http import HttpResponseForbidden, Http404, JsonResponse, HttpResponse, FileResponse
 from django.template import Context, Template
 from django.contrib.sites.shortcuts import get_current_site
 
@@ -38,13 +38,23 @@ from docxtpl import DocxTemplate
 from PyPDF2 import PdfWriter
 
 from .models import (
-    Vehicle, Location, Booking, EmailTemplate, DistributionList, AutomationSettings,
-    EmailLog, Client, InactiveUser, Contract
+    Vehicle,
+    Location,
+    Booking,
+    EmailTemplate,
+    DistributionList,
+    AutomationSettings,
+    ContractTemplateSettings,
+    EmailLog,
+    Client,
+    InactiveUser,
+    Contract,
 )
 from .forms import (
     BookingForm, VehicleCreateForm, VehicleEditForm, LocationCreateForm,
     UserCreateForm, UpdateUserForm, ClientForm, GroupForm, DistributionListForm,
-    EmailTemplateForm, LocationUpdateForm, AutomationSettingsForm, BookingFilterForm, VehicleImportForm
+    EmailTemplateForm, LocationUpdateForm, AutomationSettingsForm, ContractTemplateSettingsForm,
+    BookingFilterForm, VehicleImportForm
 )
 from .utils import (
     add_business_days, subtract_business_days, kill_user_sessions, kill_all_sessions,
@@ -80,6 +90,32 @@ def get_managed_vehicle_types(user):
         if 'tllight' in user_groups: vehicle_types.append('LIGHT')
         if 'tlapv' in user_groups: vehicle_types.append('APV')
     return list(set(vehicle_types))
+
+def resolve_placeholder_path(path, base_context):
+    """Resolve dotted attribute paths against a context of objects/dicts."""
+    if not path:
+        return ''
+
+    current = base_context
+    for segment in path.split('.'):
+        if isinstance(current, dict):
+            current = current.get(segment)
+        else:
+            current = getattr(current, segment, None)
+
+        if current is None:
+            return ''
+
+        if callable(current):
+            try:
+                current = current()
+            except TypeError:
+                return ''
+
+    if current is None:
+        return ''
+
+    return current
 
 # ------------------------------
 # Core / Auth Views
@@ -272,7 +308,12 @@ def _handle_booking_form_submission(request, form, vehicle, is_new_booking=True)
             }
 
             if is_new_booking:
-                send_system_notification('booking_created', context_data=ctx)
+                if booking.vehicle.vehicle_type=='LIGHT':
+                    send_system_notification('light_booking_created', context_data=ctx)
+                elif booking.vehicle.vehicle_type=='HEAVY':
+                    send_system_notification('heavy_booking_created', context_data=ctx)
+                elif booking.vehicle.vehicle_type == 'APV':
+                    send_system_notification('apv_booking_created', context_data=ctx)
                 if booking.needs_transport:
                     send_system_notification('transport_required', context_data=ctx)
                 messages.success(request, _('Your booking request has been submitted successfully!'))
@@ -347,14 +388,30 @@ def generate_and_save_contract_view(request, booking_pk):
     booking = get_object_or_404(Booking, pk=booking_pk)
     contract = Contract.objects.create(booking=booking)
 
+    template_settings = ContractTemplateSettings.load()
     template_dir = os.path.join(settings.BASE_DIR, 'document_templates')
-    docx_template_path = os.path.join(template_dir, 'contract_template.docx')
+    docx_template_path = template_settings.get_template_path()
     static_pdf_path = os.path.join(template_dir, 'terms_and_conditions.pdf')
     temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
     os.makedirs(temp_dir, exist_ok=True)
 
+    # --- Render DOCX ---
     doc = DocxTemplate(docx_template_path)
     context = {'booking': booking, 'contract': contract}
+    base_context = {'booking': booking, 'contract': contract}
+    for entry in template_settings.placeholder_map:
+        handle = (entry.get('handle') or '').strip()
+        path = (entry.get('path') or '').strip()
+        if not handle or not path:
+            continue
+
+        value = resolve_placeholder_path(path, base_context)
+        if value is None:
+            value = ''
+        elif not isinstance(value, (str, int, float)):
+            value = str(value)
+
+        context[handle] = value
     doc.render(context)
 
     temp_docx_path = os.path.join(temp_dir, f'temp_contract_{contract.pk}.docx')
@@ -362,12 +419,14 @@ def generate_and_save_contract_view(request, booking_pk):
 
     try:
         soffice_path = shutil.which('soffice') or 'soffice'
+        if platform.system() == 'Windows':
+            soffice_path = r"C:\\Program Files\\LibreOffice\\program\\soffice.exe"
         subprocess.run(
             [soffice_path, '--headless', '--convert-to', 'pdf', temp_docx_path, '--outdir', temp_dir],
             check=True, timeout=15
         )
     except Exception as e:
-        messages.error(request, _("Could not convert document. (%s)") % e)
+        messages.error(request, f"{_('Could not convert document.')} ({e})")
         contract.delete()
         return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
 
@@ -595,7 +654,11 @@ def location_create_view(request):
         form = LocationCreateForm(request.POST)
         if form.is_valid():
             location = form.save()
-            send_system_notification('location_created')
+            ctx = {
+                "location": location,
+                "user": request.user,
+            }
+            send_system_notification('location_created', context_data=ctx)
             messages.success(request, _("Location created successfully!"))
             return redirect(reverse('booking_app:admin_location_list'))
     else:
@@ -1156,70 +1219,63 @@ def automation_settings_view(request):
 # ------------------------------
 
 @login_required
-def generate_and_save_contract_view(request, booking_pk):
-    booking = get_object_or_404(Booking, pk=booking_pk)
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
+def contract_template_settings_view(request):
+    settings_instance = ContractTemplateSettings.load()
 
-    contract = Contract.objects.create(booking=booking)
+    placeholders = settings_instance.placeholder_map
 
-    template_dir = os.path.join(settings.BASE_DIR, 'document_templates')
-    docx_template_path = os.path.join(template_dir, 'contract_template.docx')
-    static_pdf_path = os.path.join(template_dir, 'terms_and_conditions.pdf')
-    temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
-    os.makedirs(temp_dir, exist_ok=True)
+    if request.method == 'POST':
+        form = ContractTemplateSettingsForm(request.POST, request.FILES, instance=settings_instance)
+        if form.is_valid():
+            settings_instance = form.save()
+            send_system_notification('contract_template_settings_updated', settings=settings_instance,
+                                     user=request.user)
+            messages.success(request, _("Contract template settings updated successfully."))
+            return redirect('booking_app:contract_template_settings')
+        else:
+            try:
+                placeholders = json.loads(request.POST.get('placeholders_json', '[]'))
+            except json.JSONDecodeError:
+                placeholders = settings_instance.placeholder_map
+    else:
+        form = ContractTemplateSettingsForm(instance=settings_instance)
+        form.fields['placeholders_json'].initial = json.dumps(settings_instance.placeholder_map)
+        form.fields['remove_template'].initial = 'false'
+        form.fields['rendered_html'].initial = ''
 
-    # --- Render DOCX ---
-    doc = DocxTemplate(docx_template_path)
-    context = {'booking': booking, 'contract': contract}
-    doc.render(context)
+    template_preview_url = reverse('booking_app:contract_template_file')
+    default_template_preview_url = f"{template_preview_url}?default=1"
 
-    temp_docx_path = os.path.join(temp_dir, f'temp_contract_{contract.pk}.docx')
-    doc.save(temp_docx_path)
+    return render(
+        request,
+        'admin/admin_contract_template_settings.html',
+        {
+            'form': form,
+            'settings': settings_instance,
+            'placeholders': placeholders,
+            'template_preview_url': template_preview_url,
+            'default_template_preview_url': default_template_preview_url,
+            'page_title': _("Contract Template Settings"),
+        },
+    )
 
-    # --- Convert DOCX → PDF ---
-    try:
-        soffice_path = shutil.which('soffice') or 'soffice'
-        if platform.system() == 'Windows':
-            soffice_path = r"C:\Program Files\LibreOffice\program\soffice.exe"
+@login_required
+@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
+def contract_template_file_view(request):
+    settings_instance = ContractTemplateSettings.load()
+    use_default = request.GET.get('default') == '1'
+    if settings_instance.template and not use_default:
+        template_path = settings_instance.template.path
+    else:
+        template_path = os.path.join(settings.BASE_DIR, 'document_templates', 'contract_template.docx')
+    if not os.path.exists(template_path):
+        raise Http404("Template file not found.")
 
-        subprocess.run(
-            [soffice_path, '--headless', '--convert-to', 'pdf', temp_docx_path, '--outdir', temp_dir],
-            check=True, timeout=15
-        )
-    except Exception as e:
-        messages.error(request, f"{_('Could not convert document.')} ({e})")
-        contract.delete()
-        return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
-
-    temp_pdf_path = os.path.join(temp_dir, f'temp_contract_{contract.pk}.pdf')
-
-    # --- Merge with Terms & Conditions ---
-    merger = PdfWriter()
-    try:
-        merger.append(temp_pdf_path)
-        merger.append(static_pdf_path)
-        pdf_buffer = BytesIO()
-        merger.write(pdf_buffer)
-        pdf_buffer.seek(0)
-    finally:
-        merger.close()
-
-    # --- Save PDF ---
-    final_pdf_filename = f'contract_{contract.formatted_number}.pdf'
-    contract.file.save(final_pdf_filename, ContentFile(pdf_buffer.getvalue()), save=True)
-
-    for path in (temp_docx_path, temp_pdf_path):
-        if os.path.exists(path):
-            os.remove(path)
-
-    ctx = {
-        "booking": booking,
-        "vehicle": booking.vehicle,
-        "user": request.user,
-    }
-
-    send_system_notification('contract_generated', context_data=ctx)
-    messages.success(request, _("Contract %(number)s generated successfully.") % {"number": contract.formatted_number})
-    return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
+    return FileResponse(
+        open(template_path, 'rb'),
+        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    )
 
 
 # ------------------------------
@@ -1239,78 +1295,6 @@ def client_booking_history_view(request, tax_number):
         'bookings': bookings,
         'page_title': _(f"Booking History for {client.name} (Tax ID: {tax_number})")
     })
-
-
-@login_required
-@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
-def admin_client_list_view(request):
-    clients = Client.objects.all().order_by('name')
-    paginator = Paginator(clients, 15)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    return render(request, 'admin/admin_client_list.html', {'clients_page': page_obj, 'page_title': _("Manage Clients")})
-
-
-@login_required
-@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
-def admin_client_create_view(request):
-    if request.method == 'POST':
-        form = ClientForm(request.POST)
-        if form.is_valid():
-            client = form.save()
-            ctx={
-                "client": client,
-                "user": request.user,
-            }
-            send_system_notification('client_created', context_data=ctx)
-            messages.success(request, _("Client created successfully."))
-            return redirect('booking_app:admin_client_list')
-    else:
-        form = ClientForm()
-    return render(request, 'admin/admin_client_form.html', {'form': form, 'page_title': _("Create New Client")})
-
-
-@login_required
-@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
-def admin_client_update_view(request, pk):
-    client = get_object_or_404(Client, pk=pk)
-    if request.method == 'POST':
-        form = ClientForm(request.POST, instance=client)
-        if form.is_valid():
-            client = form.save()
-            ctx = {
-                "client": client,
-                "user": request.user,
-            }
-            send_system_notification('client_updated', context_data=ctx)
-            messages.success(request, _("Client updated successfully."))
-            return redirect('booking_app:admin_client_list')
-    else:
-        form = ClientForm(instance=client)
-    return render(request, 'admin/admin_client_form.html', {'form': form, 'page_title': _(f"Edit Client: {client.name}")})
-
-
-@login_required
-@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
-def admin_client_delete_view(request, pk):
-    client = get_object_or_404(Client, pk=pk)
-    if client.bookings.exists():
-        messages.error(request, _("This client cannot be deleted because they have existing bookings."))
-        return redirect('booking_app:admin_client_list')
-
-    if request.method == 'POST':
-        name = client.name
-        client.delete()
-        ctx={
-            "user": request.user,
-            "extra_info": {'name': name}
-        }
-        send_system_notification('client_deleted', context_data=ctx)
-        messages.success(request, _(f"Client '{name}' deleted successfully."))
-        return redirect('booking_app:admin_client_list')
-
-    return render(request, 'admin/admin_client_confirm_delete.html', {'client': client, 'page_title': _("Confirm Deletion")})
-
 
 # ------------------------------
 # Client Check / External APIs
@@ -1477,33 +1461,6 @@ def update_booking_view(request, booking_pk):
         form = BookingForm(instance=booking, vehicle=booking.vehicle)
 
     return render(request, 'update_booking.html', {'form': form, 'booking': booking})
-
-
-@login_required
-def cancel_booking_view(request, booking_pk):
-    """
-    Cancel a booking (only if user owns it and it’s not already completed/cancelled).
-    """
-    booking = get_object_or_404(Booking, pk=booking_pk, user=request.user)
-    if booking.status in ['cancelled', 'completed']:
-        messages.warning(request, _("This booking cannot be cancelled."))
-        return redirect('booking_app:my_bookings')
-
-    if request.method == 'POST':
-        booking.status = 'cancelled'
-        booking.cancelled_by = request.user
-        booking.cancellation_time = timezone.now()
-        booking.cancellation_reason = _("Cancelled by user.")
-        booking.save()
-        send_system_notification(
-            event_trigger='booking_canceled_by_user',
-            context_data={"booking":booking}
-        )
-        messages.success(request, _("Booking cancelled successfully."))
-        return redirect('booking_app:my_bookings')
-
-    return render(request, 'cancel_booking.html', {'booking': booking})
-
 
 @login_required
 def my_account_view(request):
