@@ -570,6 +570,9 @@ def vehicle_create_view(request):
             send_system_notification('vehicle_created', context_data=ctx)
             messages.success(request, _("Vehicle created successfully!"))
             return redirect(reverse('booking_app:admin_vehicle_list'))
+        else:
+            print("FORM ERRORS:", form.errors.as_json())  # 🔍 DEBUG
+            messages.error(request, _("Form is not valid. Please correct the errors."))
     else:
         form = VehicleCreateForm()
     return render(request, 'admin/admin_vehicle_create.html', {'form': form, 'page_title': _("Create New Vehicle")})
@@ -619,12 +622,43 @@ def vehicle_delete_view(request, pk):
 @login_required
 @user_passes_test(lambda u: u.is_booking_admin_member, login_url='booking_app:login_user')
 def admin_vehicle_list_view(request):
-    vehicles = Vehicle.objects.select_related('current_location').all().order_by('license_plate')
-    paginator = Paginator(vehicles, 10)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    return render(request, 'admin/admin_vehicle_list.html', {'vehicles': page_obj, 'page_title': _("Manage Vehicles")})
+    vehicles = Vehicle.objects.select_related('current_location')
 
+    filter_by = request.GET.get("filter_by")
+    filter_value = request.GET.get("filter_value")
+
+    if filter_by and filter_value:
+        if filter_by in ["license_plate", "model"]:
+            vehicles = vehicles.filter(**{f"{filter_by}__icontains": filter_value})
+        elif filter_by == "vehicle_type":
+            vehicles = vehicles.filter(vehicle_type=filter_value.upper())
+        elif filter_by == "annotated_is_available":
+            if filter_value.lower() == "yes":
+                vehicles = vehicles.filter(bookings__isnull=True)
+            elif filter_value.lower() == "no":
+                vehicles = vehicles.filter(bookings__isnull=False)
+        elif filter_by == "current_customer":
+            vehicles = vehicles.filter(bookings__client__name__icontains=filter_value)
+        elif filter_by == "current_location":
+            vehicles = vehicles.filter(current_location__name__icontains=filter_value)
+
+    # 🔑 Ensure uniqueness after JOINs
+    vehicles = vehicles.distinct().order_by("license_plate")
+
+    paginator = Paginator(vehicles, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    return render(
+        request,
+        "admin/admin_vehicle_list.html",
+        {
+            "vehicles": page_obj,
+            "page_title": _("Manage Vehicles"),
+            "current_sort": request.GET.get("sort", "license_plate"),
+            "current_dir": request.GET.get("dir", "asc"),
+        },
+    )
 
 @login_required
 @user_passes_test(lambda u: u.is_booking_admin_member, login_url='booking_app:login_user')
@@ -1695,86 +1729,102 @@ def download_vehicle_template_view(request):
     ])
     return response
 
-
 @login_required
 @user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def import_vehicles_view(request):
+    """
+    Import vehicles from a CSV file uploaded via the modal popup in the admin vehicle list.
+    Always redirects back to the admin_vehicle_list page with messages.
+    """
     if request.method == 'POST':
         form = VehicleImportForm(request.POST, request.FILES)
-        if form.is_valid():
-            csv_file = request.FILES['csv_file']
+        if not form.is_valid():
+            messages.error(request, _("Invalid form submission."))
+            return redirect('booking_app:admin_vehicle_list')
 
-            if not csv_file.name.endswith('.csv'):
-                messages.error(request, _("This is not a CSV file. Please upload a valid .csv file."))
-                return redirect('booking_app:import_vehicles')
+        csv_file = request.FILES['csv_file']
 
-            try:
-                with transaction.atomic():
-                    decoded_file = csv_file.read().decode('utf-8')
-                    io_string = io.StringIO(decoded_file)
-                    reader = csv.DictReader(io_string)
+        if not csv_file.name.endswith('.csv'):
+            messages.error(request, _("This is not a CSV file. Please upload a valid .csv file."))
+            return redirect('booking_app:admin_vehicle_list')
 
-                    vehicles_to_create = []
-                    errors = []
+        try:
+            with transaction.atomic():
+                file_bytes = csv_file.read()
+                try:
+                    decoded_file = file_bytes.decode('utf-8')
+                except UnicodeDecodeError:
+                    decoded_file = file_bytes.decode('latin-1')  # fallback for Excel exports
 
-                    for i, row in enumerate(reader, start=2):  # start=2 because of header
-                        license_plate = row.get('license_plate')
-                        if not license_plate:
-                            errors.append(f"Row {i}: Missing license_plate.")
+                io_string = io.StringIO(decoded_file)
+                reader = csv.DictReader(io_string)
+                reader.fieldnames = [name.strip().lower() for name in reader.fieldnames]
+
+                vehicles_to_create = []
+                errors = []
+
+                for i, row in enumerate(reader, start=2):  # start=2 because of header
+                    license_plate = row.get('license_plate')
+                    if not license_plate:
+                        errors.append(f"Row {i}: Missing license_plate.")
+                        continue
+
+                    vehicle_data = {
+                        'license_plate': license_plate,
+                        'model': row.get('model', 'N/A'),
+                        'vehicle_type': (row.get('vehicle_type') or '').upper(),
+                        'chassis': row.get('chassis') or '',
+                        'vehicle_km': row.get('vehicle_km') or 0,
+                        'viaverde_id': row.get('viaverde_id') or '',
+                        'is_electric': (row.get('is_electric') or '').lower() in ['true', '1', 'yes'],
+                    }
+
+                    # Validate vehicle_type
+                    valid_types = [choice[0] for choice in Vehicle.VEHICLE_TYPE_CHOICES]
+                    if vehicle_data['vehicle_type'] not in valid_types:
+                        errors.append(
+                            f"Row {i}: Invalid vehicle_type '{vehicle_data['vehicle_type']}'. "
+                            f"Must be one of {valid_types}."
+                        )
+                        continue
+
+                    # Resolve location FK by name
+                    location_name = row.get('current_location')
+                    if location_name:
+                        try:
+                            vehicle_data['current_location'] = Location.objects.get(name__iexact=location_name)
+                        except Location.DoesNotExist:
+                            errors.append(f"Row {i}: Location '{location_name}' does not exist.")
                             continue
 
-                        vehicle_data = {
-                            'license_plate': license_plate,
-                            'model': row.get('model', 'N/A'),
-                            'vehicle_type': (row.get('vehicle_type') or '').upper(),
-                            'chassis': row.get('chassis') or '',
-                            'vehicle_km': row.get('vehicle_km') or 0,
-                            'viaverde_id': row.get('viaverde_id') or '',
-                            'is_electric': (row.get('is_electric') or '').lower() in ['true', '1', 'yes'],
-                        }
+                    # Assign default picture if none is set
+                    if not vehicle_data.get('picture'):
+                        if vehicle_data['vehicle_type'] == 'HEAVY':
+                            vehicle_data['picture'] = 'Default/heavy.jpg'
+                        elif vehicle_data['vehicle_type'] == 'LIGHT':
+                            vehicle_data['picture'] = 'Default/light.jpg'
+                        else:
+                            vehicle_data['picture'] = 'Default/no_image.png'
 
-                        # Validate vehicle_type
-                        valid_types = [choice[0] for choice in Vehicle.VEHICLE_TYPE_CHOICES]
-                        if vehicle_data['vehicle_type'] not in valid_types:
-                            errors.append(
-                                f"Row {i}: Invalid vehicle_type '{vehicle_data['vehicle_type']}'. "
-                                f"Must be one of {valid_types}."
-                            )
-                            continue
+                    vehicles_to_create.append(Vehicle(**vehicle_data))
 
-                        # Resolve location FK by name
-                        location_name = row.get('current_location')
-                        if location_name:
-                            try:
-                                vehicle_data['current_location'] = Location.objects.get(name__iexact=location_name)
-                            except Location.DoesNotExist:
-                                errors.append(f"Row {i}: Location '{location_name}' does not exist.")
-                                continue
+                if errors:
+                    raise ValidationError(errors)
 
-                        vehicles_to_create.append(Vehicle(**vehicle_data))
+                Vehicle.objects.bulk_create(vehicles_to_create, ignore_conflicts=True)
+                messages.success(request, _(f"Successfully imported {len(vehicles_to_create)} vehicles."))
 
-                    if errors:
-                        raise ValidationError(errors)
+        except ValidationError as e:
+            for err in e.messages:
+                messages.error(request, err)
+        except Exception as e:
+            messages.error(request, _(f"An unexpected error occurred: {e}"))
 
-                    Vehicle.objects.bulk_create(vehicles_to_create, ignore_conflicts=True)
-                    messages.success(request, _(f"Successfully imported {len(vehicles_to_create)} vehicles."))
-                    return redirect('booking_app:admin_vehicle_list')
+        return redirect('booking_app:admin_vehicle_list')
 
-            except ValidationError as e:
-                for err in e.messages:
-                    messages.error(request, err)
-            except Exception as e:
-                messages.error(request, _(f"An unexpected error occurred: {e}"))
+    # 🚨 No GET support — this view should never render a page anymore
+    return redirect('booking_app:admin_vehicle_list')
 
-            return redirect('booking_app:import_vehicles')
-    else:
-        form = VehicleImportForm()
-
-    context = {
-        'form': form,
-        'page_title': _("Import Vehicles from CSV"),
-    }
-    return render(request, 'admin/import_vehicles.html', context)
 
 
 # ------------------------------

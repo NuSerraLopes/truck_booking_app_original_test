@@ -227,9 +227,11 @@ class UserCreateForm(forms.ModelForm):
 class VehicleCreateForm(forms.ModelForm):
     class Meta:
         model = Vehicle
-        fields = ['license_plate', 'vehicle_type', 'model', 'is_electric', 'viaverde_id', 'chassis',
-                  'picture', 'current_location', 'insurance_document', 'registration_document',
-                  'next_maintenance_date', 'vehicle_km', 'start_date', 'end_date', 'vehicle_value']
+        fields = [
+            'license_plate', 'vehicle_type', 'model', 'is_electric', 'viaverde_id', 'chassis',
+            'picture', 'current_location', 'insurance_document', 'registration_document',
+            'next_maintenance_date', 'vehicle_km', 'start_date', 'end_date', 'vehicle_value'
+        ]
         widgets = {
             'next_maintenance_date': forms.DateInput(attrs={'type': 'date'}),
             'start_date': forms.DateInput(attrs={'type': 'date'}),
@@ -237,11 +239,52 @@ class VehicleCreateForm(forms.ModelForm):
             'vehicle_value': forms.NumberInput(attrs={'step': '0.01'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from crispy_forms.helper import FormHelper
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+
+    def save(self, commit=True):
+        vehicle = super().save(commit=False)
+
+        # if no picture uploaded, assign a default based on type
+        if not vehicle.picture:
+            if vehicle.vehicle_type == "HEAVY":
+                vehicle.picture.name = "Default/heavy.jpg"
+            elif vehicle.vehicle_type == "LIGHT":
+                vehicle.picture.name = "Default/light.jpg"
+            else:
+                vehicle.picture.name = "Default/no_image.png"
+
+        if commit:
+            vehicle.save()
+            self.save_m2m()
+        return vehicle
 
 class VehicleEditForm(VehicleCreateForm):
     class Meta(VehicleCreateForm.Meta):
-        widgets = {'picture': forms.FileInput(),
-                   'next_maintenance_date': forms.DateInput(attrs={'type': 'date'})}
+        widgets = {
+            'picture': forms.FileInput(),
+            'next_maintenance_date': forms.DateInput(attrs={'type': 'date'}),
+        }
+
+    def save(self, commit=True):
+        vehicle = super(forms.ModelForm, self).save(commit=False)  # bypass VehicleCreateForm.save
+
+        # Only assign defaults if it's a brand new vehicle and no picture exists
+        if not vehicle.picture and not vehicle.pk:
+            if vehicle.vehicle_type == "HEAVY":
+                vehicle.picture.name = "Default/heavy.jpg"
+            elif vehicle.vehicle_type == "LIGHT":
+                vehicle.picture.name = "Default/light.jpg"
+            else:
+                vehicle.picture.name = "Default/no_image.png"
+
+        if commit:
+            vehicle.save()
+            self.save_m2m()
+        return vehicle
 
 
 class VehicleImportForm(forms.Form):
