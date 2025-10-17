@@ -39,7 +39,6 @@ class BootstrapCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     def __init__(self, attrs=None):
         super().__init__(attrs={'class': 'form-check-input'})
 
-
 # --- Booking Form ---
 class BookingForm(forms.ModelForm):
     client_name = forms.CharField(label=_("Client Name"))
@@ -233,9 +232,15 @@ class VehicleCreateForm(forms.ModelForm):
             'next_maintenance_date', 'vehicle_km', 'start_date', 'end_date', 'vehicle_value'
         ]
         widgets = {
-            'next_maintenance_date': forms.DateInput(attrs={'type': 'date'}),
-            'start_date': forms.DateInput(attrs={'type': 'date'}),
-            'end_date': forms.DateInput(attrs={'type': 'date'}),
+            'next_maintenance_date': forms.DateInput(
+                attrs={'class': 'datepicker', 'placeholder': 'dd/mm/yyyy'}
+            ),
+            'start_date': forms.DateInput(
+                attrs={'class': 'datepicker', 'placeholder': 'dd/mm/yyyy'}
+            ),
+            'end_date': forms.DateInput(
+                attrs={'class': 'datepicker', 'placeholder': 'dd/mm/yyyy'}
+            ),
             'vehicle_value': forms.NumberInput(attrs={'step': '0.01'}),
         }
 
@@ -262,11 +267,25 @@ class VehicleCreateForm(forms.ModelForm):
             self.save_m2m()
         return vehicle
 
-class VehicleEditForm(VehicleCreateForm):
-    class Meta(VehicleCreateForm.Meta):
+from django import forms
+from .models import Vehicle
+
+class VehicleEditForm(forms.ModelForm):
+    class Meta:
+        model = Vehicle
+        fields = "__all__"
         widgets = {
             'picture': forms.FileInput(),
-            'next_maintenance_date': forms.DateInput(attrs={'type': 'date'}),
+            'next_maintenance_date': forms.DateInput(
+                attrs={'class': 'datepicker', 'placeholder': 'dd/mm/yyyy'}
+            ),
+            'start_date': forms.DateInput(
+                attrs={'class': 'datepicker', 'placeholder': 'dd/mm/yyyy'}
+            ),
+            'end_date': forms.DateInput(
+                attrs={'class': 'datepicker', 'placeholder': 'dd/mm/yyyy'}
+            ),
+            'vehicle_value': forms.NumberInput(attrs={'step': '0.01'}),
         }
 
     def save(self, commit=True):
@@ -285,6 +304,7 @@ class VehicleEditForm(VehicleCreateForm):
             vehicle.save()
             self.save_m2m()
         return vehicle
+
 
 
 class VehicleImportForm(forms.Form):

@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load i18n %}
 {% load crispy_forms_tags %}
+{% load static %}
 
 {% block title %}{% translate "Create New Vehicle" %}{% endblock %}
 
@@ -29,11 +30,32 @@
 {% endblock %}
 
 {% block scripts %}
+<link rel="stylesheet" href="{% static 'css/flatpickr.min.css' %}">
+<script src="{% static 'js/flatpickr.min.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Enable flatpickr on all datepicker fields
+    flatpickr(".datepicker", {
+        dateFormat: "d/m/Y",  // dd/mm/yyyy
+        allowInput: true,
+        altInput: true,
+        altFormat: "d/m/Y",
+        disableMobile: true,
+        onReady: function(selectedDates, dateStr, instance) {
+            instance._input.addEventListener("input", function(e) {
+                let v = this.value.replace(/\D/g, ""); // digits only
+                if (v.length >= 2 && v.length <= 4) {
+                    v = v.slice(0,2) + "/" + v.slice(2);
+                }
+                if (v.length > 4) {
+                    v = v.slice(0,2) + "/" + v.slice(2,4) + "/" + v.slice(4,8);
+                }
+                this.value = v;
+            });
+        }
+    });
+
     const vehicleTypeSelect = document.getElementById('id_vehicle_type');
-    // Note: The field name is 'next_maintenance_date', but Crispy wraps it.
-    // We select the parent div that Crispy Forms creates.
     const maintenanceDateDiv = document.querySelector('#div_id_next_maintenance_date');
 
     function toggleMaintenanceField() {
@@ -44,10 +66,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Run on page load
     toggleMaintenanceField();
-
-    // Run whenever the vehicle type is changed
     vehicleTypeSelect.addEventListener('change', toggleMaintenanceField);
 });
 </script>

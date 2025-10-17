@@ -127,7 +127,6 @@ LANGUAGE_CODE = 'pt-pt'
 TIME_ZONE = 'Europe/Lisbon'
 
 USE_I18N = True
-USE_L10N = True
 
 USE_TZ = True
 
@@ -160,10 +159,6 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Default datetime format for templates when using |date:"FORMAT" filter
-# This ensures consistent display of date/time across your application
-DATETIME_FORMAT = "Y-m-d H:i"
-
 # Authentication Redirect URLs
 # The URL name to redirect to after a user logs in successfully
 LOGIN_REDIRECT_URL = 'booking_app:vehicle_list'
@@ -194,7 +189,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-APP_VERSION = 'v0.17.6'
+APP_VERSION = 'v0.17.7'
 APP_UPDATE_DATE = date(2025, 10, 17)
 
 IMPERSONATE_PERMISSIONS = 'impersonate.permissions.staff'
@@ -257,3 +252,17 @@ USE_X_FORWARDED_HOST = True
 # Sessions expire after 1 day (in seconds)
 SESSION_COOKIE_AGE = 86400
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+
+# Set default input/output formats
+DATE_FORMAT = "d/m/Y"           # How Django displays dates
+DATETIME_FORMAT = "d/m/Y H:i"   # Optional for date+time
+SHORT_DATE_FORMAT = "d/m/Y"     # Used in admin etc.
+
+# Accepted input formats (forms, admin, serializers)
+DATE_INPUT_FORMATS = [
+    "%d/%m/%Y",  # Flatpickr format
+    "%Y-%m-%d",  # fallback ISO
+]
+
+# Localization settings
+USE_L10N = False

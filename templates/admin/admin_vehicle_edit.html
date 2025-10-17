@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load static %}
 {% load i18n %}
 {% load crispy_forms_tags %}
 
@@ -52,26 +53,32 @@
 {% endblock %}
 
 {% block scripts %}
+<link rel="stylesheet" href="{% static 'css/flatpickr.min.css' %}">
+<script src="{% static 'js/flatpickr.min.js' %}"></script>
+<script src="{% static 'js/flatpickr.min.js' %}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const vehicleTypeSelect = document.getElementById('id_vehicle_type');
-    // Note: The field name is 'next_maintenance_date', but Crispy wraps it.
-    // We select the parent div that Crispy Forms creates.
-    const maintenanceDateDiv = document.querySelector('#div_id_next_maintenance_date');
+    flatpickr(".datepicker", {
+        dateFormat: "d/m/Y",   // dd/mm/yyyy
+        allowInput: true,      // allow manual typing
+        altInput: true,        // shows pretty formatted input
+        altFormat: "d/m/Y",    // what user sees
+        disableMobile: true,   // force Flatpickr on mobile too
 
-    function toggleMaintenanceField() {
-        if (vehicleTypeSelect.value === 'APV') {
-            maintenanceDateDiv.style.display = 'block';
-        } else {
-            maintenanceDateDiv.style.display = 'none';
+        // Hook into key presses to auto-add slashes
+        onReady: function(selectedDates, dateStr, instance) {
+            instance._input.addEventListener("input", function(e) {
+                let v = this.value.replace(/\D/g, ""); // only digits
+                if (v.length >= 2 && v.length <= 4) {
+                    v = v.slice(0,2) + "/" + v.slice(2);
+                }
+                if (v.length > 4) {
+                    v = v.slice(0,2) + "/" + v.slice(2,4) + "/" + v.slice(4,8);
+                }
+                this.value = v;
+            });
         }
-    }
-
-    // Run on page load
-    toggleMaintenanceField();
-
-    // Run whenever the vehicle type is changed
-    vehicleTypeSelect.addEventListener('change', toggleMaintenanceField);
+    });
 });
 </script>
 {% endblock scripts %}
