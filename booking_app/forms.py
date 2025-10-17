@@ -289,7 +289,7 @@ class VehicleEditForm(forms.ModelForm):
         }
 
     def save(self, commit=True):
-        vehicle = super(forms.ModelForm, self).save(commit=False)  # bypass VehicleCreateForm.save
+        vehicle = super().save(commit=False)  # bypass VehicleCreateForm.save
 
         # Only assign defaults if it's a brand new vehicle and no picture exists
         if not vehicle.picture and not vehicle.pk:
