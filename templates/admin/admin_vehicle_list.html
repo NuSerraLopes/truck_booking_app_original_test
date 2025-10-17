@@ -90,8 +90,12 @@
                                 <td>{{ vehicle.model }}</td>
                                 <td>{{ vehicle.get_vehicle_type_display }}</td>
                                 <td>
-                                    {% if vehicle.annotated_is_available %}
+                                    {% if vehicle.is_available_now %}
                                         <span class="badge bg-success">Yes</span>
+                                    {% elif vehicle.next_available_start %}
+                                        <span class="badge bg-info text-dark">
+                                            Next: {{ vehicle.next_available_start|date:"d/m/Y" }}
+                                        </span>
                                     {% else %}
                                         <span class="badge bg-danger">No</span>
                                     {% endif %}

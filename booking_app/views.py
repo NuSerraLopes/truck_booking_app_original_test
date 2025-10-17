@@ -593,6 +593,8 @@ def vehicle_edit_view(request, pk):
             send_system_notification('vehicle_updated', context_data=ctx)
             messages.success(request, _("Vehicle updated successfully!"))
             return redirect('booking_app:admin_vehicle_list')
+        else:
+            print(form.errors)
     else:
         form = VehicleEditForm(instance=vehicle)
     return render(request, 'admin/admin_vehicle_edit.html', {'form': form, 'vehicle': vehicle})
@@ -648,12 +650,23 @@ def admin_vehicle_list_view(request):
         elif filter_by == "current_location":
             vehicles = vehicles.filter(current_location__name__icontains=filter_value)
 
-    # 🔑 Ensure uniqueness after JOINs
     vehicles = vehicles.distinct().order_by("license_plate")
 
     paginator = Paginator(vehicles, 10)
     page_number = request.GET.get("page")
     page_obj = paginator.get_page(page_number)
+
+    # annotate each vehicle with availability slot
+    tomorrow = date.today() + timedelta(days=1)
+    for v in page_obj:
+        slots = v.get_availability_slots()
+        v.is_available_now = False
+        v.next_available_start = None
+        if slots:
+            first_slot = slots[0]
+            if first_slot['start'] and first_slot['start'] <= tomorrow:
+                v.is_available_now = True
+            v.next_available_start = first_slot['start']
 
     return render(
         request,
@@ -663,6 +676,7 @@ def admin_vehicle_list_view(request):
             "page_title": _("Manage Vehicles"),
             "current_sort": request.GET.get("sort", "license_plate"),
             "current_dir": request.GET.get("dir", "asc"),
+            "tomorrow": tomorrow,
         },
     )
 

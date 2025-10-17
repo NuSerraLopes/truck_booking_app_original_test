@@ -267,8 +267,6 @@ class VehicleCreateForm(forms.ModelForm):
             self.save_m2m()
         return vehicle
 
-from django import forms
-from .models import Vehicle
 
 class VehicleEditForm(forms.ModelForm):
     class Meta:
@@ -277,19 +275,27 @@ class VehicleEditForm(forms.ModelForm):
         widgets = {
             'picture': forms.FileInput(),
             'next_maintenance_date': forms.DateInput(
+                format='%d/%m/%Y',
                 attrs={'class': 'datepicker', 'placeholder': 'dd/mm/yyyy'}
             ),
             'start_date': forms.DateInput(
+                format='%d/%m/%Y',
                 attrs={'class': 'datepicker', 'placeholder': 'dd/mm/yyyy'}
             ),
             'end_date': forms.DateInput(
+                format='%d/%m/%Y',
                 attrs={'class': 'datepicker', 'placeholder': 'dd/mm/yyyy'}
             ),
             'vehicle_value': forms.NumberInput(attrs={'step': '0.01'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False   # 👈 prevents nested form tags
+
     def save(self, commit=True):
-        vehicle = super().save(commit=False)  # bypass VehicleCreateForm.save
+        vehicle = super().save(commit=False)
 
         # Only assign defaults if it's a brand new vehicle and no picture exists
         if not vehicle.picture and not vehicle.pk:

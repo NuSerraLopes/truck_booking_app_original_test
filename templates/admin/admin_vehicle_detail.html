@@ -92,6 +92,11 @@
                         </li>
 
                         <li class="list-group-item px-0 d-flex justify-content-between">
+                            <strong>{% translate "Active Until" %}:</strong>
+                            <span>{{ vehicle.end_date|default:_("Not Set") }}</span>
+                        </li>
+
+                        <li class="list-group-item px-0 d-flex justify-content-between">
                             <strong>{% translate "Current Location" %}:</strong>
                             <span>{{ vehicle.current_location.name|default:_("Not Set") }}</span>
                         </li>
