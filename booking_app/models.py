@@ -366,7 +366,7 @@ class EmailTemplate(models.Model):
         ('Automated Notifications', (
             ('booking_reminder_7_days', _('Booking Reminder (7 Days Away)')),
             ('booking_auto_cancelled', _('Booking Auto-Cancelled (Unapproved)')),
-            ('automation_settings_updated', _('BAutomation Settings Updated')),
+            ('automation_settings_updated', _('Automation Settings Updated')),
         )),
         ('Account Events', (
             ('user_created', _('New User Account Created')),

@@ -2,14 +2,14 @@
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-# 
+#
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2025-10-08 17:25+0100\n"
-"PO-Revision-Date: 2025-10-01 14:50+0100\n"
+"POT-Creation-Date: 2025-10-17 17:23+0100\n"
+"PO-Revision-Date: 2025-10-17 17:53+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: pt\n"
@@ -21,7 +21,7 @@ msgstr ""
 
 #: booking_app/admin.py:60
 msgid "A user with that email already exists."
-msgstr "Já existe um utilizador com esse email."
+msgstr "Já existe um utilizador com esse e-mail."
 
 #: booking_app/admin.py:80
 #, python-brace-format
@@ -29,12 +29,12 @@ msgid ""
 "User '{user.username}' created with temporary password: '{random_password}'. "
 "They will be required to change it on first login."
 msgstr ""
-"Utilizador '{user.username}' criado com password temporária: "
-"'{random_password}'. Será necessário alterá-la no primeiro login."
+"Utilizador '{user.username}' criado com palavra-passe temporária: "
+"'{random_password}'. Será necessário alterá-la no primeiro sessão."
 
 #: booking_app/admin.py:84
 msgid "The two password fields didn't match."
-msgstr "As duas passwords não coincidem."
+msgstr "As duas palavra-passes não coincidem."
 
 #: booking_app/admin.py:112
 msgid "Personal info"
@@ -48,48 +48,48 @@ msgstr "Permissões"
 msgid "Important dates"
 msgstr "Datas Importantes"
 
-#: booking_app/forms.py:31 templates/booking_detail.html:94
+#: booking_app/forms.py:44 templates/booking_detail.html:94
 #: templates/group_booking_detail.html:57 templates/group_dashboard.html:44
 msgid "Client Name"
 msgstr "Nome do Cliente"
 
-#: booking_app/forms.py:32
+#: booking_app/forms.py:45
 msgid "Client Tax Number"
 msgstr "Número de Contribuinte do Cliente"
 
-#: booking_app/forms.py:33
+#: booking_app/forms.py:46
 msgid "Client Address"
 msgstr "Morada do Cliente"
 
-#: booking_app/forms.py:34 templates/booking_detail.html:98
+#: booking_app/forms.py:47 templates/booking_detail.html:98
 #: templates/group_booking_detail.html:58
 msgid "Client Email"
-msgstr "Email do Cliente"
+msgstr "E-mail do Cliente"
 
-#: booking_app/forms.py:35 templates/booking_detail.html:102
+#: booking_app/forms.py:48 templates/booking_detail.html:102
 #: templates/group_booking_detail.html:59
 msgid "Client Phone"
 msgstr "Telefone do Cliente"
 
-#: booking_app/forms.py:36
+#: booking_app/forms.py:49
 msgid "Client CRC"
 msgstr "CRC do Cliente"
 
-#: booking_app/forms.py:111
+#: booking_app/forms.py:124
 msgid "Submit Booking Request"
 msgstr "Submeter Pedido de Reserva"
 
-#: booking_app/forms.py:124
+#: booking_app/forms.py:137
 msgid "Please provide either a Client Email or a Client Phone Number."
 msgstr ""
-"Por favor, forneça pelo menos um método de contacto: um endereço de email ou "
+"Por favor, forneça pelo menos um método de contacto: um morada de e-mail ou "
 "um número de telefone."
 
-#: booking_app/forms.py:132
+#: booking_app/forms.py:145
 msgid "End date must be after start date."
 msgstr "A data de fim deve ser posterior à data de início."
 
-#: booking_app/forms.py:149
+#: booking_app/forms.py:162
 #, python-format
 msgid ""
 "The selected date range conflicts with an existing booking (ID: "
@@ -98,11 +98,11 @@ msgstr ""
 "O intervalo de datas selecionado entra em conflito com uma reserva existente "
 "(ID: %(booking_id)s) para este veículo de %(start)s a %(end)s."
 
-#: booking_app/forms.py:158
+#: booking_app/forms.py:171
 msgid "This field is required for APV bookings."
 msgstr "Este campo é obrigatório para reservas APV."
 
-#: booking_app/forms.py:163
+#: booking_app/forms.py:176
 #, python-format
 msgid ""
 "Final kilometers (%(final)s) must be greater than the initial kilometers "
@@ -111,60 +111,66 @@ msgstr ""
 "Os quilómetros finais (%(final)s) devem ser superiores aos quilómetros "
 "iniciais (%(initial)s)."
 
-#: booking_app/forms.py:191
-#, fuzzy
-#| msgid "Start date cannot be in the past."
+#: booking_app/forms.py:204
 msgid "Booking date cannot be today or in the past."
-msgstr "A data de início não pode ser no passado."
+msgstr "A data de início não pode ser hoje ou no passado."
 
-#: booking_app/forms.py:193
-#, fuzzy
-#| msgid "Bookings cannot start on a weekend. Please select a business day."
+#: booking_app/forms.py:206
 msgid "Bookings cannot start on a weekend."
-msgstr ""
-"As reservas não podem começar num fim de semana. Selecione um dia útil."
+msgstr "As reservas não podem começar num fim de semana."
 
-#: booking_app/forms.py:234
+#: booking_app/forms.py:317
 msgid "Upload CSV File"
 msgstr "Enviar arquivo CSV"
 
-#: booking_app/forms.py:235
+#: booking_app/forms.py:318
 msgid "The file must be in CSV format with the correct headers."
 msgstr "O arquivo deve estar no formato CSV com os cabeçalhos corretos."
 
-#: booking_app/forms.py:256
+#: booking_app/forms.py:339
 msgid "Group Members"
 msgstr "Membros do Grupo"
 
-#: booking_app/forms.py:291
+#: booking_app/forms.py:389
+#, python-format
+msgid "Invalid placeholder data: %(error)s"
+msgstr "Espaço reservado com dados errados: %(error)s"
+
+#: booking_app/forms.py:397
+msgid "Placeholder entries require both a handle and a data path."
+msgstr ""
+"As entradas de espaço reservado exigem um identificador e um caminho de "
+"dados."
+
+#: booking_app/forms.py:446
 msgid "Filter by Status"
 msgstr "Filtrar por estado"
 
-#: booking_app/forms.py:299
+#: booking_app/forms.py:454
 msgid "All Actionable"
 msgstr "Tudo acionável"
 
-#: booking_app/forms.py:299
+#: booking_app/forms.py:454
 msgid "Pending Approval"
 msgstr "Aguardando aprovação"
 
-#: booking_app/forms.py:300 booking_app/models.py:234
+#: booking_app/forms.py:455 booking_app/models.py:240
 msgid "Pending Contract"
 msgstr "Pendente de Contrato"
 
-#: booking_app/forms.py:300
+#: booking_app/forms.py:455
 msgid "Confirmed / Upcoming"
 msgstr "Confirmado / Próximo"
 
-#: booking_app/forms.py:301 booking_app/models.py:237
+#: booking_app/forms.py:456 booking_app/models.py:243
 msgid "Completed"
 msgstr "Concluído"
 
-#: booking_app/forms.py:301 booking_app/models.py:238
+#: booking_app/forms.py:456 booking_app/models.py:244
 msgid "Cancelled"
 msgstr "Cancelado"
 
-#: booking_app/forms.py:302 booking_app/models.py:236
+#: booking_app/forms.py:457 booking_app/models.py:242
 msgid "Pending Final KM"
 msgstr "Pendente KM final"
 
@@ -182,15 +188,15 @@ msgstr "Utilizador Inactivo"
 msgid "Inactive Users"
 msgstr "Utilizadores Inactivos"
 
-#: booking_app/models.py:86
+#: booking_app/models.py:86 templates/admin/admin_vehicle_list.html:39
 msgid "Heavy"
 msgstr "Heavy"
 
-#: booking_app/models.py:87
+#: booking_app/models.py:87 templates/admin/admin_vehicle_list.html:40
 msgid "Light"
 msgstr "Light"
 
-#: booking_app/models.py:88
+#: booking_app/models.py:88 templates/admin/admin_vehicle_list.html:41
 msgid "APV"
 msgstr "APV"
 
@@ -215,8 +221,6 @@ msgid "The Model of the vehicle."
 msgstr "O nome do modelo do veículo."
 
 #: booking_app/models.py:107
-#, fuzzy
-#| msgid "Is Vehicle Eletric."
 msgid "Is Vehicle Electric."
 msgstr "É Veículo elétrico."
 
@@ -237,8 +241,7 @@ msgstr "Número do Chassis"
 msgid "The unique chassis number of the vehicle."
 msgstr "O Número do Chassis unico do veículo."
 
-#: booking_app/models.py:123 templates/admin/admin_vehicle_list.html:44
-#: templates/vehicle_list.html:19
+#: booking_app/models.py:123 templates/vehicle_list.html:19
 msgid "Picture"
 msgstr "Fotografia"
 
@@ -264,7 +267,7 @@ msgstr "Registo"
 msgid "Upload the vehicle's registration document (PDF, DOCX, etc.)."
 msgstr "Carregue o documento de registo do veículo (PDF, DOCX, etc.)."
 
-#: booking_app/models.py:138 templates/admin/admin_vehicle_detail.html:95
+#: booking_app/models.py:138 templates/admin/admin_vehicle_detail.html:100
 #: templates/vehicle_detail.html:98
 msgid "Current Location"
 msgstr "Localização Atual"
@@ -287,126 +290,124 @@ msgstr "Disponível a Partir de"
 
 #: booking_app/models.py:149
 msgid "Date from which the vehicle can be booked."
-msgstr ""
+msgstr "Data a partir da qual o veículo pode ser reservado."
 
 #: booking_app/models.py:152
-#, fuzzy
-#| msgid "Available"
 msgid "Available Until"
-msgstr "Disponível"
+msgstr "Disponível até"
 
 #: booking_app/models.py:153
 msgid "Last date the vehicle can be booked."
-msgstr ""
+msgstr "Última data em que o veículo pode ser reservado."
 
 #: booking_app/models.py:156
-#, fuzzy
-#| msgid "Vehicle Fleet"
+msgid "Is vehicle active?"
+msgstr "Veiculo está ativo?"
+
+#: booking_app/models.py:159
 msgid "Vehicle Value"
-msgstr "Frota Veiculos"
+msgstr "Valor do veiculo"
 
-#: booking_app/models.py:158
+#: booking_app/models.py:161
 msgid "Estimated value of the vehicle (for reference/insurance)."
-msgstr ""
+msgstr "Valor estimado do veículo (para referência/seguro)."
 
-#: booking_app/models.py:213 templates/admin/admin_client_list.html:20
+#: booking_app/models.py:219 templates/admin/admin_client_list.html:20
 #: templates/client_booking_history.html:13
 msgid "Tax Number"
 msgstr "Número de Contribuinte (NIF)"
 
-#: booking_app/models.py:214 templates/admin/admin_inactive_user_list.html:22
+#: booking_app/models.py:220 templates/admin/admin_inactive_user_list.html:22
 #: templates/admin/admin_user_list.html:37
 msgid "Full Name"
 msgstr "Nome Completo"
 
-#: booking_app/models.py:215 templates/client_booking_history.html:14
+#: booking_app/models.py:221 templates/client_booking_history.html:14
 msgid "Address"
 msgstr "Morada"
 
-#: booking_app/models.py:216
+#: booking_app/models.py:222
 msgid "Email Address"
-msgstr "Endereço de email"
+msgstr "Endereço de e-mail"
 
-#: booking_app/models.py:217 templates/my_account.html:27
+#: booking_app/models.py:223 templates/my_account.html:27
 msgid "Phone Number"
 msgstr "Número de Telefone"
 
-#: booking_app/models.py:218
-#, fuzzy
-#| msgid "Permanent registration certificate code"
+#: booking_app/models.py:224
 msgid "Permanent Registration Number"
 msgstr "Certidão permanente de cliente"
 
-#: booking_app/models.py:224 booking_app/models.py:247
-#: templates/admin/admin_vehicle_detail.html:133
+#: booking_app/models.py:230 booking_app/models.py:253
+#: templates/admin/admin_vehicle_detail.html:138
 msgid "Client"
 msgstr "Cliente"
 
-#: booking_app/models.py:225
+#: booking_app/models.py:231
 msgid "Clients"
 msgstr "Clientes"
 
-#: booking_app/models.py:233 templates/booking_detail.html:83
+#: booking_app/models.py:239 templates/booking_detail.html:83
 msgid "Pending"
 msgstr "Pendente"
 
-#: booking_app/models.py:235
+#: booking_app/models.py:241
 msgid "Confirmed"
 msgstr "Confirmado"
 
-#: booking_app/models.py:261
+#: booking_app/models.py:267
 msgid "Booking Status"
 msgstr "Estado da Reserva"
 
-#: booking_app/models.py:269
+#: booking_app/models.py:275
 msgid "Cancelled By"
 msgstr "Cancelado por"
 
-#: booking_app/models.py:271
+#: booking_app/models.py:277
 msgid "Cancellation Reason"
 msgstr "Motivo do cancelamento"
 
-#: booking_app/models.py:272
+#: booking_app/models.py:278
 msgid "Cancellation Time"
 msgstr "Hora de cancelamento"
 
-#: booking_app/models.py:276
+#: booking_app/models.py:282
 msgid "Initial Kilometers"
 msgstr "Quilómetros iniciais"
 
-#: booking_app/models.py:279
+#: booking_app/models.py:285
 msgid "The vehicle's kilometers at the start of the booking."
 msgstr "Os quilómetros do veículo no início da reserva."
 
-#: booking_app/models.py:282
+#: booking_app/models.py:288
 msgid "Final Kilometers"
 msgstr "Quilómetros finais"
 
-#: booking_app/models.py:285
+#: booking_app/models.py:291
 msgid "The vehicle's kilometers at the end of the booking."
 msgstr "Os quilómetros do veículo no final da reserva."
 
-#: booking_app/models.py:288 templates/group_dashboard.html:46
+#: booking_app/models.py:294 templates/group_dashboard.html:46
 msgid "Motive"
 msgstr "Motivo"
 
-#: booking_app/models.py:290
+#: booking_app/models.py:296
 msgid "Required only for APV vehicle bookings."
 msgstr "Necessário apenas para reservas de veículos APV."
 
-#: booking_app/models.py:293
+#: booking_app/models.py:299
 msgid "Created At"
 msgstr "Criado em"
 
-#: booking_app/models.py:295
+#: booking_app/models.py:301
 msgid "The date and time the booking was created."
 msgstr "A data e a hora em que a reserva foi criada."
 
-#: booking_app/models.py:298
+#: booking_app/models.py:304
 msgid "Transport Required Before Booking"
 msgstr "Transporte necessário antes da reserva"
 
-#: booking_app/models.py:300
+#: booking_app/models.py:306
 msgid ""
 "Indicates if the vehicle needs to be moved from a different location before "
 "this booking can start."
@@ -414,16 +415,15 @@ msgstr ""
 "Indica se o veículo precisa ser movido de um local diferente antes que esta "
 "reserva possa começar."
 
-#: booking_app/models.py:310
+#: booking_app/models.py:316
 msgid "On Going"
 msgstr "Em curso"
 
-#: booking_app/models.py:321 booking_app/views.py:1303
-#: booking_app/views.py:1320 templates/admin/admin_user_list.html:48
-#: templates/admin/admin_vehicle_list.html:103
-#: templates/admin/admin_vehicle_list.html:106 templates/booking_detail.html:99
-#: templates/booking_detail.html:103 templates/booking_detail.html:111
-#: templates/booking_detail.html:163 templates/booking_detail.html:173
+#: booking_app/models.py:327 booking_app/views.py:1451
+#: booking_app/views.py:1468 templates/admin/admin_user_list.html:48
+#: templates/booking_detail.html:99 templates/booking_detail.html:103
+#: templates/booking_detail.html:111 templates/booking_detail.html:163
+#: templates/booking_detail.html:173
 #: templates/emails/booking_cancellation_notification.html:37
 #: templates/emails/booking_confirmation.html:37
 #: templates/emails/booking_update_notification.html:37
@@ -436,560 +436,579 @@ msgstr "Em curso"
 msgid "N/A"
 msgstr "N/D"
 
-#: booking_app/models.py:326
+#: booking_app/models.py:332
 msgid "Booking"
 msgstr "Reserva"
 
-#: booking_app/models.py:327 templates/client_booking_history.html:17
+#: booking_app/models.py:333 templates/client_booking_history.html:17
 #: templates/group_dashboard.html:35 templates/group_reports.html:104
 msgid "Bookings"
 msgstr "Reservas"
 
-#: booking_app/models.py:333
+#: booking_app/models.py:339
 msgid "New LIGHT Vehicle Booking Created"
 msgstr "Nova reserva de veículo LIGHT criada"
 
-#: booking_app/models.py:334
+#: booking_app/models.py:340
 msgid "New HEAVY Vehicle Booking Created"
 msgstr "Nova reserva de veículo HEAVY criada"
 
-#: booking_app/models.py:335
+#: booking_app/models.py:341
 msgid "New APV Vehicle Booking Created"
 msgstr "Nova reserva de veículo APV criada"
 
-#: booking_app/models.py:336
+#: booking_app/models.py:342
+msgid "New Contract Generated"
+msgstr "Novo contrato gerado"
+
+#: booking_app/models.py:343
 msgid "LIGHT Booking Reverted to Pending"
 msgstr "Reserva LIGHT revertida para pendente"
 
-#: booking_app/models.py:337
+#: booking_app/models.py:344
 msgid "HEAVY Booking Reverted to Pending"
 msgstr "Reserva HEAVY revertida para pendente"
 
-#: booking_app/models.py:338
+#: booking_app/models.py:345
 msgid "APV Booking Reverted to Pending"
 msgstr "Reserva APV revertida para pendente"
 
-#: booking_app/models.py:339
+#: booking_app/models.py:346
 msgid "Booking Canceled by Manager"
 msgstr "Reserva cancelada pelo Manager"
 
-#: booking_app/models.py:340
+#: booking_app/models.py:347
 msgid "Booking Canceled by User"
 msgstr "Reserva cancelada pelo utilizador"
 
-#: booking_app/models.py:341
+#: booking_app/models.py:348
 msgid "Booking Completed"
 msgstr "Reserva Concluída"
 
-#: booking_app/models.py:342
+#: booking_app/models.py:349
 msgid "Booking Pending Reminder"
 msgstr "Lembrete de reserva pendente"
 
-#: booking_app/models.py:343
-#, fuzzy
-#| msgid "Transport Required"
+#: booking_app/models.py:350
 msgid "Booking Transport is required"
 msgstr "Transporte necessário"
 
-#: booking_app/models.py:344
+#: booking_app/models.py:351
 msgid "Booking Transport Status Changed"
 msgstr "Estado de transporte da reserva alterou"
 
-#: booking_app/models.py:345
+#: booking_app/models.py:352
 msgid "Booking Ended Pending KM"
 msgstr "Pendente KM final"
 
-#: booking_app/models.py:348
+#: booking_app/models.py:355
 msgid "Booking Approved"
 msgstr "Reserva aprovada"
 
-#: booking_app/models.py:349
+#: booking_app/models.py:356
 msgid "APV Booking Approved"
 msgstr "Reserva APV aprovada"
 
-#: booking_app/models.py:350
-msgid "Send User Credentials"
-msgstr "Enviar credenciais de utilizador"
-
-#: booking_app/models.py:351 templates/admin/admin_user_edit.html:41
-msgid "Send Temporary Password"
-msgstr "Enviar palavra-passe temporária"
-
-#: booking_app/models.py:354
-msgid "Booking Reminder (7 Days Away)"
-msgstr "Lembrente de reserva (A 7 dias)"
-
-#: booking_app/models.py:355
-msgid "Booking Auto-Cancelled (Unapproved)"
-msgstr "Reserva cancelada cancelada automaticamente (Não aprovada)"
-
-#: booking_app/models.py:358
-msgid "New User Account Created"
-msgstr "Nova conta de utilizador criada"
-
 #: booking_app/models.py:359
+msgid "User Sessions Terminated"
+msgstr "Sessões de utilizadores encerradas"
+
+#: booking_app/models.py:360
+msgid "All Sessions Terminated"
+msgstr "Todas as sessões encerradas"
+
+#: booking_app/models.py:361
+msgid "User Current Session Terminated"
+msgstr "Sessão atual do utilizador encerrada"
+
+#: booking_app/models.py:362
 msgid "User Password Was Reset"
 msgstr "A palavra-passe do utilizador foi redefinida"
 
-#: booking_app/models.py:362
+#: booking_app/models.py:363
+msgid "Send User Credentials"
+msgstr "Enviar credenciais de utilizador"
+
+#: booking_app/models.py:364 templates/admin/admin_user_edit.html:41
+msgid "Send Temporary Password"
+msgstr "Enviar palavra-passe temporária"
+
+#: booking_app/models.py:367
+msgid "Booking Reminder (7 Days Away)"
+msgstr "Lembrente de reserva (A 7 dias)"
+
+#: booking_app/models.py:368
+msgid "Booking Auto-Cancelled (Unapproved)"
+msgstr "Reserva cancelada cancelada automaticamente (Não aprovada)"
+
+#: booking_app/models.py:369
+msgid "Automation Settings Updated"
+msgstr "Definições automatização atualizada"
+
+#: booking_app/models.py:372
+msgid "New User Account Created"
+msgstr "Nova conta de utilizador criada"
+
+#: booking_app/models.py:373
+msgid "User Updated"
+msgstr "Utilizador atualizado"
+
+#: booking_app/models.py:374
+msgid "Group Created"
+msgstr "Grupo criado"
+
+#: booking_app/models.py:375
+msgid "Group Updated"
+msgstr "Grupo atualizado"
+
+#: booking_app/models.py:376
+msgid "Group Deleted"
+msgstr "Grupo apagado"
+
+#: booking_app/models.py:377
+msgid "User Deactivated"
+msgstr "Utilizador desactivado"
+
+#: booking_app/models.py:378
+msgid "User Reactivated"
+msgstr "Utilizador reactivado"
+
+#: booking_app/models.py:381
 msgid "Vehicle Created"
 msgstr "Veículo Criado"
 
-#: booking_app/models.py:363
+#: booking_app/models.py:382
 msgid "Vehicle Updated"
 msgstr "Veículo Actualizado"
 
-#: booking_app/models.py:364
-msgid "Vehicle Deleted"
-msgstr "Veículo Removido"
+#: booking_app/models.py:383
+msgid "Vehicle Deactivated"
+msgstr "Veículo desactivado"
 
-#: booking_app/models.py:367
+#: booking_app/models.py:384
+msgid "Vehicles Deactivated Automatically"
+msgstr "Veículo desactivado automaticamente"
+
+#: booking_app/models.py:387
 msgid "Location Created"
 msgstr "Localização Criada"
 
-#: booking_app/models.py:368
+#: booking_app/models.py:388
 msgid "Location Updated"
 msgstr "Localização Actualizada"
 
-#: booking_app/models.py:369
+#: booking_app/models.py:389
 msgid "Location Deleted"
 msgstr "Localização Removida"
 
-#: booking_app/views.py:109
+#: booking_app/models.py:392
+msgid "Client Created"
+msgstr "Cliente criado"
+
+#: booking_app/models.py:393
+msgid "Client Updated"
+msgstr "Cliente actualizado"
+
+#: booking_app/models.py:394
+msgid "Client Deleted"
+msgstr "Cliente Apagado"
+
+#: booking_app/models.py:397
+msgid "Distribution List Created"
+msgstr "Lista de distribuição Criada"
+
+#: booking_app/models.py:398
+msgid "Distribution List Updated"
+msgstr "Lista de distribuição Actualizada"
+
+#: booking_app/models.py:399
+msgid "Distribution List Deleted"
+msgstr "Lista de distribuição eliminada"
+
+#: booking_app/views.py:145
 msgid "For your security, you must change your password before proceeding."
 msgstr ""
 "Para sua segurança, deve alterar a sua palavra-passe antes de prosseguir."
 
-#: booking_app/views.py:115
-#, fuzzy, python-format
-#| msgid "You are now logged in as {username}."
+#: booking_app/views.py:151
+#, python-format
 msgid "You are now logged in as %(username)s."
-msgstr "Iniciou sessão como {username}."
+msgstr "Iniciou sessão como %(username)s."
 
-#: booking_app/views.py:119
+#: booking_app/views.py:155
 msgid "Invalid username or password."
-msgstr "Nome de utilizador ou password inválidos."
+msgstr "Nome de utilizador ou palavra-passe inválidos."
 
-#: booking_app/views.py:129
+#: booking_app/views.py:165
 msgid "You have successfully logged out."
 msgstr "Terminou a sessão com sucesso."
 
-#: booking_app/views.py:152
+#: booking_app/views.py:188
 msgid "Form is not valid. Please check the errors."
 msgstr "O formulário não é válido. Verifique os erros."
 
-#: booking_app/views.py:238
+#: booking_app/views.py:274
 msgid "Please resolve the client data conflict below."
 msgstr "Resolva o conflito de dados do cliente abaixo."
 
-#: booking_app/views.py:278
+#: booking_app/views.py:319
 msgid "Your booking request has been submitted successfully!"
 msgstr "O seu pedido de reserva foi submetido com sucesso!"
 
-#: booking_app/views.py:283
+#: booking_app/views.py:324
 msgid "Booking has been updated successfully."
 msgstr "A reserva foi atualizada com sucesso."
 
-#: booking_app/views.py:296
+#: booking_app/views.py:337
 msgid "An unknown error occurred. Could not determine a client to save."
 msgstr ""
 "Ocorreu um erro desconhecido. Não foi possível determinar um cliente para "
 "guardar."
 
-#: booking_app/views.py:323 booking_app/views.py:1379
+#: booking_app/views.py:364
 msgid "This booking cannot be cancelled."
 msgstr "Esta reserva não pode ser cancelada."
 
-#: booking_app/views.py:329 booking_app/views.py:1386
+#: booking_app/views.py:370
 msgid "Cancelled by user."
 msgstr "Reserva cancelada pelo utilizador."
 
-#: booking_app/views.py:332 booking_app/views.py:1392
+#: booking_app/views.py:378
 msgid "Booking cancelled successfully."
 msgstr "Reserva cancelada com sucesso."
 
-#: booking_app/views.py:365
-#, fuzzy, python-format
-#| msgid "Could not connect to VIES service."
-msgid "Could not convert document. (%s)"
-msgstr "Não foi possível estabelecer ligação com o serviço VIES."
-
-#: booking_app/views.py:388
-#, fuzzy, python-format
-#| msgid "Client '{client.name}' has been deleted."
+#: booking_app/views.py:458
+#, python-format
 msgid "Contract %(number)s has been generated."
-msgstr "O cliente '{client.name}' foi apagado."
+msgstr "O cliente %(number)s foi apagado."
 
-#: booking_app/views.py:462 templates/vehicle_list.html:5
+#: booking_app/views.py:532 templates/vehicle_list.html:5
 #: templates/vehicle_list.html:11
 msgid "Vehicle Fleet"
 msgstr "Frota Veiculos"
 
-#: booking_app/views.py:485 templates/vehicle_detail.html:10
+#: booking_app/views.py:555 templates/vehicle_detail.html:10
 msgid "Vehicle Details"
 msgstr "Detalhes do Veículo"
 
-#: booking_app/views.py:497
+#: booking_app/views.py:571
 msgid "Vehicle created successfully!"
 msgstr "Veículo criado com sucesso!"
 
-#: booking_app/views.py:501 templates/admin/admin_vehicle_create.html:5
-#: templates/admin/admin_vehicle_create.html:13
+#: booking_app/views.py:575
+msgid "Form is not valid. Please correct the errors."
+msgstr "O formulário não é válido. Verifique os erros."
+
+#: booking_app/views.py:578 templates/admin/admin_vehicle_create.html:6
+#: templates/admin/admin_vehicle_create.html:14
 msgid "Create New Vehicle"
 msgstr "Criar Novo Veículo"
 
-#: booking_app/views.py:513
+#: booking_app/views.py:594
 msgid "Vehicle updated successfully!"
 msgstr "Veículo atualizado com sucesso!"
 
-#: booking_app/views.py:525
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Vehicle '{vehicle_to_delete.license_plate}' cannot be deleted because it "
-#| "has associated bookings."
-msgid ""
-"Vehicle '{vehicle.license_plate}' cannot be deleted because it has bookings."
-msgstr ""
-"O veículo '{vehicle_to_delete.license_plate}' não pode ser eliminado porque "
-"tem reservas associadas."
+#: booking_app/views.py:619
+#, python-brace-format
+msgid "Vehicle '{vehicle.license_plate}' deactivated successfully!"
+msgstr "Veículo '{vehicle.license_plate}' eliminado com sucesso!"
 
-#: booking_app/views.py:531
-#, fuzzy, python-brace-format
-#| msgid "Vehicle '{vehicle_to_delete.license_plate}' deleted successfully!"
-msgid "Vehicle '{vehicle.license_plate}' deleted successfully!"
-msgstr "Veículo '{vehicle_to_delete.license_plate}' eliminado com sucesso!"
-
-#: booking_app/views.py:544 templates/admin/admin_vehicle_list.html:5
+#: booking_app/views.py:676 templates/admin/admin_vehicle_list.html:5
 #: templates/admin/admin_vehicle_list.html:11
 msgid "Manage Vehicles"
 msgstr "Gerir Veículos"
 
-#: booking_app/views.py:557 templates/admin/admin_vehicle_detail.html:5
+#: booking_app/views.py:693 templates/admin/admin_vehicle_detail.html:5
 #: templates/admin/admin_vehicle_detail.html:11
 msgid "Admin Vehicle Details"
 msgstr "Detalhes do Veículo (Admin)"
 
-#: booking_app/views.py:576
+#: booking_app/views.py:716
 msgid "Location created successfully!"
 msgstr "Localização criada com sucesso!"
 
-#: booking_app/views.py:580 templates/admin/admin_location_create.html:5
+#: booking_app/views.py:720 templates/admin/admin_location_create.html:5
 #: templates/admin/admin_location_create.html:13
 #: templates/admin/admin_location_list.html:13
 msgid "Create New Location"
 msgstr "Criar Nova Localização"
 
-#: booking_app/views.py:602
-#, fuzzy, python-brace-format
-#| msgid "Location '{location_to_edit.name}' updated successfully!"
+#: booking_app/views.py:746
+#, python-brace-format
 msgid "Location '{location.name}' updated successfully!"
-msgstr "Localização '{location_to_edit.name}' atualizada com sucesso!"
+msgstr "Localização '{location.name}' atualizada com sucesso!"
 
-#: booking_app/views.py:614
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "Location '{location_to_delete.name}' cannot be deleted because it is used "
-#| "in existing bookings."
+#: booking_app/views.py:758
+#, python-brace-format
 msgid ""
 "Location '{location.name}' cannot be deleted because it is used in bookings."
 msgstr ""
-"A localização '{location_to_delete.name}' não pode ser eliminada porque é "
-"usada em reservas existentes."
+"A localização '{location.name}' não pode ser eliminada porque é usada em "
+"reservas existentes."
 
-#: booking_app/views.py:620
-#, fuzzy, python-brace-format
-#| msgid "Location '{location_to_delete.name}' deleted successfully!"
+#: booking_app/views.py:768
+#, python-brace-format
 msgid "Location '{location.name}' deleted successfully!"
-msgstr "Localização '{location_to_delete.name}' eliminada com sucesso!"
+msgstr "Localização '{location.name}' eliminada com sucesso!"
 
-#: booking_app/views.py:637 booking_app/views.py:1153
-#: templates/admin/admin_dashboard.html:138
+#: booking_app/views.py:785 templates/admin/admin_dashboard.html:151
 msgid "Manage Clients"
 msgstr "Gerir Clientes"
 
-#: booking_app/views.py:648 booking_app/views.py:1164
+#: booking_app/views.py:800
 msgid "Client created successfully."
 msgstr "Cliente criado com sucesso."
 
-#: booking_app/views.py:652 booking_app/views.py:1168
+#: booking_app/views.py:804
 msgid "Create New Client"
 msgstr "Criar como novo cliente"
 
-#: booking_app/views.py:664 booking_app/views.py:1180
+#: booking_app/views.py:820
 msgid "Client updated successfully."
 msgstr "Cliente atualizado com sucesso."
 
-#: booking_app/views.py:668 booking_app/views.py:1184
+#: booking_app/views.py:824
 #, python-brace-format
 msgid "Edit Client: {client.name}"
 msgstr "Editar Cliente: {client.name}"
 
-#: booking_app/views.py:676
-#, fuzzy
-#| msgid "This client cannot be deleted because they have existing bookings."
+#: booking_app/views.py:832
 msgid "This client cannot be deleted because they have bookings."
 msgstr "Este cliente não pode ser eliminado porque tem reservas existentes."
 
-#: booking_app/views.py:682
-#, fuzzy, python-brace-format
-#| msgid "Client created successfully."
+#: booking_app/views.py:842
+#, python-brace-format
 msgid "Client '{client.name}' deleted successfully."
-msgstr "Cliente criado com sucesso."
+msgstr "O cliente '{client.name}' foi apagado com sucesso."
 
-#: booking_app/views.py:685 booking_app/views.py:1202
+#: booking_app/views.py:845
 msgid "Confirm Deletion"
 msgstr "Confirmar eliminação"
 
-#: booking_app/views.py:710
+#: booking_app/views.py:874
 msgid "Group created successfully!"
 msgstr "Grupo criado com sucesso!"
 
-#: booking_app/views.py:726
-#, fuzzy, python-brace-format
-#| msgid "Group '{group_to_edit.name}' updated successfully!"
+#: booking_app/views.py:894
+#, python-brace-format
 msgid "Group '{group.name}' updated successfully!"
-msgstr "Grupo '{group_to_edit.name}' atualizado com sucesso!"
+msgstr "Grupo '{group.name}' atualizado com sucesso!"
 
-#: booking_app/views.py:740
-#, fuzzy, python-brace-format
-#| msgid "Group '{group_to_delete.name}' deleted successfully!"
+#: booking_app/views.py:912
+#, python-brace-format
 msgid "Group '{group.name}' deleted successfully!"
-msgstr "Grupo '{group_to_delete.name}' eliminado com sucesso!"
+msgstr "Grupo '{group.name}' eliminado com sucesso!"
 
-#: booking_app/views.py:756
+#: booking_app/views.py:931
 #, python-brace-format
 msgid "User '{user.username}' created successfully."
 msgstr "Utilizador '{user.username}' criado com sucesso."
 
-#: booking_app/views.py:775
+#: booking_app/views.py:950
 msgid "Manage Active Users"
 msgstr "Gerir Utilizadores Activos"
 
-#: booking_app/views.py:786 templates/admin/admin_inactive_user_list.html:4
+#: booking_app/views.py:961 templates/admin/admin_inactive_user_list.html:4
 msgid "Manage Inactive Users"
 msgstr "Gerir Utilizadores inactivos"
 
-#: booking_app/views.py:794
+#: booking_app/views.py:969
 msgid "You cannot deactivate your own account."
 msgstr "Não é possível desativar sua própria conta."
 
-#: booking_app/views.py:801
+#: booking_app/views.py:980
 #, python-brace-format
 msgid "User '{user_to_deactivate.username}' has been deactivated."
 msgstr ""
-"Utilizador '{user_to_deactivate.username}' foi desactivado com sucesso!"
+"Utilizador '{user_to_deactivate.username}' foi desactivado com sucesso."
 
-#: booking_app/views.py:815
+#: booking_app/views.py:998
 #, python-brace-format
 msgid "User '{user_to_reactivate.username}' has been reactivated."
 msgstr ""
-"O utilizador '{user_to_reactivate.username}' foi reactivado com sucesso!"
+"O utilizador '{user_to_reactivate.username}' foi reactivado com sucesso."
 
-#: booking_app/views.py:828
+#: booking_app/views.py:1015
 #, python-brace-format
 msgid "User '{user_to_edit.username}' updated successfully!"
 msgstr "Utilizador '{user_to_edit.username}' atualizado com sucesso!"
 
-#: booking_app/views.py:874
+#: booking_app/views.py:1072
 msgid "Session terminated."
-msgstr ""
+msgstr "Sessão encerrada."
 
-#: booking_app/views.py:896
+#: booking_app/views.py:1094
 #, python-brace-format
 msgid ""
 "Password for user '{user_to_reset.username}' has been reset successfully!"
 msgstr ""
-"A password para o utilizador '{user_to_reset.username}' foi redefinida com "
-"sucesso!"
+"A palavra-passe para o utilizador '{user_to_reset.username}' foi redefinida "
+"com sucesso!"
 
-#: booking_app/views.py:917
-#, fuzzy, python-brace-format
-#| msgid "Login credentials have been sent to {user_to_notify.email}."
+#: booking_app/views.py:1115
+#, python-brace-format
 msgid "Login credentials sent to {user_to_notify.email}."
 msgstr ""
-"As credenciais de início de sessão foram enviadas para {user_to_notify."
-"email}."
+"As credenciais de início de sessão foram enviadas para "
+"{user_to_notify.email}."
 
-#: booking_app/views.py:934
-#, fuzzy, python-brace-format
-#| msgid "A temporary password has been sent to {user_to_reset.email}."
+#: booking_app/views.py:1132
+#, python-brace-format
 msgid "A temporary password was sent to {user_to_reset.email}."
 msgstr "Foi enviada uma palavra-passe temporária para {user_to_reset.email}."
 
-#: booking_app/views.py:960
+#: booking_app/views.py:1158
 #, python-brace-format
 msgid "Email template '{instance.name}' saved successfully!"
-msgstr "Template de email '{instance.name}' guardado com sucesso!"
+msgstr "Template de e-mail '{instance.name}' guardado com sucesso!"
 
-#: booking_app/views.py:975
-#, fuzzy
-#| msgid "Cannot run test: A vehicle and location must exist."
+#: booking_app/views.py:1173
 msgid "Cannot run test: vehicle and location required."
 msgstr ""
 "Não é possível executar o teste: É necessário que exista um veículo e um "
 "local."
 
-#: booking_app/views.py:997
+#: booking_app/views.py:1194
 #, python-brace-format
 msgid "Test email for '{template.name}' sent to {request.user.email}."
 msgstr ""
-"E-mail de teste para ‘{template.name}’ enviado para {request.user.email}."
+"E-mail de teste para '{template.name}' enviado para {request.user.email}."
 
-#: booking_app/views.py:999
+#: booking_app/views.py:1196
 #, python-brace-format
 msgid "Failed to send test email for '{template.name}'. Error: {e}"
 msgstr ""
-"Falha no envio da mensagem de correio eletrónico de teste  '{template."
-"name}'. Erro: {e}"
+"Falha no envio da mensagem de correio eletrónico de teste '{template.name}'. "
+"Erro: {e}"
 
-#: booking_app/views.py:1024
+#: booking_app/views.py:1225
 msgid "Distribution list saved successfully!"
 msgstr "Lista de distribuição guardada com êxito!"
 
-#: booking_app/views.py:1038
+#: booking_app/views.py:1243
 msgid "Distribution list deleted successfully!"
 msgstr "Lista de distribuição eliminada com êxito!"
 
-#: booking_app/views.py:1056
+#: booking_app/views.py:1265
 msgid "Automation settings updated successfully."
 msgstr "Definições de automatização atualizadas com sucesso."
 
-#: booking_app/views.py:1123
-#, fuzzy, python-format
-#| msgid "Client created successfully."
-msgid "Contract %(number)s generated successfully."
-msgstr "Cliente criado com sucesso."
+#: booking_app/views.py:1288
+msgid "Contract template settings updated successfully."
+msgstr "Definições de automatização atualizadas com sucesso."
 
-#: booking_app/views.py:1142
+#: booking_app/views.py:1313
+msgid "Contract Template Settings"
+msgstr "Definições modelo contrato"
+
+#: booking_app/views.py:1350
 #, python-brace-format
 msgid "Booking History for {client.name} (Tax ID: {tax_number})"
 msgstr "Histórico de reservas para {client.name} (NIF: {tax_number})"
 
-#: booking_app/views.py:1192
-msgid "This client cannot be deleted because they have existing bookings."
-msgstr "Este cliente não pode ser eliminado porque tem reservas existentes."
-
-#: booking_app/views.py:1199
-#, fuzzy, python-brace-format
-#| msgid "Client created successfully."
-msgid "Client '{name}' deleted successfully."
-msgstr "Cliente criado com sucesso."
-
-#: booking_app/views.py:1229
+#: booking_app/views.py:1377
 msgid "CRC code is required."
 msgstr "É necessário o código CRC."
 
-#: booking_app/views.py:1235
+#: booking_app/views.py:1383
 msgid "Company not found or CRC is invalid."
 msgstr "Empresa não encontrada ou CRC inválido."
 
-#: booking_app/views.py:1277
+#: booking_app/views.py:1425
 msgid "Country code and VAT number are required."
 msgstr "É necessário indicar o código do país e o NIF."
 
-#: booking_app/views.py:1285 templates/book_vehicle.html:220
+#: booking_app/views.py:1433 templates/book_vehicle.html:220
 msgid "Invalid VAT number."
 msgstr "O NIF é inválido."
 
-#: booking_app/views.py:1287
+#: booking_app/views.py:1435
 msgid "Could not connect to VIES service."
 msgstr "Não foi possível estabelecer ligação com o serviço VIES."
 
-#: booking_app/views.py:1356
+#: booking_app/views.py:1504
 msgid "You do not have permission to access this booking."
 msgstr "Não tem permissão para gerir esta reserva."
 
-#: booking_app/views.py:1417
+#: booking_app/views.py:1538
 msgid "Your personal data was successfully updated!"
 msgstr "Os seus dados pessoais foram atualizados com sucesso!"
 
-#: booking_app/views.py:1434
+#: booking_app/views.py:1555
 msgid "Your password was successfully updated!"
-msgstr "A sua password foi atualizada com sucesso!"
+msgstr "A sua palavra-passe foi atualizada com sucesso!"
 
-#: booking_app/views.py:1462 templates/base.html:42
+#: booking_app/views.py:1583 templates/base.html:42
 msgid "Group Dashboard"
 msgstr "Painel do grupo"
 
-#: booking_app/views.py:1478
+#: booking_app/views.py:1599
 msgid "You do not have permission to view this group booking."
 msgstr "Não tem permissão para ver esta reserva de grupo."
 
-#: booking_app/views.py:1483 templates/group_booking_detail.html:4
+#: booking_app/views.py:1604 templates/group_booking_detail.html:4
 msgid "Group Booking Details"
 msgstr "Detalhes da Reserva de Grupo"
 
-#: booking_app/views.py:1506
-#, fuzzy
-#| msgid "APV Booking has been approved successfully."
+#: booking_app/views.py:1627
 msgid "Booking has been approved."
-msgstr "A reserva APV foi aprovada com êxito."
+msgstr "Reserva foi aprovada com êxito."
 
-#: booking_app/views.py:1520
-#, fuzzy
-#| msgid "APV Booking has been approved successfully."
+#: booking_app/views.py:1641
 msgid "APV booking has been approved."
 msgstr "A reserva APV foi aprovada com êxito."
 
-#: booking_app/views.py:1533
-#, fuzzy
-#| msgid "This booking is finalized and cannot be modified."
+#: booking_app/views.py:1654
 msgid "Booking has been finalized and confirmed."
-msgstr "Esta reserva já não está ativa e não pode ser modificada."
+msgstr "Reserva finalizada e concluida."
 
-#: booking_app/views.py:1535
-#, fuzzy
-#| msgid "A contract must be uploaded before you can confirm this booking."
+#: booking_app/views.py:1656
 msgid "Contract must be uploaded before confirming."
 msgstr "O contrato deve ser carregado antes de poder confirmar esta reserva."
 
-#: booking_app/views.py:1542
-#, fuzzy
-#| msgid "Cancelled by management."
+#: booking_app/views.py:1663
 msgid "Cancelled by manager"
 msgstr "Reserva cancelada pelo Manager"
 
-#: booking_app/views.py:1551
-#, fuzzy
-#| msgid "This booking cannot be cancelled."
+#: booking_app/views.py:1672
 msgid "Booking has been cancelled."
-msgstr "Esta reserva não pode ser cancelada."
+msgstr "Reserva cancelada."
 
-#: booking_app/views.py:1564
+#: booking_app/views.py:1685
 msgid "Final KM request has been sent."
-msgstr ""
+msgstr "Pedido de KM final enviado."
 
-#: booking_app/views.py:1599 templates/admin/admin_dashboard.html:4
+#: booking_app/views.py:1720 templates/admin/admin_dashboard.html:4
 #: templates/admin/admin_dashboard.html:8 templates/base.html:47
 msgid "Admin Dashboard"
 msgstr "Painel de Administração"
 
-#: booking_app/views.py:1641
+#: booking_app/views.py:1762
+msgid "Invalid form submission."
+msgstr "Submissão do formulário inválida."
+
+#: booking_app/views.py:1768
 msgid "This is not a CSV file. Please upload a valid .csv file."
 msgstr "Este não é um arquivo CSV. Carregue um arquivo .csv válido."
 
-#: booking_app/views.py:1693
+#: booking_app/views.py:1835
 msgid "Successfully imported {len(vehicles_to_create)} vehicles."
 msgstr "Importou {len(vehicles_to_create)} veículos com sucesso."
 
-#: booking_app/views.py:1700
+#: booking_app/views.py:1841
 #, python-brace-format
 msgid "An unexpected error occurred: {e}"
 msgstr "Ocorreu um erro: {e}"
 
-#: booking_app/views.py:1708
-msgid "Import Vehicles from CSV"
-msgstr "Importar veículos de CSV"
-
-#: booking_app/views.py:1754
+#: booking_app/views.py:1891
 msgid "Group Reports & Charts"
 msgstr "Relatórios e gráficos do grupo"
 
-#: booking_app/views.py:1801
+#: booking_app/views.py:1938
 msgid "Group Bookings Calendar"
 msgstr "Calendário de reservas do grupo"
 
-#: booking_app/views.py:1819
+#: booking_app/views.py:1956
 msgid "Email Logs"
 msgstr "Registos de correio eletrónico"
 
@@ -999,8 +1018,6 @@ msgstr "Registos de correio eletrónico"
 #: templates/admin/admin_group_list.html:47
 #: templates/admin/admin_location_list.html:44
 #: templates/admin/admin_location_list.html:47
-#: templates/admin/admin_vehicle_list.html:122
-#: templates/admin/admin_vehicle_list.html:128
 #: templates/my_group_bookings.html:74 templates/vehicle_list.html:99
 #: templates/vehicle_list.html:102
 msgid "first"
@@ -1009,11 +1026,8 @@ msgstr "primeira"
 #: templates/_pagination.html:14 templates/_pagination.html:18
 #: templates/admin/admin_email_log_list.html:57
 #: templates/admin/admin_group_list.html:45
-#: templates/admin/admin_group_list.html:48
-#: templates/admin/admin_vehicle_list.html:125
-#: templates/admin/admin_vehicle_list.html:129
-#: templates/my_group_bookings.html:75 templates/vehicle_list.html:100
-#: templates/vehicle_list.html:103
+#: templates/admin/admin_group_list.html:48 templates/my_group_bookings.html:75
+#: templates/vehicle_list.html:100 templates/vehicle_list.html:103
 msgid "previous"
 msgstr "anterior"
 
@@ -1031,11 +1045,8 @@ msgstr ""
 #: templates/_pagination.html:31 templates/_pagination.html:39
 #: templates/admin/admin_email_log_list.html:63
 #: templates/admin/admin_group_list.html:56
-#: templates/admin/admin_group_list.html:59
-#: templates/admin/admin_vehicle_list.html:138
-#: templates/admin/admin_vehicle_list.html:144
-#: templates/my_group_bookings.html:81 templates/vehicle_list.html:111
-#: templates/vehicle_list.html:114
+#: templates/admin/admin_group_list.html:59 templates/my_group_bookings.html:81
+#: templates/vehicle_list.html:111 templates/vehicle_list.html:114
 msgid "next"
 msgstr "próxima"
 
@@ -1045,8 +1056,6 @@ msgstr "próxima"
 #: templates/admin/admin_group_list.html:60
 #: templates/admin/admin_location_list.html:57
 #: templates/admin/admin_location_list.html:60
-#: templates/admin/admin_vehicle_list.html:141
-#: templates/admin/admin_vehicle_list.html:145
 #: templates/my_group_bookings.html:82 templates/vehicle_list.html:112
 #: templates/vehicle_list.html:115
 msgid "last"
@@ -1065,6 +1074,7 @@ msgstr ""
 "pendentes há muito tempo."
 
 #: templates/admin/admin_automation_settings.html:39
+#: templates/admin/admin_contract_template_settings.html:164
 msgid "Save Settings"
 msgstr "Guardar Alterações"
 
@@ -1087,12 +1097,13 @@ msgstr ""
 #: templates/admin/admin_dl_confirm_delete.html:16
 #: templates/admin/admin_group_delete.html:19
 #: templates/admin/admin_location_confirm_delete.html:19
-#: templates/admin/admin_vehicle_delete.html:21
+#: templates/admin/admin_vehicle_inactive.html:21
 msgid "This action cannot be undone."
 msgstr "Esta ação não pode ser desfeita."
 
 #: templates/admin/admin_client_confirm_delete.html:21
 #: templates/admin/admin_client_form.html:19
+#: templates/admin/admin_contract_template_settings.html:163
 #: templates/admin/admin_dl_confirm_delete.html:20
 #: templates/admin/admin_dl_form.html:17
 #: templates/admin/admin_email_template_form.html:73
@@ -1105,9 +1116,10 @@ msgstr "Esta ação não pode ser desfeita."
 #: templates/admin/admin_user_create.html:22
 #: templates/admin/admin_user_edit.html:52
 #: templates/admin/admin_user_reset_password.html:50
-#: templates/admin/admin_vehicle_create.html:20
-#: templates/admin/admin_vehicle_delete.html:27
-#: templates/admin/admin_vehicle_edit.html:43
+#: templates/admin/admin_vehicle_create.html:21
+#: templates/admin/admin_vehicle_edit.html:44
+#: templates/admin/admin_vehicle_inactive.html:27
+#: templates/admin/admin_vehicle_list.html:184
 #: templates/admin/import_vehicles.html:27 templates/change_password.html:50
 #: templates/group_booking_update.html:99 templates/my_group_bookings.html:57
 #: templates/update_booking.html:99 templates/update_user_data.html:59
@@ -1130,7 +1142,7 @@ msgstr "Nome"
 #: templates/admin/admin_inactive_user_list.html:21
 #: templates/admin/admin_user_list.html:36 templates/my_account.html:19
 msgid "Email"
-msgstr "Email"
+msgstr "E-mail"
 
 #: templates/admin/admin_client_list.html:22
 msgid "Phone"
@@ -1143,7 +1155,6 @@ msgstr "Telefone"
 #: templates/admin/admin_inactive_user_list.html:23
 #: templates/admin/admin_location_list.html:23
 #: templates/admin/admin_user_list.html:40
-#: templates/admin/admin_vehicle_list.html:76
 #: templates/client_booking_history.html:27 templates/group_dashboard.html:48
 #: templates/my_account.html:64 templates/my_bookings.html:27
 #: templates/my_group_bookings.html:27 templates/vehicle_list.html:47
@@ -1157,7 +1168,6 @@ msgstr "Ações"
 #: templates/admin/admin_inactive_user_list.html:41
 #: templates/admin/admin_location_list.html:31
 #: templates/admin/admin_user_list.html:71
-#: templates/admin/admin_vehicle_list.html:109
 msgid "Edit"
 msgstr "Editar"
 
@@ -1165,7 +1175,6 @@ msgstr "Editar"
 #: templates/admin/admin_dl_list.html:30
 #: templates/admin/admin_group_list.html:32
 #: templates/admin/admin_location_list.html:32
-#: templates/admin/admin_vehicle_list.html:110
 msgid "Delete"
 msgstr "Eliminar"
 
@@ -1179,9 +1188,176 @@ msgstr "Nenhum cliente encontrado."
 #: templates/admin/admin_group_list.html:72
 #: templates/admin/admin_location_list.html:72
 #: templates/admin/admin_user_list.html:96
-#: templates/admin/admin_vehicle_list.html:166
+#: templates/admin/admin_vehicle_list.html:167
 msgid "Back to Admin Dashboard"
 msgstr "Voltar ao Painel de Administração"
+
+#: templates/admin/admin_contract_template_settings.html:37
+msgid ""
+"Upload a DOCX template for contracts, preview it instantly, and drag "
+"placeholder handles directly into the document."
+msgstr ""
+"Carregue um modelo DOCX para contratos, visualize-o instantaneamente e "
+"arraste os controlos de espaço reservado diretamente para o documento."
+
+#: templates/admin/admin_contract_template_settings.html:46
+msgid "Contract Template (.docx)"
+msgstr "Modelo Contrato (.docx)"
+
+#: templates/admin/admin_contract_template_settings.html:49
+msgid "Use Default"
+msgstr "Usar padrão"
+
+#: templates/admin/admin_contract_template_settings.html:53
+msgid "Current template:"
+msgstr "Template Actual:"
+
+#: templates/admin/admin_contract_template_settings.html:54
+#: templates/admin/admin_contract_template_settings.html:147
+msgid "Download"
+msgstr "Descarregar"
+
+#: templates/admin/admin_contract_template_settings.html:57
+msgid ""
+"Using bundled default template (document_templates/contract_template.docx)."
+msgstr ""
+"Usando o modelo padrão incluído (document_templates/contract_template.docx)."
+
+#: templates/admin/admin_contract_template_settings.html:73
+msgid "Placeholder Handles"
+msgstr "Identificadores de espaço reservado"
+
+#: templates/admin/admin_contract_template_settings.html:75
+msgid "Handles appear in the template as"
+msgstr "Os identificadores aparecem no modelo como"
+
+#: templates/admin/admin_contract_template_settings.html:77
+msgid "and map to booking or contract attributes."
+msgstr "e mapeie para atributos de reserva ou contrato."
+
+#: templates/admin/admin_contract_template_settings.html:83
+msgid "Handle"
+msgstr "Identificador"
+
+#: templates/admin/admin_contract_template_settings.html:84
+msgid "Data Path"
+msgstr "Caminho dos dados"
+
+#: templates/admin/admin_contract_template_settings.html:85
+#: templates/admin/email_template_variables/_booking_vars.html:7
+#: templates/admin/email_template_variables/_location_vars.html:7
+#: templates/admin/email_template_variables/_user_vars.html:7
+#: templates/admin/email_template_variables/_vehicle_vars.html:7
+msgid "Description"
+msgstr "Descrição"
+
+#: templates/admin/admin_contract_template_settings.html:86
+#: templates/admin/admin_contract_template_settings.html:97
+#: templates/admin/admin_contract_template_settings.html:107
+#: templates/admin/admin_contract_template_settings.html:210
+msgid "Remove"
+msgstr "Remover"
+
+#: templates/admin/admin_contract_template_settings.html:95
+#: templates/admin/admin_contract_template_settings.html:105
+#: templates/admin/admin_contract_template_settings.html:209
+msgid "Client full legal name"
+msgstr "O nome completo do cliente"
+
+#: templates/admin/admin_contract_template_settings.html:115
+msgid "Add Handle"
+msgstr "Adicionar Identificador"
+
+#: templates/admin/admin_contract_template_settings.html:116
+msgid "Available roots:"
+msgstr "Rotas disponíveis:"
+
+#: templates/admin/admin_contract_template_settings.html:122
+msgid "Handles Palette"
+msgstr "Painel de Identificadores"
+
+#: templates/admin/admin_contract_template_settings.html:123
+msgid ""
+"Drag a handle from this list and drop it on the document preview to place it."
+msgstr ""
+"Arraste um identificador desta lista e solte-a na pré-visualização do "
+"documento para posicioná-la."
+
+#: templates/admin/admin_contract_template_settings.html:129
+msgid "Need help with data paths?"
+msgstr "Precisa de ajuda com os caminhos de dados?"
+
+#: templates/admin/admin_contract_template_settings.html:130
+msgid "Use dot notation to drill into booking data. For example:"
+msgstr "Use a notação de ponto para detalhar os dados da reserva. Por exemplo:"
+
+#: templates/admin/admin_contract_template_settings.html:132
+msgid "Client name"
+msgstr "Nome do Cliente"
+
+#: templates/admin/admin_contract_template_settings.html:133
+msgid "Vehicle license plate"
+msgstr "Matrícula do veiculo"
+
+#: templates/admin/admin_contract_template_settings.html:134
+msgid "Booking start date"
+msgstr "Inicio da Reserva"
+
+#: templates/admin/admin_contract_template_settings.html:135
+msgid "Generated contract number"
+msgstr "Gerado numero de contrato"
+
+#: templates/admin/admin_contract_template_settings.html:137
+msgid "If a path cannot be resolved the handle will render as empty text."
+msgstr ""
+"Se um caminho não puder ser resolvido, o identificador será renderizado como "
+"texto vazio."
+
+#: templates/admin/admin_contract_template_settings.html:144
+msgid "Template Preview"
+msgstr "Previsão de template"
+
+#: templates/admin/admin_contract_template_settings.html:146
+msgid "Reload"
+msgstr "Recarregar"
+
+#: templates/admin/admin_contract_template_settings.html:151
+msgid ""
+"Drop handles into the preview to insert placeholders exactly where contract "
+"data should merge."
+msgstr ""
+"Arraste os identificadores para a pré-visualização para inserir espaços "
+"reservados exatamente onde os dados do contrato devem ser mesclados."
+
+#: templates/admin/admin_contract_template_settings.html:154
+#: templates/admin/admin_contract_template_settings.html:358
+msgid "Loading template preview..."
+msgstr "A carregar pré-visualização do modelo..."
+
+#: templates/admin/admin_contract_template_settings.html:270
+msgid "Add a handle above to enable drag and drop."
+msgstr ""
+"Adicione um identificador acima para ativar o recurso de arrastar e soltar."
+
+#: templates/admin/admin_contract_template_settings.html:349
+msgid ""
+"Unable to render the DOCX preview. Please verify that the file is a valid "
+"DOCX document."
+msgstr ""
+"Não é possível renderizar a pré-visualização do DOCX. Verifique se o "
+"ficheiro é um documento DOCX válido."
+
+#: templates/admin/admin_contract_template_settings.html:368
+msgid ""
+"Could not load the template file. Try reloading the page or uploading a new "
+"file."
+msgstr ""
+"Não foi possível carregar o ficheiro modelo. Tente recarregar a página ou "
+"carregar um novo ficheiro."
+
+#: templates/admin/admin_contract_template_settings.html:454
+msgid "Revert to the bundled template?"
+msgstr "Reverter para o modelo integrado?"
 
 #: templates/admin/admin_dashboard.html:17
 msgid "User Management"
@@ -1235,15 +1411,15 @@ msgstr "Ver Todas as Localizações"
 
 #: templates/admin/admin_dashboard.html:79
 msgid "Email Templates"
-msgstr "Templates de Email"
+msgstr "Templates de E-mail"
 
 #: templates/admin/admin_dashboard.html:80
 msgid "Edit the content of notification emails."
-msgstr "Editar o conteúdo dos emails de notificação."
+msgstr "Editar o conteúdo dos e-mails de notificação."
 
 #: templates/admin/admin_dashboard.html:83
 msgid "Manage Email Templates"
-msgstr "Gerir Templates de Email"
+msgstr "Gerir Templates de E-mail"
 
 #: templates/admin/admin_dashboard.html:94
 msgid "Distribution Lists"
@@ -1269,23 +1445,35 @@ msgstr "Gerir definições da aplicação."
 msgid "Manage Automation Settings"
 msgstr "Gerir Definições automatização"
 
-#: templates/admin/admin_dashboard.html:125
+#: templates/admin/admin_dashboard.html:123
+msgid "Contract Template"
+msgstr "Template de contrato"
+
+#: templates/admin/admin_dashboard.html:124
+msgid "Upload templates and map contract merge fields."
+msgstr "Carregue modelos e mapeie campos de mesclagem de contratos."
+
+#: templates/admin/admin_dashboard.html:127
+msgid "Manage Contract Template"
+msgstr "Gerir Templates de Contratos"
+
+#: templates/admin/admin_dashboard.html:138
 msgid "Recent Email Logs"
 msgstr "Registos de correio eletrónico recentes"
 
-#: templates/admin/admin_dashboard.html:126
+#: templates/admin/admin_dashboard.html:139
 msgid "View recent emails logs of email sent."
 msgstr "Ver os registos de mensagens de correio eletrónico recentes enviadas."
 
-#: templates/admin/admin_dashboard.html:129
+#: templates/admin/admin_dashboard.html:142
 msgid "View All Logs"
 msgstr "Ver todos os registos"
 
-#: templates/admin/admin_dashboard.html:139
+#: templates/admin/admin_dashboard.html:152
 msgid "View, create, edit, and delete client records."
 msgstr "Ver, Criar, editar e apagar registos de clientes."
 
-#: templates/admin/admin_dashboard.html:142
+#: templates/admin/admin_dashboard.html:155
 msgid "Go to Clients"
 msgstr "Ir para Clientes"
 
@@ -1301,7 +1489,6 @@ msgstr ""
 #: templates/admin/admin_dl_confirm_delete.html:21
 #: templates/admin/admin_group_delete.html:27
 #: templates/admin/admin_location_confirm_delete.html:26
-#: templates/admin/admin_vehicle_delete.html:28
 msgid "Yes, Confirm Delete"
 msgstr "Sim, Confirmar Eliminação"
 
@@ -1319,7 +1506,7 @@ msgstr "Nome da Lista"
 
 #: templates/admin/admin_dl_list.html:19
 msgid "Email Addresses"
-msgstr "Endereço de email"
+msgstr "Endereço de e-mail"
 
 #: templates/admin/admin_dl_list.html:35
 msgid "No distribution lists found."
@@ -1327,7 +1514,7 @@ msgstr "Não foram encontradas listas de distribuição."
 
 #: templates/admin/admin_email_log_list.html:20
 #: templates/admin/admin_user_list.html:38
-#: templates/admin/admin_vehicle_detail.html:137
+#: templates/admin/admin_vehicle_detail.html:142
 #: templates/booking_detail.html:24 templates/client_booking_history.html:26
 #: templates/emails/booking_confirmation.html:40
 #: templates/emails/booking_update_notification.html:40
@@ -1355,16 +1542,14 @@ msgid "Error"
 msgstr "Erro"
 
 #: templates/admin/admin_email_log_list.html:60
-#: templates/admin/admin_group_list.html:52
-#: templates/admin/admin_vehicle_list.html:133
-#: templates/my_group_bookings.html:78 templates/vehicle_list.html:107
+#: templates/admin/admin_group_list.html:52 templates/my_group_bookings.html:78
+#: templates/vehicle_list.html:107
 msgid "Page"
 msgstr "Página"
 
 #: templates/admin/admin_email_log_list.html:60
-#: templates/admin/admin_group_list.html:52
-#: templates/admin/admin_vehicle_list.html:133
-#: templates/my_group_bookings.html:78 templates/vehicle_list.html:107
+#: templates/admin/admin_group_list.html:52 templates/my_group_bookings.html:78
+#: templates/vehicle_list.html:107
 msgid "of"
 msgstr "de"
 
@@ -1385,7 +1570,7 @@ msgid "The event trigger cannot be changed after creation."
 msgstr "O acionador de eventos não pode ser alterado após a criação."
 
 #: templates/admin/admin_email_template_form.html:77
-#: templates/admin/admin_vehicle_edit.html:42
+#: templates/admin/admin_vehicle_edit.html:43
 #: templates/group_booking_update.html:94 templates/update_booking.html:94
 #: templates/update_user_data.html:60
 msgid "Save Changes"
@@ -1401,6 +1586,7 @@ msgstr "Variáveis de Template Disponíveis"
 
 #: templates/admin/admin_email_template_form.html:96
 #: templates/admin/admin_email_template_form.html:129
+#: templates/admin/admin_vehicle_list.html:175
 msgid "Close"
 msgstr "Fechar"
 
@@ -1413,46 +1599,32 @@ msgstr ""
 "serão substituídas pelos dados reais."
 
 #: templates/admin/admin_email_template_form.html:102
-#, fuzzy
-#| msgid "Booking Details"
 msgid "Booking Events"
 msgstr "Detalhes da Reserva"
 
 #: templates/admin/admin_email_template_form.html:106
-#, fuzzy
-#| msgid "Management Actions"
 msgid "Manager Actions"
-msgstr "Ações de Gestão"
+msgstr "Ações de Manager"
 
 #: templates/admin/admin_email_template_form.html:108
-#, fuzzy
-#| msgid "Actions"
 msgid "User Actions"
-msgstr "Ações"
+msgstr "Ações de utilizador"
 
 #: templates/admin/admin_email_template_form.html:112
-#, fuzzy
-#| msgid "Booking Update Notification"
 msgid "Automated Notifications"
-msgstr "Notificação de Atualização de Reserva"
+msgstr "Notificação de Automáticas"
 
 #: templates/admin/admin_email_template_form.html:116
-#, fuzzy
-#| msgid "Account Actions"
 msgid "Account Events"
 msgstr "Ações da Conta"
 
 #: templates/admin/admin_email_template_form.html:120
-#, fuzzy
-#| msgid "Vehicle Details"
 msgid "Vehicle Events"
-msgstr "Detalhes do Veículo"
+msgstr "Ações do Veículo"
 
 #: templates/admin/admin_email_template_form.html:124
-#, fuzzy
-#| msgid "Locations"
 msgid "Location Events"
-msgstr "Localizações"
+msgstr "Eventos de Localização"
 
 #: templates/admin/admin_email_template_list.html:12
 msgid "Create New Template"
@@ -1463,7 +1635,7 @@ msgid ""
 "Here you can edit the content of the automated notification emails sent to "
 "users. The 'Template Key' is used by the system and cannot be changed."
 msgstr ""
-"Aqui pode editar o conteúdo dos emails de notificação automáticos enviados "
+"Aqui pode editar o conteúdo dos e-mails de notificação automáticos enviados "
 "aos utilizadores. A 'Chave do Template' é usada pelo sistema e não pode ser "
 "alterada."
 
@@ -1482,7 +1654,7 @@ msgstr "Enviar teste"
 #: templates/admin/admin_email_template_list.html:46
 msgid "No email templates found. Please click the button above to create one."
 msgstr ""
-"Nenhum template de email encontrado. Por favor, clique no botão acima para "
+"Nenhum template de e-mail encontrado. Por favor, clique no botão acima para "
 "criar um."
 
 #: templates/admin/admin_group_delete.html:16
@@ -1617,7 +1789,7 @@ msgid ""
 "This user will no longer be able to log in. You can reactivate them later "
 "from the Inactive Users page."
 msgstr ""
-"Este utilizador não poderá mais fazer login. Você pode reativá-lo "
+"Este utilizador não poderá mais fazer sessão. Você pode reativá-lo "
 "posteriormente na página Utilizadores inativos."
 
 #: templates/admin/admin_user_create.html:5
@@ -1640,21 +1812,19 @@ msgid "Group Assignment"
 msgstr "Atribuição de Grupo"
 
 #: templates/admin/admin_user_edit.html:38
-#, fuzzy
-#| msgid "Password Management"
 msgid "Password & Session Management"
-msgstr "Gestão de Password"
+msgstr "Gestão de Palavra-passe e sessão"
 
 #: templates/admin/admin_user_edit.html:45
-#, fuzzy
-#| msgid "Are you sure you want to approve this booking?"
 msgid "Are you sure you want to log this user out from all devices?"
-msgstr "Tem a certeza que quer aprovar esta reserva?"
+msgstr ""
+"Tem a certeza de que deseja terminar a sessão deste utilizador em todos os "
+"dispositivos?"
 
 #: templates/admin/admin_user_edit.html:46
 #: templates/admin/admin_user_list.html:101
 msgid "Kill All Sessions"
-msgstr ""
+msgstr "Encerrar todas as sessões"
 
 #: templates/admin/admin_user_edit.html:51
 msgid "Update User"
@@ -1665,12 +1835,12 @@ msgid "Manage Users"
 msgstr "Gerir Utilizadores"
 
 #: templates/admin/admin_user_list.html:39
-#, fuzzy
-#| msgid "Is Active"
 msgid "Last Activity"
-msgstr "Está Ativo"
+msgstr "Última atividade"
 
 #: templates/admin/admin_user_list.html:51
+#: templates/admin/admin_vehicle_list.html:26
+#: templates/admin/admin_vehicle_list.html:52
 msgid "Active"
 msgstr "Ativo"
 
@@ -1680,21 +1850,19 @@ msgstr "Inativo"
 
 #: templates/admin/admin_user_list.html:61
 msgid "Online"
-msgstr ""
+msgstr "Online"
 
 #: templates/admin/admin_user_list.html:63
 msgid "Offline"
-msgstr ""
+msgstr "Offline"
 
 #: templates/admin/admin_user_list.html:66
 msgid "No activity"
-msgstr ""
+msgstr "Sem Actividade"
 
 #: templates/admin/admin_user_list.html:70
-#, fuzzy
-#| msgid "Permissions"
 msgid "Sessions"
-msgstr "Permissões"
+msgstr "Sessões"
 
 #: templates/admin/admin_user_list.html:74
 msgid "Deactivate"
@@ -1709,26 +1877,22 @@ msgid "No active users found."
 msgstr "Nenhum utilizador activo encontrado."
 
 #: templates/admin/admin_user_list.html:100
-#, fuzzy
-#| msgid "Are you sure you want to delete the location "
 msgid "Are you sure you want to log out ALL users?"
-msgstr "Tem a certeza que quer eliminar a localização "
+msgstr "Tem a certeza que querterminar a sessão de todos os utilizadores?"
 
 #: templates/admin/admin_user_reset_password.html:5
 #: templates/admin/admin_user_reset_password.html:13
 msgid "Reset Password for"
-msgstr "Redefinir Password para"
+msgstr "Redefinir Palavra-passe para"
 
 #: templates/admin/admin_user_reset_password.html:51
 msgid "Set New Password"
-msgstr "Definir Nova Password"
+msgstr "Definir Nova Palavra-passe"
 
 #: templates/admin/admin_user_sessions.html:5
 #: templates/admin/admin_user_sessions.html:12
-#, fuzzy
-#| msgid "Permissions"
 msgid "Sessions for"
-msgstr "Permissões"
+msgstr "Sessões para"
 
 #: templates/admin/admin_user_sessions.html:16
 #: templates/admin/admin_user_sessions.html:61
@@ -1736,57 +1900,42 @@ msgid "Back to User List"
 msgstr "Voltar à Lista de Utilizadores"
 
 #: templates/admin/admin_user_sessions.html:20
-#, fuzzy
-#| msgid "Are you sure you want to delete the location "
 msgid "Are you sure you want to log out this user from all devices?"
-msgstr "Tem a certeza que quer eliminar a localização "
+msgstr ""
+"Tem a certeza que quer terminar a sessão deste utilizador em todos os "
+"dispositivos?"
 
 #: templates/admin/admin_user_sessions.html:21
 msgid "Kill User Sessions"
-msgstr ""
+msgstr "Encerrar sessões do utilizador"
 
 #: templates/admin/admin_user_sessions.html:31
-#, fuzzy
-#| msgid "created"
 msgid "Created"
-msgstr "criado"
+msgstr "Criado"
 
 #: templates/admin/admin_user_sessions.html:32
 msgid "Last activity"
-msgstr ""
+msgstr "Última atividade"
 
 #: templates/admin/admin_user_sessions.html:33
 msgid "Expires"
-msgstr ""
+msgstr "Expira"
 
 #: templates/admin/admin_user_sessions.html:34
 msgid "IP"
-msgstr ""
+msgstr "IP"
 
 #: templates/admin/admin_user_sessions.html:35
-#, fuzzy
-#| msgid "User Management"
 msgid "User agent"
-msgstr "Gestão de Utilizadores"
+msgstr "Agente de Utilizadores"
 
 #: templates/admin/admin_user_sessions.html:55
-#, fuzzy
-#| msgid "No active users found."
 msgid "No active sessions found."
-msgstr "Nenhum utilizador activo encontrado."
+msgstr "Nenhuma sessão activa encontrada."
 
-#: templates/admin/admin_vehicle_create.html:19
+#: templates/admin/admin_vehicle_create.html:20
 msgid "Create Vehicle"
 msgstr "Criar Veículo"
-
-#: templates/admin/admin_vehicle_delete.html:18
-#, python-format
-msgid ""
-"Are you sure you want to delete the vehicle: <strong>%(vehicle_obj.model)s "
-"(%(vehicle_obj.license_plate)s)</strong>?"
-msgstr ""
-"Tem a certeza que quer eliminar o veículo: <strong>%(vehicle_obj.model)s "
-"(%(vehicle_obj.license_plate)s)</strong>?"
 
 #: templates/admin/admin_vehicle_detail.html:12
 #: templates/vehicle_detail.html:11
@@ -1799,8 +1948,7 @@ msgid "No Image Available"
 msgstr "Nenhuma Imagem Disponível"
 
 #: templates/admin/admin_vehicle_detail.html:28
-#: templates/admin/admin_vehicle_list.html:20
-#: templates/admin/admin_vehicle_list.html:47 templates/booking_detail.html:65
+#: templates/admin/admin_vehicle_list.html:20 templates/booking_detail.html:65
 #: templates/group_booking_detail.html:49 templates/group_dashboard.html:43
 #: templates/group_reports.html:49 templates/my_group_bookings.html:20
 #: templates/vehicle_detail.html:29 templates/vehicle_list.html:22
@@ -1828,16 +1976,14 @@ msgid "Electric"
 msgstr "Elétrico"
 
 #: templates/admin/admin_vehicle_detail.html:49
-#: templates/admin/admin_vehicle_list.html:94 templates/booking_detail.html:58
-#: templates/group_booking_detail.html:39 templates/group_dashboard.html:89
-#: templates/vehicle_detail.html:50
+#: templates/booking_detail.html:58 templates/group_booking_detail.html:39
+#: templates/group_dashboard.html:89 templates/vehicle_detail.html:50
 msgid "Yes"
 msgstr "Sim"
 
 #: templates/admin/admin_vehicle_detail.html:49
-#: templates/admin/admin_vehicle_list.html:96 templates/booking_detail.html:58
-#: templates/group_booking_detail.html:41 templates/group_dashboard.html:91
-#: templates/vehicle_detail.html:50
+#: templates/booking_detail.html:58 templates/group_booking_detail.html:41
+#: templates/group_dashboard.html:91 templates/vehicle_detail.html:50
 msgid "No"
 msgstr "Não"
 
@@ -1896,43 +2042,48 @@ msgstr ""
 msgid "No upcoming availability found."
 msgstr "Não foi encontrada nenhuma disponibilidade futura."
 
+#: templates/admin/admin_vehicle_detail.html:95
+msgid "Active Until"
+msgstr "Ativo até"
+
 #: templates/admin/admin_vehicle_detail.html:96
+#: templates/admin/admin_vehicle_detail.html:101
 #: templates/vehicle_detail.html:99
 msgid "Not Set"
 msgstr "Não Definido"
 
-#: templates/admin/admin_vehicle_detail.html:99
+#: templates/admin/admin_vehicle_detail.html:104
 #: templates/vehicle_detail.html:102
 msgid "Insurance Document"
 msgstr "Documento de seguro"
 
-#: templates/admin/admin_vehicle_detail.html:102
-#: templates/admin/admin_vehicle_detail.html:112
+#: templates/admin/admin_vehicle_detail.html:107
+#: templates/admin/admin_vehicle_detail.html:117
 msgid "View/Download"
 msgstr "Ver/Descarregar"
 
-#: templates/admin/admin_vehicle_detail.html:104
-#: templates/admin/admin_vehicle_detail.html:114
+#: templates/admin/admin_vehicle_detail.html:109
+#: templates/admin/admin_vehicle_detail.html:119
 #: templates/booking_detail.html:138
 msgid "Not Uploaded"
 msgstr "Não carregado"
 
-#: templates/admin/admin_vehicle_detail.html:109
+#: templates/admin/admin_vehicle_detail.html:114
 #: templates/vehicle_detail.html:112
 msgid "Registration Document"
 msgstr "Documento de registo"
 
-#: templates/admin/admin_vehicle_detail.html:120
-#: templates/admin/admin_vehicle_edit.html:5
-#: templates/admin/admin_vehicle_edit.html:13
+#: templates/admin/admin_vehicle_detail.html:125
+#: templates/admin/admin_vehicle_edit.html:6
+#: templates/admin/admin_vehicle_edit.html:14
 msgid "Edit Vehicle"
 msgstr "Editar Veículo"
 
-#: templates/admin/admin_vehicle_detail.html:126
+#: templates/admin/admin_vehicle_detail.html:131
 msgid "Booking History"
 msgstr "Histórico de Reservas"
 
-#: templates/admin/admin_vehicle_detail.html:132
+#: templates/admin/admin_vehicle_detail.html:137
 #: templates/cancel_booking.html:19 templates/client_booking_history.html:22
 #: templates/emails/booking_cancellation_notification.html:23
 #: templates/emails/booking_cancellation_notification.html:26
@@ -1943,11 +2094,11 @@ msgstr "Histórico de Reservas"
 msgid "Booking ID"
 msgstr "ID da Reserva"
 
-#: templates/admin/admin_vehicle_detail.html:134
+#: templates/admin/admin_vehicle_detail.html:139
 msgid "User"
 msgstr "Utilizador"
 
-#: templates/admin/admin_vehicle_detail.html:135
+#: templates/admin/admin_vehicle_detail.html:140
 #: templates/booking_detail.html:41 templates/cancel_booking.html:35
 #: templates/client_booking_history.html:24
 #: templates/group_booking_detail.html:33 templates/my_account.html:61
@@ -1955,7 +2106,7 @@ msgstr "Utilizador"
 msgid "Start Date"
 msgstr "Data de Início"
 
-#: templates/admin/admin_vehicle_detail.html:136
+#: templates/admin/admin_vehicle_detail.html:141
 #: templates/booking_detail.html:45 templates/cancel_booking.html:39
 #: templates/client_booking_history.html:25
 #: templates/group_booking_detail.html:34 templates/my_account.html:62
@@ -1963,27 +2114,35 @@ msgstr "Data de Início"
 msgid "End Date"
 msgstr "Data de Fim"
 
-#: templates/admin/admin_vehicle_detail.html:165
+#: templates/admin/admin_vehicle_detail.html:170
 msgid "This vehicle has no upcoming or current bookings."
 msgstr "Este veículo não tem reservas futuras ou atuais."
 
-#: templates/admin/admin_vehicle_edit.html:21
+#: templates/admin/admin_vehicle_edit.html:22
 msgid "Current Picture:"
 msgstr "Imagem atual:"
 
-#: templates/admin/admin_vehicle_edit.html:27
+#: templates/admin/admin_vehicle_edit.html:28
 msgid "Current Insurance:"
 msgstr "Seguro atual:"
 
-#: templates/admin/admin_vehicle_edit.html:28
-#: templates/admin/admin_vehicle_edit.html:34 templates/vehicle_detail.html:105
+#: templates/admin/admin_vehicle_edit.html:29
+#: templates/admin/admin_vehicle_edit.html:35 templates/vehicle_detail.html:105
 #: templates/vehicle_detail.html:115
 msgid "View Document"
 msgstr "Ver documento"
 
-#: templates/admin/admin_vehicle_edit.html:33
+#: templates/admin/admin_vehicle_edit.html:34
 msgid "Current Registration:"
 msgstr "Registo atual:"
+
+#: templates/admin/admin_vehicle_inactive.html:18
+msgid "Are you sure you want to deactivate the vehicle: "
+msgstr "Tem a certeza que quer desativar o veiculo: "
+
+#: templates/admin/admin_vehicle_inactive.html:28
+msgid "Yes, Confirm Deactivation"
+msgstr "Confirmar desativação"
 
 #: templates/admin/admin_vehicle_list.html:17
 msgid "Filter By"
@@ -1993,69 +2152,81 @@ msgstr "Filtrar por"
 msgid "All Text Fields (Plate, Model)"
 msgstr "Todos campos de texto"
 
-#: templates/admin/admin_vehicle_list.html:21
-#: templates/admin/admin_vehicle_list.html:53 templates/booking_detail.html:69
+#: templates/admin/admin_vehicle_list.html:21 templates/booking_detail.html:69
 #: templates/group_booking_detail.html:50 templates/vehicle_list.html:28
 msgid "Model"
 msgstr "Modelo"
 
-#: templates/admin/admin_vehicle_list.html:22
-#: templates/admin/admin_vehicle_list.html:59 templates/vehicle_list.html:34
+#: templates/admin/admin_vehicle_list.html:22 templates/vehicle_list.html:34
 msgid "Type"
 msgstr "Tipo"
 
 #: templates/admin/admin_vehicle_list.html:24
-#: templates/admin/admin_vehicle_list.html:69
 msgid "Booked By (Customer)"
 msgstr "Reservado Por (Cliente)"
 
-#: templates/admin/admin_vehicle_list.html:25
-#: templates/admin/admin_vehicle_list.html:72 templates/vehicle_list.html:43
+#: templates/admin/admin_vehicle_list.html:25 templates/vehicle_list.html:43
 msgid "Location"
 msgstr "Localização"
 
-#: templates/admin/admin_vehicle_list.html:29
+#: templates/admin/admin_vehicle_list.html:31
 msgid "Value"
 msgstr "Valor"
 
-#: templates/admin/admin_vehicle_list.html:33 templates/group_dashboard.html:24
-msgid "Filter"
-msgstr "Filtro"
-
-#: templates/admin/admin_vehicle_list.html:34 templates/group_dashboard.html:25
-msgid "Clear"
-msgstr "Limpar"
-
-#: templates/admin/admin_vehicle_list.html:65
+#: templates/admin/admin_vehicle_list.html:46
 msgid "Available"
 msgstr "Disponível"
 
-#: templates/admin/admin_vehicle_list.html:86 templates/booking_detail.html:151
-#: templates/vehicle_list.html:57
-msgid "No Image"
-msgstr "Sem Imagem"
+#: templates/admin/admin_vehicle_list.html:47 templates/vehicle_detail.html:107
+#: templates/vehicle_detail.html:117
+msgid "Not Available"
+msgstr "Não disponível"
 
-#: templates/admin/admin_vehicle_list.html:108 templates/my_account.html:90
-#: templates/my_group_bookings.html:56 templates/vehicle_list.html:86
-msgid "Details"
-msgstr "Detalhes"
+#: templates/admin/admin_vehicle_list.html:53
+msgid "Not Active"
+msgstr "Não Ativo"
 
-#: templates/admin/admin_vehicle_list.html:151
+#: templates/admin/admin_vehicle_list.html:58 templates/group_dashboard.html:24
+msgid "Filter"
+msgstr "Filtro"
+
+#: templates/admin/admin_vehicle_list.html:59 templates/group_dashboard.html:25
+msgid "Clear"
+msgstr "Limpar"
+
+#: templates/admin/admin_vehicle_list.html:153
 msgid "No vehicles found matching your criteria."
 msgstr "Nenhum veículo encontrado que corresponda aos critérios."
 
-#: templates/admin/admin_vehicle_list.html:158
+#: templates/admin/admin_vehicle_list.html:159
 msgid "Add New Vehicle"
 msgstr "Adicionar Novo Veículo"
 
-#: templates/admin/admin_vehicle_list.html:161
+#: templates/admin/admin_vehicle_list.html:162
 #: templates/admin/import_vehicles.html:19
 msgid "Download Template"
 msgstr "Descarregar Template"
 
-#: templates/admin/admin_vehicle_list.html:164
+#: templates/admin/admin_vehicle_list.html:165
 msgid "Import from CSV"
 msgstr "Importar de CSV"
+
+#: templates/admin/admin_vehicle_list.html:174
+msgid "Import Vehicles from CSV"
+msgstr "Importar veículos de CSV"
+
+#: templates/admin/admin_vehicle_list.html:178
+msgid ""
+"Upload a CSV file with vehicle data. The file must contain the correct "
+"headers."
+msgstr ""
+"Carregue um ficheiro CSV com os dados do veículo. O ficheiro deve conter os "
+"cabeçalhos corretos."
+
+#: templates/admin/admin_vehicle_list.html:185
+#: templates/admin/import_vehicles.html:28
+msgid "Upload and Import"
+msgstr "Carregar e importar"
 
 #: templates/admin/email_template_variables/_booking_vars.html:6
 #: templates/admin/email_template_variables/_location_vars.html:6
@@ -2063,13 +2234,6 @@ msgstr "Importar de CSV"
 #: templates/admin/email_template_variables/_vehicle_vars.html:6
 msgid "Variable"
 msgstr "Variável"
-
-#: templates/admin/email_template_variables/_booking_vars.html:7
-#: templates/admin/email_template_variables/_location_vars.html:7
-#: templates/admin/email_template_variables/_user_vars.html:7
-#: templates/admin/email_template_variables/_vehicle_vars.html:7
-msgid "Description"
-msgstr "Descrição"
 
 #: templates/admin/email_template_variables/_booking_vars.html:11
 #: templates/booking_detail.html:4 templates/booking_detail.html:12
@@ -2090,14 +2254,10 @@ msgid "The end date of the booking."
 msgstr "A data de término da reserva."
 
 #: templates/admin/email_template_variables/_booking_vars.html:15
-#, fuzzy
-#| msgid "The pickup location name."
 msgid "Pickup location."
 msgstr "O nome do local de recolha."
 
 #: templates/admin/email_template_variables/_booking_vars.html:16
-#, fuzzy
-#| msgid "The drop-off location name."
 msgid "Drop-off location."
 msgstr "O nome do local de entrega."
 
@@ -2108,180 +2268,122 @@ msgid "APV Only"
 msgstr "Apenas APV"
 
 #: templates/admin/email_template_variables/_booking_vars.html:17
-#, fuzzy
-#| msgid "The reason for the booking."
 msgid "Reason for the booking."
 msgstr "O motivo da reserva."
 
 #: templates/admin/email_template_variables/_booking_vars.html:18
-#, fuzzy
-#| msgid "The starting kilometers."
 msgid "Starting kilometers."
 msgstr "Quilómetros Iniciais."
 
 #: templates/admin/email_template_variables/_booking_vars.html:19
-#, fuzzy
-#| msgid "Final Kilometers"
 msgid "Final kilometers."
-msgstr "Quilómetros finais"
+msgstr "Quilómetros finais."
 
 #: templates/admin/email_template_variables/_booking_vars.html:20
-#, fuzzy
-#| msgid "The URL to the contract document."
 msgid "URL to the signed contract document."
 msgstr "O URL para o documento do contrato."
 
 #: templates/admin/email_template_variables/_booking_vars.html:21
 msgid "Whether vehicle transport is required."
-msgstr ""
+msgstr "Se é necessário o transporte do veículo."
 
 #: templates/admin/email_template_variables/_booking_vars.html:22
-#, fuzzy
-#| msgid "End Location of previous booking"
 msgid "End Location of previous booking."
-msgstr "Local de destino da reserva anterior"
+msgstr "Local de destino da reserva anterior."
 
 #: templates/admin/email_template_variables/_booking_vars.html:24
-#, fuzzy
-#| msgid "Client Information"
 msgid "Client Info"
 msgstr "Informação do Cliente"
 
 #: templates/admin/email_template_variables/_booking_vars.html:25
-#, fuzzy
-#| msgid "The client's full name."
 msgid "Client full name."
 msgstr "O nome completo do cliente."
 
 #: templates/admin/email_template_variables/_booking_vars.html:26
-#, fuzzy
-#| msgid "Client Email"
 msgid "Client email."
-msgstr "Email do Cliente"
+msgstr "E-mail do Cliente."
 
 #: templates/admin/email_template_variables/_booking_vars.html:27
-#, fuzzy
-#| msgid "The client's phone number."
 msgid "Client phone number."
 msgstr "O número de telefone do cliente."
 
 #: templates/admin/email_template_variables/_booking_vars.html:29
-#, fuzzy
-#| msgid "Salesperson Information"
 msgid "Salesperson Info"
 msgstr "Informação do Vendedor"
 
 #: templates/admin/email_template_variables/_booking_vars.html:30
-#, fuzzy
-#| msgid "Salesperson"
 msgid "Salesperson name."
-msgstr "Vendedor"
+msgstr "Numo do Vendedor."
 
 #: templates/admin/email_template_variables/_booking_vars.html:31
-#, fuzzy
-#| msgid "Salesperson"
 msgid "Salesperson email."
-msgstr "Vendedor"
+msgstr "Email do Vendedor."
 
 #: templates/admin/email_template_variables/_location_vars.html:11
-#, fuzzy
-#| msgid "The end date of the booking."
 msgid "The name of the location."
-msgstr "A data de término da reserva."
+msgstr "O nome da localização."
 
 #: templates/admin/email_template_variables/_location_vars.html:12
-#, fuzzy
-#| msgid "The email address of the recipient."
 msgid "The address of the location."
-msgstr "O endereço de correio eletrónico do destinatário."
+msgstr "O morada da localização."
 
 #: templates/admin/email_template_variables/_location_vars.html:13
-#, fuzzy
-#| msgid "Confirm Delete Location"
 msgid "City of the location."
-msgstr "Confirmar Eliminação de Localização"
+msgstr "Cidade da Localização."
 
 #: templates/admin/email_template_variables/_location_vars.html:14
-#, fuzzy
-#| msgid "Confirm Delete Location"
 msgid "Country of the location."
-msgstr "Confirmar Eliminação de Localização"
+msgstr "Pais da Localização."
 
 #: templates/admin/email_template_variables/_user_vars.html:11
-#, fuzzy
-#| msgid "The full name of the salesperson."
 msgid "The username of the user."
-msgstr "O nome completo do vendedor."
+msgstr "Nome de uitlizador."
 
 #: templates/admin/email_template_variables/_user_vars.html:12
-#, fuzzy
-#| msgid "The full name of the salesperson."
 msgid "The full name of the user."
-msgstr "O nome completo do vendedor."
+msgstr "O nome completo do utilizador."
 
 #: templates/admin/email_template_variables/_user_vars.html:13
-#, fuzzy
-#| msgid "The email address of the recipient."
 msgid "The email address of the user."
-msgstr "O endereço de correio eletrónico do destinatário."
+msgstr "O morada de correio eletrónico do utilizador."
 
 #: templates/admin/email_template_variables/_user_vars.html:14
-#, fuzzy
-#| msgid "The generated temporary password."
 msgid "Generated temporary password (if applicable)."
-msgstr "A palavra-passe temporária gerada."
+msgstr "A palavra-passe temporária gerada (Se aplicável)."
 
 #: templates/admin/email_template_variables/_vehicle_vars.html:11
-#, fuzzy
-#| msgid "The Model of the vehicle."
 msgid "The model of the vehicle."
-msgstr "O nome do modelo do veículo."
+msgstr "O modelo do veículo."
 
 #: templates/admin/email_template_variables/_vehicle_vars.html:12
-#, fuzzy
-#| msgid "License Plate"
 msgid "The license plate."
-msgstr "Matrícula"
+msgstr "Matrícula."
 
 #: templates/admin/email_template_variables/_vehicle_vars.html:13
-#, fuzzy
-#| msgid "Vehicle Type (LIGHT, HEAVY, APV)."
 msgid "Vehicle type (HEAVY, LIGHT, APV)."
 msgstr "Tipo de veículo (LIGHT, HEAVY, APV)."
 
 #: templates/admin/email_template_variables/_vehicle_vars.html:14
-#, fuzzy
-#| msgid "This vehicle is available for booking on or after"
 msgid "First available booking date."
-msgstr "Este veículo está disponível para reserva a partir de"
+msgstr "Primeira data disponivel de reserva."
 
 #: templates/admin/email_template_variables/_vehicle_vars.html:15
-#, fuzzy
-#| msgid "has been updated."
 msgid "Last bookable date."
-msgstr "foi atualizada."
+msgstr "Ultima data para reserva."
 
 #: templates/admin/email_template_variables/_vehicle_vars.html:16
-#, fuzzy
-#| msgid "Upload a picture of the vehicle."
 msgid "Declared value of the vehicle."
-msgstr "Carregue uma fotografia do veículo."
+msgstr "Valor do veiculo declarado."
 
 #: templates/admin/email_template_variables/_vehicle_vars.html:17
-#, fuzzy
-#| msgid "The next maintenance date."
 msgid "Next scheduled maintenance date."
 msgstr "Próxima data de manutenção."
 
 #: templates/admin/email_template_variables/_vehicle_vars.html:18
-#, fuzzy
-#| msgid "The URL to the insurance document."
 msgid "URL to insurance document."
 msgstr "O URL do documento do seguro."
 
 #: templates/admin/email_template_variables/_vehicle_vars.html:19
-#, fuzzy
-#| msgid "The URL to the registration document."
 msgid "URL to registration document."
 msgstr "O URL do documento de registo."
 
@@ -2293,10 +2395,6 @@ msgstr ""
 "Carregue um ficheiro CSV com os dados do veículo. O ficheiro deve conter os "
 "cabeçalhos corretos. Pode descarregar um modelo para ver o formato "
 "necessário."
-
-#: templates/admin/import_vehicles.html:28
-msgid "Upload and Import"
-msgstr "Carregar e importar"
 
 #: templates/base.html:8
 msgid "Demo Booking App"
@@ -2357,7 +2455,7 @@ msgstr "Sair"
 #: templates/registration/login.html:4 templates/registration/login.html:13
 #: templates/registration/login.html:54
 msgid "Login"
-msgstr "Entrar"
+msgstr "Login"
 
 #: templates/base.html:128
 msgid "NuLopes.me. All Rights Reserved."
@@ -2568,6 +2666,10 @@ msgstr "Ficheiros de veículos associados"
 msgid "Vehicle Picture"
 msgstr "Fotografia do Veículo"
 
+#: templates/booking_detail.html:151 templates/vehicle_list.html:57
+msgid "No Image"
+msgstr "Sem Imagem"
+
 #: templates/booking_detail.html:161 templates/booking_detail.html:171
 #: templates/client_booking_history.html:39
 #: templates/group_booking_detail.html:107
@@ -2613,11 +2715,11 @@ msgstr "Sim, Cancelar Esta Reserva"
 #: templates/change_password.html:5 templates/change_password.html:51
 #: templates/my_account.html:42
 msgid "Change Password"
-msgstr "Alterar Password"
+msgstr "Alterar Palavra-passe"
 
 #: templates/change_password.html:13
 msgid "Change Your Password"
-msgstr "Altere a Sua Password"
+msgstr "Altere a Sua Palavra-passe"
 
 #: templates/client_booking_history.html:12
 msgid "Client Details"
@@ -2644,8 +2746,7 @@ msgstr "Caro(a)"
 #: templates/emails/booking_cancellation_notification.html:23
 msgid "This email confirms that your booking for Vehicle ID"
 msgstr ""
-"Esta mensagem de correio eletrónico confirma que a sua reserva para o "
-"Vehicle ID"
+"Esta mensagem de correio eletrónico confirma que a sua reserva para o Veiculo"
 
 #: templates/emails/booking_cancellation_notification.html:23
 msgid "has been successfully cancelled."
@@ -2725,7 +2826,7 @@ msgstr "A Equipa TruckApp"
 #: templates/emails/booking_confirmation.html:50
 #: templates/emails/booking_update_notification.html:50
 msgid "This is an automated email, please do not reply."
-msgstr "Este é um email automático, por favor não responda."
+msgstr "Este é um e-mail automático, por favor não responda."
 
 #: templates/emails/booking_confirmation.html:6
 msgid "Booking Confirmation"
@@ -2979,6 +3080,11 @@ msgstr "As Minhas Reservas Recentes"
 msgid "ID"
 msgstr "ID"
 
+#: templates/my_account.html:90 templates/my_group_bookings.html:56
+#: templates/vehicle_list.html:86
+msgid "Details"
+msgstr "Detalhes"
+
 #: templates/my_account.html:99
 msgid "View All My Bookings"
 msgstr "Ver Todas as Minhas Reservas"
@@ -3025,7 +3131,7 @@ msgstr "Voltar ao Início"
 
 #: templates/registration/login.html:59
 msgid "Forgot password?"
-msgstr "Esqueceu-se da password?"
+msgstr "Esqueceu-se da palavra-passe?"
 
 #: templates/registration/login.html:63
 msgid "Don't have an account?"
@@ -3046,10 +3152,6 @@ msgstr "Atualize os Seus Dados Pessoais"
 #: templates/update_user_data.html:33
 msgid "Username cannot be changed."
 msgstr "O nome de utilizador não pode ser alterado."
-
-#: templates/vehicle_detail.html:107 templates/vehicle_detail.html:117
-msgid "Not Available"
-msgstr "Não disponível"
 
 #: templates/vehicle_detail.html:124
 msgid "Book This Vehicle"
@@ -3086,830 +3188,3 @@ msgstr "Reservar Agora"
 #: templates/vehicle_list.html:122
 msgid "No vehicles found."
 msgstr "Nenhum veículo encontrado."
-
-#~ msgid ""
-#~ "Booking date cannot be today or in the past. Please select tomorrow or a "
-#~ "future date."
-#~ msgstr ""
-#~ "A data da reserva não pode ser hoje ou no passado. Por favor, selecione "
-#~ "amanhã ou uma data futura."
-
-#~ msgid "A user with that username already exists."
-#~ msgstr "Já existe um utilizador com esse nome."
-
-#~ msgid "Save Client"
-#~ msgstr "Guardar Cliente"
-
-#~ msgid "Contract"
-#~ msgstr "Contrato"
-
-#~ msgid "Upload the signed contract to confirm the booking."
-#~ msgstr "Carregue o contrato assinado para confirmar a reserva."
-
-#~ msgid ""
-#~ "Contract has been generated and attached to the booking successfully."
-#~ msgstr "O contrato foi gerado e anexado à reserva com sucesso."
-
-#~ msgid "Booking-Related Variables"
-#~ msgstr "Variáveis relacionadas com reservas"
-
-#~ msgid ""
-#~ "Available for events related to bookings (e.g., 'booking_created', "
-#~ "'booking_approved')."
-#~ msgstr ""
-#~ "Disponível para eventos relacionados com reservas (por exemplo, 'Reserva "
-#~ "Criada, 'Reserva Aprovada')."
-
-#~ msgid "The final kilometers."
-#~ msgstr "Quilómetros finais."
-
-#~ msgid ""
-#~ "Vehicle needs transport? if clause required (refer to support if needed)"
-#~ msgstr ""
-#~ "O veículo precisa de transporte? Se for necessário, consulte o suporte "
-#~ "(se necessário)."
-
-#~ msgid "The client's email address."
-#~ msgstr "O endereço de email do cliente."
-
-#~ msgid "Vehicle Information"
-#~ msgstr "Informação do Veículo"
-
-#~ msgid "The model name of the vehicle."
-#~ msgstr "O nome do modelo do veículo."
-
-#~ msgid "The license plate of the vehicle."
-#~ msgstr "A matrícula do veículo."
-
-#~ msgid "The email of the salesperson."
-#~ msgstr "O e-mail do vendedor."
-
-#~ msgid "User-Related Variables"
-#~ msgstr "Variáveis relacionadas ao utilizador"
-
-#~ msgid "Available for events like 'user_created', 'password_reset', etc."
-#~ msgstr "Disponível para eventos como «user_created», «password_reset», etc."
-
-#~ msgid "The user's username."
-#~ msgstr "O nome de utilizador do utilizador."
-
-#~ msgid "The user's full name."
-#~ msgstr "O nome completo do utilizador."
-
-#~ msgid "The user's email address."
-#~ msgstr "O endereço de email do utilizador."
-
-#~ msgid "New APV Booking Created"
-#~ msgstr "Nova reserva APV criada"
-
-#~ msgid "Customer Email"
-#~ msgstr "Email do Cliente"
-
-#~ msgid "Customer Phone"
-#~ msgstr "Telefone do Cliente"
-
-#~ msgid "Motive (Required for APV)"
-#~ msgstr "Motivo (obrigatório para APV)"
-
-#~ msgid "Assign to Groups"
-#~ msgstr "Atribuir a Grupos"
-
-#~ msgid "Vehicle Km"
-#~ msgstr "KM do Veículo"
-
-#~ msgid "A group with this name already exists."
-#~ msgstr "Já existe um grupo com este nome."
-
-#~ msgid "Email Subject"
-#~ msgstr "Assunto do Email"
-
-#~ msgid "Email Body (HTML is allowed)"
-#~ msgstr "Corpo do Email (HTML é permitido)"
-
-#~ msgid "Is this template active?"
-#~ msgstr "Esse modelo está ativo?"
-
-#~ msgid "Send to Salesperson"
-#~ msgstr "Enviar a Vendedor"
-
-#~ msgid "Send to Groups"
-#~ msgstr "Enviar a Grupo"
-
-#~ msgid "Send to Specific Users"
-#~ msgstr "Enviar para utikizadores específicos"
-
-#~ msgid "Send to Distribution Lists"
-#~ msgstr "Enviar para listas de distribuição"
-
-#~ msgid "Enable Reminders for Pending Bookings"
-#~ msgstr "Ativar lembretes para reservas pendentes"
-
-#~ msgid "Send Reminder After (Days)"
-#~ msgstr "Enviar lembrete após (dias)"
-
-#~ msgid "Require Company Verification (CRC)"
-#~ msgstr "Necessário Código Certidão Permanente"
-
-#~ msgid ""
-#~ "If checked, the system will send reminders for bookings that are pending "
-#~ "for too long."
-#~ msgstr ""
-#~ "Se estiver marcado, o sistema enviará lembretes para reservas que "
-#~ "estiverem pendentes há muito tempo."
-
-#~ msgid ""
-#~ "The number of days a booking can be in 'Pending' status before a reminder "
-#~ "is sent."
-#~ msgstr ""
-#~ "O número de dias que uma reserva pode permanecer no estado «Pendente» "
-#~ "antes de ser enviado um lembrete."
-
-#~ msgid ""
-#~ "If checked, the booking form will be locked until a valid CRC is entered "
-#~ "and verified."
-#~ msgstr ""
-#~ "Se selecionado, o formulário de reserva ficará bloqueado até que um CRC "
-#~ "válido seja inserido e verificado."
-
-#~ msgid "The Username field must be set"
-#~ msgstr "O campo Nome de Utilizador tem de ser preenchido"
-
-#~ msgid "The Email field must be set"
-#~ msgstr "O campo Email tem de ser preenchido"
-
-#~ msgid "Superuser must have is_staff=True."
-#~ msgstr "O Superutilizador tem de ter is_staff=True."
-
-#~ msgid "Superuser must have is_superuser=True."
-#~ msgstr "O Superutilizador tem de ter is_superuser=True."
-
-#~ msgid "username"
-#~ msgstr "nome de utilizador"
-
-#~ msgid "email address"
-#~ msgstr "endereço de email"
-
-#~ msgid "first name"
-#~ msgstr "primeiro nome"
-
-#~ msgid "last name"
-#~ msgstr "último nome"
-
-#~ msgid "phone number"
-#~ msgstr "número de telefone"
-
-#~ msgid "date joined"
-#~ msgstr "data de registo"
-
-#~ msgid "staff status"
-#~ msgstr "estado de membro da equipa"
-
-#~ msgid "superuser status"
-#~ msgstr "estado de superutilizador"
-
-#~ msgid "Preferred Language"
-#~ msgstr "Língua preferencial"
-
-#~ msgid "user"
-#~ msgstr "utilizador"
-
-#~ msgid "users"
-#~ msgstr "utilizadores"
-
-#~ msgid "The address of the customer, can be auto-filled from VAT validation."
-#~ msgstr ""
-#~ "O endereço do cliente pode ser preenchido automaticamente a partir da "
-#~ "validação do NIF."
-
-#~ msgid ""
-#~ "A booking must have either a customer email or a customer phone number."
-#~ msgstr ""
-#~ "Uma reserva tem de ter um email de cliente ou um número de telefone de "
-#~ "cliente."
-
-#~ msgid "Enter one or more email addresses, separated by commas or new lines."
-#~ msgstr ""
-#~ "Digite um ou mais endereços de e-mail, separados por vírgulas ou novas "
-#~ "linhas."
-
-#~ msgid "Distribution List"
-#~ msgstr "Lista de distribuição"
-
-#~ msgid "Contract Generated"
-#~ msgstr "Contrato gerado"
-
-#~ msgid "Select the specific event that will trigger this email notification."
-#~ msgstr "Selecione o evento que irá acionar esta notificação de email."
-
-#~ msgid ""
-#~ "A descriptive name for this template (e.g., 'New Booking Confirmation')."
-#~ msgstr ""
-#~ "Um nome descritivo para este modelo (por exemplo, “Confirmação de nova "
-#~ "reserva”)."
-
-#~ msgid ""
-#~ "The email subject line. You can use template variables like {{ booking."
-#~ "pk }}."
-#~ msgstr ""
-#~ "A linha de assunto do email. Pode usar variáveis de template como "
-#~ "{{ booking.pk }}."
-
-#~ msgid ""
-#~ "The email body. Can contain HTML and template variables like {{ booking."
-#~ "customer_name }}."
-#~ msgstr ""
-#~ "O corpo do email. Pode conter HTML e variáveis de template como "
-#~ "{{ booking.customer_name }}."
-
-#~ msgid "Only active templates will be sent."
-#~ msgstr "Apenas os modelos activos serão enviados."
-
-#~ msgid ""
-#~ "Check to send a notification to the salesperson who created the booking."
-#~ msgstr "Marque para enviar uma notificação ao vendedor que criou a reserva."
-
-#~ msgid "Select groups whose members should receive this notification."
-#~ msgstr "Selecione os grupos cujos membros devem receber esta notificação."
-
-#~ msgid "Select specific users who should receive this notification."
-#~ msgstr ""
-#~ "Selecione os utilizadores específicos que devem receber esta notificação."
-
-#~ msgid "Select distribution lists that should receive this notification."
-#~ msgstr ""
-#~ "Selecione as listas de distribuição que devem receber esta notificação."
-
-#~ msgid "Activate Pending Booking Automation"
-#~ msgstr "Ativar a automatização das reservas pendentes"
-
-#~ msgid ""
-#~ "If checked, the system will automatically send reminders and cancel "
-#~ "unapproved bookings."
-#~ msgstr ""
-#~ "Se estiver selecionado, o sistema enviará automaticamente lembretes e "
-#~ "cancelará as reservas não aprovadas."
-
-#~ msgid "Enable Pending Booking Reminders"
-#~ msgstr "Ativar lembretes de reservas pendentes"
-
-#~ msgid "Days Before Sending Reminder"
-#~ msgstr "Dias antes do envio do lembrete"
-
-#~ msgid ""
-#~ "Send a reminder if a booking has been in 'Pending' status for this many "
-#~ "days."
-#~ msgstr ""
-#~ "Envie um lembrete se uma reserva estiver no estado «Pendente» há tantos "
-#~ "dias."
-
-#~ msgid "Require Company Verification via CRC"
-#~ msgstr "Exigir verificação da empresa através do CRC"
-
-#~ msgid ""
-#~ "If checked, users must successfully verify a company's CRC before they "
-#~ "can fill out the rest of the booking form."
-#~ msgstr ""
-#~ "Se selecionado, os utilizadores devem verificar com sucesso o CRC da "
-#~ "empresa antes de poderem preencher o restante do formulário de reserva."
-
-#~ msgid "Automation Settings"
-#~ msgstr "Definições automatização"
-
-#~ msgid "Sent"
-#~ msgstr "Enviado"
-
-#~ msgid "Failed"
-#~ msgstr "Falhou"
-
-#~ msgid "The subject line of the email."
-#~ msgstr "A linha de assunto da mensagem de correio eletrónico."
-
-#~ msgid "The status of the email sending attempt."
-#~ msgstr "O estado da tentativa de envio de correio eletrónico."
-
-#~ msgid "Sent At"
-#~ msgstr "Enviado a"
-
-#~ msgid "The timestamp when the email was attempted to be sent."
-#~ msgstr ""
-#~ "O carimbo de data/hora da tentativa de envio da mensagem de correio "
-#~ "eletrónico."
-
-#~ msgid "Error Message"
-#~ msgstr "Mensagem de erro"
-
-#~ msgid "Any error message if the email failed to send."
-#~ msgstr ""
-#~ "Qualquer mensagem de erro se a mensagem de correio eletrónico não for "
-#~ "enviada."
-
-#~ msgid "Email Log"
-#~ msgstr "Registo de correio eletrónico"
-
-#~ msgid "Vehicle List"
-#~ msgstr "Lista de Veículos"
-
-#~ msgid "Please correct the errors below."
-#~ msgstr "Por favor, corrija os erros abaixo."
-
-#~ msgid "You do not have permission to view this booking."
-#~ msgstr "Não tem permissão para ver esta reserva."
-
-#~ msgid ""
-#~ "The booking was modified and has been returned to 'Pending' status for re-"
-#~ "approval."
-#~ msgstr ""
-#~ "A reserva foi modificada e voltou ao estado «Pendente» para nova "
-#~ "aprovação."
-
-#~ msgid "Your booking has been updated successfully."
-#~ msgstr "A sua reserva foi atualizada com sucesso."
-
-#~ msgid "Error updating booking. Please check the form."
-#~ msgstr "Erro ao atualizar a reserva. Por favor, verifique o formulário."
-
-#~ msgid "This booking cannot be modified in its current state."
-#~ msgstr "Esta reserva não pode ser modificada no estado atual."
-
-#~ msgid "You do not have permission to manage this booking."
-#~ msgstr "Não tem permissão para gerir esta reserva."
-
-#, python-brace-format
-#~ msgid "Booking {booking.pk} approved. Status is now 'Pending Contract'."
-#~ msgstr ""
-#~ "Reserva {booking.pk} aprovada. O estado é agora “Contrato pendente”."
-
-#, python-brace-format
-#~ msgid "Booking {booking.pk} has been confirmed with the uploaded contract."
-#~ msgstr "A reserva {booking.pk} foi confirmada com o contrato carregado."
-
-#, python-brace-format
-#~ msgid "Booking {booking.pk} has been cancelled by management."
-#~ msgstr "A reserva {booking.pk} foi cancelada pela administração."
-
-#~ msgid ""
-#~ "You do not have permission to update this booking's details or its status "
-#~ "prevents it."
-#~ msgstr ""
-#~ "Não tem permissão para atualizar os detalhes desta reserva ou o seu "
-#~ "estado não o permite."
-
-#, python-brace-format
-#~ msgid "Confirm Delete Vehicle: {vehicle_to_delete.license_plate}"
-#~ msgstr "Confirmar Eliminação do Veículo: {vehicle_to_delete.license_plate}"
-
-#, python-brace-format
-#~ msgid ""
-#~ "User '{user.username}' created successfully. You can now send their "
-#~ "credentials or a temporary password."
-#~ msgstr ""
-#~ "O utilizador '{user.username}' foi criado com sucesso. Agora pode enviar "
-#~ "as suas credenciais ou uma palavra-passe temporária."
-
-#~ msgid "Error creating user. Please check the form for errors."
-#~ msgstr ""
-#~ "Erro ao criar utilizador. Por favor, verifique os erros no formulário."
-
-#~ msgid "Error updating user. Please check the form."
-#~ msgstr "Erro ao atualizar o utilizador. Por favor, verifique o formulário."
-
-#~ msgid "Error resetting password. Please check the form."
-#~ msgstr "Erro ao redefinir a password. Por favor, verifique o formulário."
-
-#~ msgid "Error creating location. Please check the form."
-#~ msgstr "Erro ao criar localização. Por favor, verifique o formulário."
-
-#~ msgid "Error updating location. Please correct the errors below."
-#~ msgstr ""
-#~ "Erro ao atualizar a localização. Por favor, corrija os erros abaixo."
-
-#, python-brace-format
-#~ msgid "Confirm Delete Location: {location_to_delete.name}"
-#~ msgstr "Confirmar Eliminação da Localização: {location_to_delete.name}"
-
-#~ msgid "Error creating group. Please check the form."
-#~ msgstr "Erro ao criar grupo. Por favor, verifique o formulário."
-
-#~ msgid "Error updating group. Please check the form."
-#~ msgstr "Erro ao atualizar o grupo. Por favor, verifique o formulário."
-
-#, python-brace-format
-#~ msgid "Edit Group: {group_to_edit.name}"
-#~ msgstr "Editar Grupo: {group_to_edit.name}"
-
-#, python-brace-format
-#~ msgid "Confirm Delete Group: {group_to_delete.name}"
-#~ msgstr "Confirmar Eliminação do Grupo: {group_to_delete.name}"
-
-#, python-brace-format
-#~ msgid "Edit Email Template: {template.name}"
-#~ msgstr "Editar Template de Email: {template.name}"
-
-#~ msgid "Create New Email Template"
-#~ msgstr "Criar Novo Template de Email"
-
-#~ msgid "updated"
-#~ msgstr "atualizado"
-
-#~ msgid "Error processing template. Please check the form."
-#~ msgstr "Erro ao processar o template. Por favor, verifique o formulário."
-
-#~ msgid "Cannot run test: At least one Vehicle must exist in the database."
-#~ msgstr ""
-#~ "Não é possível executar o teste: Pelo menos um veículo deve existir na "
-#~ "base de dados."
-
-#~ msgid "Email Sending Logs"
-#~ msgstr "Registos de envio de correio eletrónico"
-
-#~ msgid "Edit Distribution List"
-#~ msgstr "Editar lista de distribuição"
-
-#~ msgid "Create Distribution List"
-#~ msgstr "Criar lista de distribuição"
-
-#, python-brace-format
-#~ msgid "Distribution list has been {action} successfully!"
-#~ msgstr "A lista de distribuição foi {action} com êxito!"
-
-#~ msgid "Confirm Delete Distribution List"
-#~ msgstr "Confirmar Eliminar lista de distribuição"
-
-#~ msgid "Could not find the details table on the page."
-#~ msgstr "Não foi possível encontrar a tabela de detalhes na página."
-
-#~ msgid "Could not find the details cell on the page."
-#~ msgstr "Não foi possível encontrar a célula de detalhes na página."
-
-#~ msgid "Could not parse all required company details from the page."
-#~ msgstr ""
-#~ "Não foi possível analisar todos os detalhes necessários da empresa na "
-#~ "página."
-
-#, python-brace-format
-#~ msgid "Server responded with status {response.status_code}"
-#~ msgstr "O servidor respondeu com o estado {response.status_code}"
-
-#~ msgid "Invalid VAT number for the selected country."
-#~ msgstr "NIF inválido para o país selecionado."
-
-#~ msgid ""
-#~ "Could not find or run the LibreOffice converter. Please ensure it is "
-#~ "installed and the path in the view is correct."
-#~ msgstr ""
-#~ "Não foi possível localizar ou executar o conversor do LibreOffice. "
-#~ "Verifique se ele está instalado e se o caminho na exibição está correto."
-
-#~ msgid "Is Available"
-#~ msgstr "Está Disponível"
-
-#~ msgid "Next Maintenance"
-#~ msgstr "Próxima manutenção"
-
-#~ msgid "The end date must be on or after the start date."
-#~ msgstr "A data final deve ser igual ou posterior à data de início."
-
-#~ msgid "Verify VAT"
-#~ msgstr "Verificar NIF"
-
-#~ msgid "Verifying VAT number..."
-#~ msgstr "A verificar o NIF..."
-
-#~ msgid "VAT number is valid. But no company name provided"
-#~ msgstr "O NIF é válido. Mas não foi fornecido o nome da empresa."
-
-#~ msgid "VAT number is valid."
-#~ msgstr "O NIF é válido."
-
-#~ msgid "An error occurred during VAT verification."
-#~ msgstr "Ocorreu um erro durante a verificação do NIF."
-
-#~ msgid "An unexpected error occurred. Please try again."
-#~ msgstr "Ocorreu um erro inesperado. Por favor, tente novamente."
-
-#, python-format
-#~ msgid "Next Available: %(next_available_date|date:\"F d, Y\")s"
-#~ msgstr "Próximo Disponível: %(next_available_date|date:\"F d, Y\")s"
-
-#~ msgid "Back to List"
-#~ msgstr "Voltar à Lista"
-
-#~ msgid "You do not have permission to access or manage this booking."
-#~ msgstr "Não tem permissão para aceder ou gerir esta reserva."
-
-#~ msgid ""
-#~ "This is the first trip for this APV. Initial KM set to 0. Please verify "
-#~ "and update if necessary."
-#~ msgstr ""
-#~ "Esta é a primeira viagem para este APV. KM inicial definido como 0. Por "
-#~ "favor, verifique e actualize se necessário."
-
-#~ msgid ""
-#~ "Booking is now awaiting final kilometers. Please enter the final reading "
-#~ "to complete."
-#~ msgstr ""
-#~ "A reserva está agora a aguardar os quilómetros finais. Por favor, "
-#~ "introduza a leitura final para concluir."
-
-#, python-brace-format
-#~ msgid "Booking {booking.pk} has been marked as completed."
-#~ msgstr "A reserva {booking.pk} foi marcada como concluída."
-
-#~ msgid "Booking Approved by Manager"
-#~ msgstr "Reserva aprovado pelo Manager"
-
-#~ msgid "APV Booking Approved by Manager"
-#~ msgstr "Reserva de APV aprovada pelo gestor"
-
-#, python-format
-#~ msgid ""
-#~ "This vehicle is only available after %(earliest_date)s. Please select a "
-#~ "later date."
-#~ msgstr ""
-#~ "Este veículo só está disponível a partir de %(earliest_date)s. Por favor, "
-#~ "selecione uma data posterior."
-
-#~ msgid "Password"
-#~ msgstr "Password"
-
-#~ msgid ""
-#~ "Enter a password for the new user. Must be at least 8 characters long."
-#~ msgstr ""
-#~ "Introduza uma password para o novo utilizador. Deve ter pelo menos 8 "
-#~ "caracteres."
-
-#~ msgid "Password confirmation"
-#~ msgstr "Confirmação da Password"
-
-#~ msgid "Enter the same password as above, for verification."
-#~ msgstr "Introduza a mesma password que acima, para verificação."
-
-#~ msgid "Assign to Other Groups"
-#~ msgstr "Atribuir a Outros Grupos"
-
-#~ msgid "Password must be at least 8 characters long."
-#~ msgstr "A password deve ter pelo menos 8 caracteres."
-
-#~ msgid "Both password fields are required."
-#~ msgstr "Ambos os campos de password são obrigatórios."
-
-#~ msgid "Booking Created by Salesperson"
-#~ msgstr "Marcação criada por vendedor"
-
-#~ msgid "Booking Updated by Salesperson"
-#~ msgstr "Reserva actualizada pelo vendedor"
-
-#~ msgid "Booking Awaiting Contract"
-#~ msgstr "Reserva a aguardar contrato"
-
-#~ msgid "Group Bookings Overview"
-#~ msgstr "Visão Geral das Reservas de Grupo"
-
-#~ msgid "View all bookings on an interactive calendar."
-#~ msgstr "Ver todas as reservas num calendário interativo."
-
-#~ msgid "Reset User Password"
-#~ msgstr "Redefinir Password do Utilizador"
-
-#~ msgid "Send Login Credentials"
-#~ msgstr "Enviar credenciais de início de sessão"
-
-#~ msgid "Back to Group Bookings"
-#~ msgstr "Voltar às Reservas de Grupo"
-
-#~ msgid "Browse Vehicles to Book"
-#~ msgstr "Procurar Veículos para Reservar"
-
-#~ msgid "Status:"
-#~ msgstr "Estado:"
-
-#~ msgid "Approve (Send to Pending Contract)"
-#~ msgstr "Aprovar (Enviar para contrato pendente)"
-
-#~ msgid "Cancel Booking (Manager)"
-#~ msgstr "Cancelar Reserva (Gestor)"
-
-#~ msgid "Mark as Completed"
-#~ msgstr "Marcar como concluído"
-
-#, python-brace-format
-#~ msgid ""
-#~ "Booking {booking.pk} for {booking.vehicle.license_plate} has been "
-#~ "approved."
-#~ msgstr ""
-#~ "A reserva {booking.pk} para {booking.vehicle.license_plate} foi aprovada."
-
-#~ msgid "Current image. Upload a new one to replace it."
-#~ msgstr "Imagem atual. Carregue uma nova para a substituir."
-
-#~ msgid "No image currently uploaded."
-#~ msgstr "Nenhuma imagem carregada atualmente."
-
-#~ msgid "Cancellation Details"
-#~ msgstr "Detalhes da Reserva Cancelada"
-
-#~ msgid "Reason"
-#~ msgstr "Motivo"
-
-#, python-format
-#~ msgid ""
-#~ "\n"
-#~ "                                    Cancelled automatically by the system "
-#~ "on %(time)s.\n"
-#~ "                                    "
-#~ msgstr ""
-#~ "\n"
-#~ "                                        Cancelado automaticamente pelo "
-#~ "sistema em %(time)s."
-
-#~ msgid "Cancel as Manager"
-#~ msgstr "Cancelar como Gestor"
-
-#~ msgid ""
-#~ "No management actions are available for this booking's current status."
-#~ msgstr ""
-#~ "Não existem ações de gestão disponíveis para o estado atual desta reserva."
-
-#~ msgid "Current Booking Details"
-#~ msgstr "Detalhes da Reserva Atual"
-
-#~ msgid "Requested Location"
-#~ msgstr "Localização Pedida"
-
-#~ msgid "Are you sure you want to cancel this booking as a manager?"
-#~ msgstr "Tem a certeza que quer cancelar esta reserva como gestor?"
-
-#~ msgid ""
-#~ "No management actions available for this booking or your current "
-#~ "permissions."
-#~ msgstr ""
-#~ "Não existem ações de gestão disponíveis para esta reserva ou para as suas "
-#~ "permissões atuais."
-
-#~ msgid "Modify Booking Information"
-#~ msgstr "Modificar Informação da Reserva"
-
-#~ msgid ""
-#~ "This booking cannot be updated or you do not have permission to modify "
-#~ "its details."
-#~ msgstr ""
-#~ "Esta reserva não pode ser atualizada ou não tem permissão para modificar "
-#~ "os seus detalhes."
-
-#~ msgid "Update"
-#~ msgstr "Atualizar"
-
-#, python-format
-#~ msgid ""
-#~ "Your selected start date (%(start_date)s) is before the earliest "
-#~ "available date for this vehicle (%(earliest_date)s). Please select a date "
-#~ "on or after %(earliest_date)s."
-#~ msgstr ""
-#~ "A data de início que selecionou (%(start_date)s) é anterior à data mais "
-#~ "próxima disponível para este veículo (%(earliest_date)s). Por favor, "
-#~ "selecione uma data igual ou posterior a %(earliest_date)s."
-
-#~ msgid "Add New Location"
-#~ msgstr "Adicionar Nova Localização"
-
-#~ msgid "Add New Group"
-#~ msgstr "Adicionar Novo Grupo"
-
-#~ msgid "User Account Details"
-#~ msgstr "Detalhes da conta de utilizador"
-
-#~ msgid "Set Password"
-#~ msgstr "Definir Password"
-
-#~ msgid "Permissions and Groups"
-#~ msgstr "Permissões e Grupos"
-
-#~ msgid "Select Start Location"
-#~ msgstr "Selecione o Local de Início"
-
-#~ msgid "Select End Location"
-#~ msgstr "Selecione o Local de Fim"
-
-#~ msgid "Please select a destination location."
-#~ msgstr "Por favor, selecione um local de destino."
-
-#~ msgid "Grant Custom Admin Dashboard Access (Adds to 'Admin' Group)"
-#~ msgstr ""
-#~ "Conceder Acesso ao Painel de Administração Personalizado (Adiciona ao "
-#~ "Grupo 'Admin')"
-
-#~ msgid "Is Staff (Django Admin Access)"
-#~ msgstr "É da Equipa (Acesso ao Admin Django)"
-
-#~ msgid "Is Superuser"
-#~ msgstr "É Superutilizador"
-
-#~ msgid "Requires Password Change"
-#~ msgstr "Requer Alteração de Password"
-
-#~ msgid ""
-#~ "Warning: The 'Admin' group does not exist. Cannot manage admin privileges "
-#~ "via checkbox."
-#~ msgstr ""
-#~ "Aviso: O grupo 'Admin' não existe. Não é possível gerir privilégios de "
-#~ "administrador através da caixa de seleção."
-
-#~ msgid ""
-#~ "Error: The 'Admin' group does not exist. User cannot be assigned admin "
-#~ "privileges."
-#~ msgstr ""
-#~ "Erro: O grupo 'Admin' não existe. O utilizador não pode ser atribuído "
-#~ "como administrador."
-
-#~ msgid "Template Name (for internal reference)"
-#~ msgstr "Nome do Template (para referência interna)"
-
-#~ msgid ""
-#~ "A unique key used by the system (e.g., 'booking_created'). Cannot be "
-#~ "changed after creation."
-#~ msgstr ""
-#~ "Uma chave única usada pelo sistema (ex: 'booking_created'). Não pode ser "
-#~ "alterada após a criação."
-
-#~ msgid ""
-#~ "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
-#~ msgstr ""
-#~ "Obrigatório. 150 caracteres ou menos. Apenas letras, dígitos e @/./+/-/_."
-
-#~ msgid "The internal name for this template."
-#~ msgstr "O nome interno para este template."
-
-#~ msgid ""
-#~ "A unique key to identify this template in the code (e.g., "
-#~ "'booking_created'). Do not change this after creation."
-#~ msgstr ""
-#~ "Uma chave única para identificar este template no código (ex: "
-#~ "'booking_created'). Não altere após a criação."
-
-#~ msgid "{{ booking.pk }}"
-#~ msgstr "{{ booking.pk }}"
-
-#~ msgid "{{ booking.start_date|date:\"F d, Y\" }}"
-#~ msgstr "{{ booking.start_date|date:\"d \\de F \\de Y\" }}"
-
-#~ msgid "{{ booking.end_date|date:\"F d, Y\" }}"
-#~ msgstr "{{ booking.end_date|date:\"d \\de F \\de Y\" }}"
-
-#~ msgid "{{ booking.start_location.name }}"
-#~ msgstr "{{ booking.start_location.name }}"
-
-#~ msgid "{{ booking.end_location.name }}"
-#~ msgstr "{{ booking.end_location.name }}"
-
-#~ msgid "{{ booking.customer_name }}"
-#~ msgstr "{{ booking.customer_name }}"
-
-#~ msgid "{{ booking.customer_email }}"
-#~ msgstr "{{ booking.customer_email }}"
-
-#~ msgid "{{ booking.customer_phone }}"
-#~ msgstr "{{ booking.customer_phone }}"
-
-#~ msgid "{{ booking.client_tax_number }}"
-#~ msgstr "{{ booking.client_tax_number }}"
-
-#~ msgid "The client's tax number (NIF)."
-#~ msgstr "O número de contribuinte (NIF) do cliente."
-
-#~ msgid "{{ booking.client_company_registration }}"
-#~ msgstr "{{ booking.client_company_registration }}"
-
-#~ msgid "The client's company registration number."
-#~ msgstr "O número de matrícula da empresa do cliente."
-
-#~ msgid "{{ booking.vehicle.model }}"
-#~ msgstr "{{ booking.vehicle.model }}"
-
-#~ msgid "{{ booking.vehicle.license_plate }}"
-#~ msgstr "{{ booking.vehicle.license_plate }}"
-
-#~ msgid "{{ booking.user.first_name }}"
-#~ msgstr "{{ booking.user.first_name }}"
-
-#~ msgid "{{ booking.user.last_name }}"
-#~ msgstr "{{ booking.user.last_name }}"
-
-#~ msgid "{{ booking.user.email }}"
-#~ msgstr "{{ booking.user.email }}"
-
-#~ msgid "To reset this user's password, click the button below."
-#~ msgstr "Para redefinir a password deste utilizador, clique no botão abaixo."
-
-#~ msgid "Please select your start date accordingly."
-#~ msgstr "Por favor, selecione a sua data de início em conformidade."
-
-#~ msgid "Start date cannot be before the vehicle's earliest availability."
-#~ msgstr ""
-#~ "A data de início não pode ser anterior à data de disponibilidade mais "
-#~ "próxima do veículo."
-
-#~ msgid "Truck ID"
-#~ msgstr "ID do Veiculo"
-
-#~ msgid "TruckApp Booking Confirmation"
-#~ msgstr "Confirmação de Reserva TruckApp"
