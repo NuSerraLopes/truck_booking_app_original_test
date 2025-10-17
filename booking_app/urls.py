@@ -69,7 +69,7 @@ urlpatterns = [
     path('admin-dashboard/vehicles/import/', views.import_vehicles_view, name='import_vehicles'),
     path('admin-dashboard/vehicles/<int:pk>/', views.admin_vehicle_detail_view, name='admin_vehicle_detail'),
     path('admin-dashboard/vehicles/<int:pk>/edit/', views.vehicle_edit_view, name='admin_vehicle_edit'),
-    path('admin-dashboard/vehicles/<int:pk>/delete/', views.vehicle_delete_view, name='admin_vehicle_delete'),
+    path('admin-dashboard/vehicles/<int:pk>/inactive/', views.vehicle_inactive_view, name='admin_vehicle_inactive'),
 
     # Admin Client Management URLs
     path('admin-dashboard/clients/', views.admin_client_list_view, name='admin_client_list'),

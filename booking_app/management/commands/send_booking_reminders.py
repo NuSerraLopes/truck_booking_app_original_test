@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
 from booking_app.models import AutomationSettings, Booking
-from booking_app.utils import send_booking_notification
+from booking_app.utils import send_system_notification
 
 logger = logging.getLogger('booking_app')
 
@@ -42,9 +42,9 @@ class Command(BaseCommand):
         for booking in overdue_bookings:
             try:
                 # Use your existing notification function with a new event trigger
-                send_booking_notification(
+                send_system_notification(
                     event_trigger='booking_pending_reminder',
-                    booking_instance=booking
+                    context_data={"booking_instance":booking}
                 )
                 sent_count += 1
                 logger.info(f"Sent pending reminder for Booking ID: {booking.pk}")

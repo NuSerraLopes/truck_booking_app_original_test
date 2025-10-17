@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from datetime import date, timedelta
 from booking_app.models import Booking, AutomationSettings
-from booking_app.utils import send_booking_notification
+from booking_app.utils import send_system_notification
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
@@ -23,7 +23,7 @@ class Command(BaseCommand):
         bookings_to_remind = Booking.objects.filter(status='pending', start_date=reminder_date)
 
         for booking in bookings_to_remind:
-            send_booking_notification('booking_reminder_7_days', booking_instance=booking)
+            send_system_notification('booking_reminder_7_days', context_data={"booking_instance":booking})
             self.stdout.write(self.style.SUCCESS(f'Sent 7-day reminder for Booking ID: {booking.pk}'))
 
         # --- Handle Cancellations for Tomorrow's Bookings ---
@@ -31,7 +31,7 @@ class Command(BaseCommand):
         bookings_to_cancel = Booking.objects.filter(status='pending', start_date=cancellation_date)
 
         for booking in bookings_to_cancel:
-            send_booking_notification('booking_auto_cancelled', booking_instance=booking)
+            send_system_notification('booking_auto_cancelled', context_data={"booking_instance":booking})
             booking.status = 'cancelled'
             booking.cancellation_time = timezone.now()
             booking.cancellation_reason = _(

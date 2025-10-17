@@ -152,6 +152,9 @@ class Vehicle(models.Model):
         _("Available Until"), null=True, blank=True,
         help_text=_("Last date the vehicle can be booked.")
     )
+    active_status = models.BooleanField(
+        default=True, help_text=_("Is vehicle active?")
+    )
     vehicle_value = models.DecimalField(
         _("Vehicle Value"), max_digits=12, decimal_places=2,
         null=True, blank=True,
@@ -204,6 +207,9 @@ class Vehicle(models.Model):
         if self.picture and hasattr(self.picture, 'url'):
             return self.picture.url
         return static('media/Default/no_image.png')
+
+    def get_active_status(self):
+        return self.active_status
 
     def __str__(self):
         return f"{self.vehicle_type} - {self.model} ({self.license_plate})"
@@ -374,7 +380,8 @@ class EmailTemplate(models.Model):
         ('Vehicle Events', (
             ('vehicle_created', _('Vehicle Created')),
             ('vehicle_updated', _('Vehicle Updated')),
-            ('vehicle_deleted', _('Vehicle Deleted')),
+            ('vehicle_inactive', _('Vehicle Deactivated')),
+            ('vehicles_deactivated_auto', _('Vehicles Deactivated Automatically')),
         )),
         ('Location Events', (
             ('location_created', _('Location Created')),

@@ -1,4 +1,4 @@
-{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_vehicle_delete.html #}
+{# C:\Users\f19705e\PycharmProjects\truck_booking_app\templates\admin_vehicle_inactive.html #}
 
 {% extends 'base.html' %}
 {% load i18n %}
@@ -15,7 +15,7 @@
                 </div>
                 <div class="card-body">
                     <p class="lead">
-                        {% blocktrans %}Are you sure you want to delete the vehicle: <strong>{{ vehicle_obj.model }} ({{ vehicle_obj.license_plate }})</strong>?{% endblocktrans %}
+                        {% trans "Are you sure you want to deactivate the vehicle: " %}<strong>{{ vehicle_obj.license_plate }}</strong>?
                     </p>
                     <p class="text-danger">
                         <strong>{% trans "This action cannot be undone." %}</strong>
@@ -25,7 +25,7 @@
                         {% csrf_token %}
                         <div class="d-flex justify-content-end">
                             <a href="{% url 'booking_app:admin_vehicle_list' %}" class="btn btn-secondary me-2">{% trans "Cancel" %}</a>
-                            <button type="submit" class="btn btn-danger">{% trans "Yes, Confirm Delete" %}</button>
+                            <button type="submit" class="btn btn-danger">{% trans "Yes, Confirm Deactivation" %}</button>
                         </div>
                     </form>
                 </div>

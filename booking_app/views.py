@@ -600,29 +600,35 @@ def vehicle_edit_view(request, pk):
 
 @login_required
 @user_passes_test(lambda u: u.is_booking_admin_member, login_url='booking_app:login_user')
-def vehicle_delete_view(request, pk):
+def vehicle_inactive_view(request, pk):
     vehicle = get_object_or_404(Vehicle, pk=pk)
-    if vehicle.bookings.exists():
-        messages.error(request, _(f"Vehicle '{vehicle.license_plate}' cannot be deleted because it has bookings."))
-        return redirect('booking_app:admin_vehicle_list')
 
     if request.method == 'POST':
-        vehicle.delete()
+        vehicle.active_status = False
+        vehicle.is_available = False   # Optional: also mark unavailable
+        vehicle.save(update_fields=["active_status", "is_available"])  # Save changes
+
         ctx = {
             "vehicle": vehicle,
             "user": request.user,
         }
-        send_system_notification('vehicle_deleted', context_data=ctx)
-        messages.success(request, _(f"Vehicle '{vehicle.license_plate}' deleted successfully!"))
+        send_system_notification('vehicle_inactive', context_data=ctx)
+
+        messages.success(request, _(f"Vehicle '{vehicle.license_plate}' deactivated successfully!"))
         return redirect('booking_app:admin_vehicle_list')
 
-    return render(request, 'admin/admin_vehicle_delete.html', {'vehicle_obj': vehicle})
+    return render(
+        request,
+        'admin/admin_vehicle_inactive.html',
+        {'vehicle_obj': vehicle}
+    )
+
 
 
 @login_required
 @user_passes_test(lambda u: u.is_booking_admin_member, login_url='booking_app:login_user')
 def admin_vehicle_list_view(request):
-    vehicles = Vehicle.objects.select_related('current_location')
+    vehicles = Vehicle.objects.select_related('current_location').filter(active_status=True)
 
     filter_by = request.GET.get("filter_by")
     filter_value = request.GET.get("filter_value")

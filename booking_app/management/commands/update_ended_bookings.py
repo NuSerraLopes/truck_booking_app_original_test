@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 from datetime import timedelta
 from booking_app.models import Booking
-from booking_app.utils import send_booking_notification
+from booking_app.utils import send_system_notification
 
 logger = logging.getLogger('booking_app')
 
@@ -36,9 +36,9 @@ class Command(BaseCommand):
                 booking.save(update_fields=['status'])
 
                 # Send a notification to prompt for final KM entry
-                send_booking_notification(
+                send_system_notification(
                     event_trigger='booking_ended_pending_km',
-                    booking_instance=booking
+                    context_data={"booking_instance":booking}
                 )
                 updated_count += 1
                 logger.info(f"Moved Booking ID {booking.pk} to 'Pending Final KM'.")

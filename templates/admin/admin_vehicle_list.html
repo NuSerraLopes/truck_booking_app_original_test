@@ -23,6 +23,7 @@
                             <option value="annotated_is_available" {% if request.GET.filter_by == 'annotated_is_available' %}selected{% endif %}>{% translate "Availability" %}</option>
                             <option value="current_customer" {% if request.GET.filter_by == 'current_customer' %}selected{% endif %}>{% translate "Booked By (Customer)" %}</option>
                             <option value="current_location" {% if request.GET.filter_by == 'current_location' %}selected{% endif %}>{% translate "Location" %}</option>
+                            <option value="active" {% if request.GET.filter_by == 'active_status' %}selected{% endif %}>{% translate "Active" %}</option>
                         </select>
                     </div>
 
@@ -44,6 +45,12 @@
                         <select name="filter_value" id="availability-input" class="form-select" style="display:none;">
                             <option value="yes" {% if request.GET.filter_value == 'yes' %}selected{% endif %}>{% translate "Available" %}</option>
                             <option value="no" {% if request.GET.filter_value == 'no' %}selected{% endif %}>{% translate "Not Available" %}</option>
+                        </select>
+
+                        <!-- Activity dropdown -->
+                        <select name="filter_value" id="active-input" class="form-select" style="display:none;">
+                            <option value="yes" {% if request.GET.filter_value == 'yes' %}selected{% endif %}>{% translate "Active" %}</option>
+                            <option value="no" {% if request.GET.filter_value == 'no' %}selected{% endif %}>{% translate "Not Active" %}</option>
                         </select>
                     </div>
 
@@ -76,7 +83,7 @@
                                     {% if vehicle.picture %}
                                         <img src="{{ vehicle.picture.url }}" alt="{{ vehicle.license_plate }}" class="img-thumbnail" style="width: 80px; height: auto;">
                                     {% else %}
-                                        <img src="{% static 'media/Default/no_image.png' %}" alt="No Image" class="img-thumbnail" style="width: 80px; height: auto;">
+                                        <img src="{% static 'Default/no_image.png' %}" alt="No Image" class="img-thumbnail" style="width: 80px; height: auto;">
                                     {% endif %}
                                 </td>
                                 <td>{{ vehicle.license_plate }}</td>
@@ -94,7 +101,7 @@
                                 <td class="text-end text-nowrap">
                                     <a href="{% url 'booking_app:admin_vehicle_detail' pk=vehicle.pk %}" class="btn btn-info btn-sm">Details</a>
                                     <a href="{% url 'booking_app:admin_vehicle_edit' pk=vehicle.pk %}" class="btn btn-secondary btn-sm">Edit</a>
-                                    <a href="{% url 'booking_app:admin_vehicle_delete' pk=vehicle.pk %}" class="btn btn-danger btn-sm">Delete</a>
+                                    <a href="{% url 'booking_app:admin_vehicle_inactive' pk=vehicle.pk %}" class="btn btn-danger btn-sm">Deactivate</a>
                                 </td>
                             </tr>
                             {% endfor %}
