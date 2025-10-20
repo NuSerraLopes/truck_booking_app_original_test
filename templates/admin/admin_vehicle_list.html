@@ -11,19 +11,20 @@
             <h1 class="h3 mb-0">{% translate "Manage Vehicles" %}</h1>
         </div>
         <div class="card-body">
-            <form method="GET" action="{% url 'booking_app:admin_vehicle_list' %}" class="mb-4">
+            <form method="post" action="{% url 'booking_app:admin_vehicle_list' %}" class="mb-4">
+                {% csrf_token %}
                 <div class="row g-3 align-items-end">
                     <div class="col-md-4">
                         <label for="filter_by" class="form-label">{% translate "Filter By" %}</label>
                         <select name="filter_by" id="filter_by" class="form-select">
                             <option value="">{% translate "All Text Fields (Plate, Model)" %}</option>
-                            <option value="license_plate" {% if request.GET.filter_by == 'license_plate' %}selected{% endif %}>{% translate "License Plate" %}</option>
-                            <option value="model" {% if request.GET.filter_by == 'model' %}selected{% endif %}>{% translate "Model" %}</option>
-                            <option value="vehicle_type" {% if request.GET.filter_by == 'vehicle_type' %}selected{% endif %}>{% translate "Type" %}</option>
-                            <option value="annotated_is_available" {% if request.GET.filter_by == 'annotated_is_available' %}selected{% endif %}>{% translate "Availability" %}</option>
-                            <option value="current_customer" {% if request.GET.filter_by == 'current_customer' %}selected{% endif %}>{% translate "Booked By (Customer)" %}</option>
-                            <option value="current_location" {% if request.GET.filter_by == 'current_location' %}selected{% endif %}>{% translate "Location" %}</option>
-                            <option value="active_status" {% if request.GET.filter_by == 'active_status' %}selected{% endif %}>{% translate "Active" %}</option>
+                            <option value="license_plate" {% if filter_by == 'license_plate' %}selected{% endif %}>{% translate "License Plate" %}</option>
+                            <option value="model" {% if filter_by == 'model' %}selected{% endif %}>{% translate "Model" %}</option>
+                            <option value="vehicle_type" {% if filter_by == 'vehicle_type' %}selected{% endif %}>{% translate "Type" %}</option>
+                            <option value="annotated_is_available" {% if filter_by == 'annotated_is_available' %}selected{% endif %}>{% translate "Availability" %}</option>
+                            <option value="current_customer" {% if filter_by == 'current_customer' %}selected{% endif %}>{% translate "Booked By (Customer)" %}</option>
+                            <option value="current_location" {% if filter_by == 'current_location' %}selected{% endif %}>{% translate "Location" %}</option>
+                            <option value="active_status" {% if filter_by == 'active_status' %}selected{% endif %}>{% translate "Active" %}</option>
                         </select>
                     </div>
 
@@ -32,24 +33,25 @@
 
                         <!-- Default text input -->
                         <input type="text" name="filter_value" id="text-input" class="form-control"
-                               value="{{ request.GET.filter_value|default:'' }}">
+                               value="{{ filter_value|default:'' }}">
 
                         <!-- Vehicle type dropdown -->
                         <select name="filter_value" id="type-input" class="form-select" style="display:none;">
-                            <option value="HEAVY" {% if request.GET.filter_value == 'HEAVY' %}selected{% endif %}>{% translate "Heavy" %}</option>
-                            <option value="LIGHT" {% if request.GET.filter_value == 'LIGHT' %}selected{% endif %}>{% translate "Light" %}</option>
-                            <option value="APV" {% if request.GET.filter_value == 'APV' %}selected{% endif %}>{% translate "APV" %}</option>
+                            <option value="HEAVY" {% if filter_value == 'HEAVY' %}selected{% endif %}>{% translate "Heavy" %}</option>
+                            <option value="LIGHT" {% if filter_value == 'LIGHT' %}selected{% endif %}>{% translate "Light" %}</option>
+                            <option value="APV" {% if filter_value == 'APV' %}selected{% endif %}>{% translate "APV" %}</option>
                         </select>
 
                         <!-- Availability dropdown -->
                         <select name="filter_value" id="availability-input" class="form-select" style="display:none;">
-                            <option value="yes" {% if request.GET.filter_value == 'yes' %}selected{% endif %}>{% translate "Available" %}</option>
-                            <option value="no" {% if request.GET.filter_value == 'no' %}selected{% endif %}>{% translate "Not Available" %}</option>
+                            <option value="yes" {% if filter_value == 'yes' %}selected{% endif %}>{% translate "Available" %}</option>
+                            <option value="no" {% if filter_value == 'no' %}selected{% endif %}>{% translate "Not Available" %}</option>
                         </select>
 
+                        <!-- Active status dropdown -->
                         <select name="filter_value" id="status-input" class="form-select" style="display:none;">
-                            <option value="True" {% if request.GET.filter_value == 'True' %}selected{% endif %}>{% translate "Active" %}</option>
-                            <option value="False" {% if request.GET.filter_value == 'False' %}selected{% endif %}>{% translate "Not Active" %}</option>
+                            <option value="True" {% if filter_value == 'True' %}selected{% endif %}>{% translate "Active" %}</option>
+                            <option value="False" {% if filter_value == 'False' %}selected{% endif %}>{% translate "Not Active" %}</option>
                         </select>
                     </div>
 
@@ -59,6 +61,7 @@
                     </div>
                 </div>
             </form>
+
             {% if vehicles %}
                 <div class="table-responsive">
                     <table class="table table-striped table-hover align-middle">
@@ -76,7 +79,6 @@
                             </tr>
                         </thead>
                         <tbody>
-                        {% if vehicles %}
                             {% for vehicle in vehicles %}
                             <tr>
                                 <td>
@@ -113,30 +115,21 @@
                                     <a href="{% url 'booking_app:admin_vehicle_detail' pk=vehicle.pk %}" class="btn btn-info btn-sm">Details</a>
                                     <a href="{% url 'booking_app:admin_vehicle_edit' pk=vehicle.pk %}" class="btn btn-secondary btn-sm">Edit</a>
                                     <a href="{% url 'booking_app:admin_vehicle_inactive' pk=vehicle.pk %}" class="btn btn-danger btn-sm">Deactivate</a>
-                                    <!---{% if vehicle.is_active %}
-                                        <a href="{% url 'booking_app:admin_vehicle_inactive' pk=vehicle.pk %}" class="btn btn-danger btn-sm">Deactivate</a>
-                                    {% else %}
-                                        <a href="{% url 'booking_app:admin_vehicle_inactive' pk=vehicle.pk %}" class="badge bg-danger">Reactivate</a>
-                                    {% endif %}--->
                                 </td>
                             </tr>
                             {% endfor %}
-                        {% else %}
-                            <tr>
-                                <td colspan="8" class="text-center text-muted">No vehicles found matching your criteria.</td>
-                            </tr>
-                        {% endif %}
                         </tbody>
                     </table>
                 </div>
+
                 <nav aria-label="Vehicle list navigation">
                     <ul class="pagination justify-content-center">
                         {% if vehicles.has_previous %}
                             <li class="page-item">
-                                <a class="page-link" href="?page=1&sort={{ current_sort }}&dir={{ current_dir }}&filter_by={{ request.GET.filter_by }}&filter_value={{ request.GET.filter_value }}">&laquo; first</a>
+                                <a class="page-link" href="?page=1&sort={{ current_sort }}&dir={{ current_dir }}">&laquo; first</a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ vehicles.previous_page_number }}&sort={{ current_sort }}&dir={{ current_dir }}&filter_by={{ request.GET.filter_by }}&filter_value={{ request.GET.filter_value }}">previous</a>
+                                <a class="page-link" href="?page={{ vehicles.previous_page_number }}&sort={{ current_sort }}&dir={{ current_dir }}">previous</a>
                             </li>
                         {% else %}
                             <li class="page-item disabled"><span class="page-link">&laquo; first</span></li>
@@ -149,10 +142,10 @@
 
                         {% if vehicles.has_next %}
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ vehicles.next_page_number }}&sort={{ current_sort }}&dir={{ current_dir }}&filter_by={{ request.GET.filter_by }}&filter_value={{ request.GET.filter_value }}">next</a>
+                                <a class="page-link" href="?page={{ vehicles.next_page_number }}&sort={{ current_sort }}&dir={{ current_dir }}">next</a>
                             </li>
                             <li class="page-item">
-                                <a class="page-link" href="?page={{ vehicles.paginator.num_pages }}&sort={{ current_sort }}&dir={{ current_dir }}&filter_by={{ request.GET.filter_by }}&filter_value={{ request.GET.filter_value }}">last &raquo;</a>
+                                <a class="page-link" href="?page={{ vehicles.paginator.num_pages }}&sort={{ current_sort }}&dir={{ current_dir }}">last &raquo;</a>
                             </li>
                         {% else %}
                             <li class="page-item disabled"><span class="page-link">next</span></li>
@@ -177,29 +170,6 @@
                 {% translate "Import from CSV" %}
             </button>
             <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary">{% translate "Back to Admin Dashboard" %}</a>
-            <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
-              <div class="modal-dialog modal-lg">
-                <div class="modal-content">
-                  <form method="post" enctype="multipart/form-data" action="{% url 'booking_app:import_vehicles' %}">
-                    {% csrf_token %}
-                    <div class="modal-header">
-                      <h5 class="modal-title" id="importModalLabel">{% translate "Import Vehicles from CSV" %}</h5>
-                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% translate 'Close' %}"></button>
-                    </div>
-                    <div class="modal-body">
-                      <p>{% translate "Upload a CSV file with vehicle data. The file must contain the correct headers." %}</p>
-                      <div class="mb-3">
-                        <input type="file" name="csv_file" accept=".csv" class="form-control" required>
-                      </div>
-                    </div>
-                    <div class="modal-footer">
-                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "Cancel" %}</button>
-                      <button type="submit" class="btn btn-primary">{% translate "Upload and Import" %}</button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
         </div>
     </div>
 </div>
@@ -211,6 +181,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const typeInput = document.getElementById('type-input');
     const availabilityInput = document.getElementById('availability-input');
     const statusInput = document.getElementById('status-input');
+
+    textInput.value = '';
+    typeInput.value = '';
+    availabilityInput.value = '';
+    statusInput.value = '';
 
     function toggleInputs() {
         textInput.style.display = 'none';
@@ -232,10 +207,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (selected === 'annotated_is_available') {
             availabilityInput.style.display = 'block';
             availabilityInput.disabled = false;
-        }  else if (selected === 'active_status') {
+        } else if (selected === 'active_status') {
             statusInput.style.display = 'block';
             statusInput.disabled = false;
-        }else {
+        } else {
             textInput.style.display = 'block';
             textInput.disabled = false;
         }

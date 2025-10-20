@@ -607,8 +607,8 @@ def vehicle_inactive_view(request, pk):
 
     if request.method == 'POST':
         vehicle.active_status = False
-        vehicle.is_available = False   # Optional: also mark unavailable
-        vehicle.save(update_fields=["active_status", "is_available"])  # Save changes
+        vehicle.is_available = False
+        vehicle.save(update_fields=["active_status", "is_available"])
 
         ctx = {
             "vehicle": vehicle,
@@ -632,8 +632,13 @@ def vehicle_inactive_view(request, pk):
 def admin_vehicle_list_view(request):
     vehicles = Vehicle.objects.select_related('current_location')
 
-    filter_by = request.GET.get("filter_by")
-    filter_value = request.GET.get("filter_value")
+    # --- Handle filter input via POST ---
+    if request.method == "POST":
+        request.session['filter_by'] = request.POST.get("filter_by")
+        request.session['filter_value'] = request.POST.get("filter_value")
+
+    filter_by = request.session.get("filter_by")
+    filter_value = request.session.get("filter_value")
 
     if filter_by and filter_value:
         if filter_by in ["license_plate", "model"]:
@@ -658,14 +663,14 @@ def admin_vehicle_list_view(request):
     vehicles = vehicles.distinct().order_by("license_plate")
 
     paginator = Paginator(vehicles, 10)
-    page_number = request.GET.get("page")
+    page_number = request.GET.get("page")  # pagination still uses GET safely
     page_obj = paginator.get_page(page_number)
 
     # annotate each vehicle with availability slot
     tomorrow = date.today() + timedelta(days=1)
     for v in page_obj:
         slots = v.get_availability_slots()
-        v.is_active=v.active_status
+        v.is_active = v.active_status
         v.is_available_now = False
         v.next_available_start = None
         if slots:
@@ -683,6 +688,8 @@ def admin_vehicle_list_view(request):
             "current_sort": request.GET.get("sort", "license_plate"),
             "current_dir": request.GET.get("dir", "asc"),
             "tomorrow": tomorrow,
+            "filter_by": filter_by,
+            "filter_value": filter_value,
         },
     )
 
