@@ -23,7 +23,7 @@
                             <option value="annotated_is_available" {% if request.GET.filter_by == 'annotated_is_available' %}selected{% endif %}>{% translate "Availability" %}</option>
                             <option value="current_customer" {% if request.GET.filter_by == 'current_customer' %}selected{% endif %}>{% translate "Booked By (Customer)" %}</option>
                             <option value="current_location" {% if request.GET.filter_by == 'current_location' %}selected{% endif %}>{% translate "Location" %}</option>
-                            <option value="active" {% if request.GET.filter_by == 'active_status' %}selected{% endif %}>{% translate "Active" %}</option>
+                            <option value="active_status" {% if request.GET.filter_by == 'active_status' %}selected{% endif %}>{% translate "Active" %}</option>
                         </select>
                     </div>
 
@@ -47,10 +47,9 @@
                             <option value="no" {% if request.GET.filter_value == 'no' %}selected{% endif %}>{% translate "Not Available" %}</option>
                         </select>
 
-                        <!-- Activity dropdown -->
-                        <select name="filter_value" id="active-input" class="form-select" style="display:none;">
-                            <option value="yes" {% if request.GET.filter_value == 'yes' %}selected{% endif %}>{% translate "Active" %}</option>
-                            <option value="no" {% if request.GET.filter_value == 'no' %}selected{% endif %}>{% translate "Not Active" %}</option>
+                        <select name="filter_value" id="status-input" class="form-select" style="display:none;">
+                            <option value="True" {% if request.GET.filter_value == 'True' %}selected{% endif %}>{% translate "Active" %}</option>
+                            <option value="False" {% if request.GET.filter_value == 'False' %}selected{% endif %}>{% translate "Not Active" %}</option>
                         </select>
                     </div>
 
@@ -72,6 +71,7 @@
                                 <th>Available</th>
                                 <th>Booked By (Customer)</th>
                                 <th>Location</th>
+                                <th>Active</th>
                                 <th class="text-end">Actions</th>
                             </tr>
                         </thead>
@@ -102,10 +102,22 @@
                                 </td>
                                 <td>{{ vehicle.current_customer|default:"N/A" }}</td>
                                 <td>{{ vehicle.current_location.name|default:"N/A" }}</td>
+                                <td>
+                                    {% if vehicle.is_active %}
+                                        <span class="badge bg-success">Yes</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">No</span>
+                                    {% endif %}
+                                </td>
                                 <td class="text-end text-nowrap">
                                     <a href="{% url 'booking_app:admin_vehicle_detail' pk=vehicle.pk %}" class="btn btn-info btn-sm">Details</a>
                                     <a href="{% url 'booking_app:admin_vehicle_edit' pk=vehicle.pk %}" class="btn btn-secondary btn-sm">Edit</a>
                                     <a href="{% url 'booking_app:admin_vehicle_inactive' pk=vehicle.pk %}" class="btn btn-danger btn-sm">Deactivate</a>
+                                    <!---{% if vehicle.is_active %}
+                                        <a href="{% url 'booking_app:admin_vehicle_inactive' pk=vehicle.pk %}" class="btn btn-danger btn-sm">Deactivate</a>
+                                    {% else %}
+                                        <a href="{% url 'booking_app:admin_vehicle_inactive' pk=vehicle.pk %}" class="badge bg-danger">Reactivate</a>
+                                    {% endif %}--->
                                 </td>
                             </tr>
                             {% endfor %}
@@ -198,6 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const textInput = document.getElementById('text-input');
     const typeInput = document.getElementById('type-input');
     const availabilityInput = document.getElementById('availability-input');
+    const statusInput = document.getElementById('status-input');
 
     function toggleInputs() {
         textInput.style.display = 'none';
@@ -216,7 +229,10 @@ document.addEventListener('DOMContentLoaded', function() {
         } else if (selected === 'annotated_is_available') {
             availabilityInput.style.display = 'block';
             availabilityInput.disabled = false;
-        } else {
+        }  else if (selected === 'active_status') {
+            statusInput.style.display = 'block';
+            statusInput.disabled = false;
+        }else {
             textInput.style.display = 'block';
             textInput.disabled = false;
         }

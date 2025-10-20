@@ -477,7 +477,7 @@ def vehicle_list_view(request, group_name=None):
 
     today = date.today()
 
-    vehicles_qs = Vehicle.objects.select_related('current_location').prefetch_related(
+    vehicles_qs = Vehicle.objects.select_related('current_location').filter(active_status=True).prefetch_related(
         Prefetch(
             'bookings',
             queryset=Booking.objects.filter(
@@ -630,7 +630,7 @@ def vehicle_inactive_view(request, pk):
 @login_required
 @user_passes_test(lambda u: u.is_booking_admin_member, login_url='booking_app:login_user')
 def admin_vehicle_list_view(request):
-    vehicles = Vehicle.objects.select_related('current_location').filter(active_status=True)
+    vehicles = Vehicle.objects.select_related('current_location')
 
     filter_by = request.GET.get("filter_by")
     filter_value = request.GET.get("filter_value")
@@ -649,6 +649,11 @@ def admin_vehicle_list_view(request):
             vehicles = vehicles.filter(bookings__client__name__icontains=filter_value)
         elif filter_by == "current_location":
             vehicles = vehicles.filter(current_location__name__icontains=filter_value)
+        elif filter_by == "active_status":
+            if filter_value.lower() == "true":
+                vehicles = vehicles.filter(active_status=True)
+            elif filter_value.lower() == "false":
+                vehicles = vehicles.filter(active_status=False)
 
     vehicles = vehicles.distinct().order_by("license_plate")
 
@@ -660,6 +665,7 @@ def admin_vehicle_list_view(request):
     tomorrow = date.today() + timedelta(days=1)
     for v in page_obj:
         slots = v.get_availability_slots()
+        v.is_active=v.active_status
         v.is_available_now = False
         v.next_available_start = None
         if slots:
