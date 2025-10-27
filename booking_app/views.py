@@ -1322,8 +1322,11 @@ def contract_template_settings_view(request):
         form = ContractTemplateSettingsForm(request.POST, request.FILES, instance=settings_instance)
         if form.is_valid():
             settings_instance = form.save()
-            send_system_notification('contract_template_settings_updated', settings=settings_instance,
-                                     user=request.user)
+            ctx = {
+                "settings": settings_instance,
+                "user": request.user
+            }
+            send_system_notification('contract_template_settings_updated', context_data=ctx)
             messages.success(request, _("Contract template settings updated successfully."))
             return redirect('booking_app:contract_template_settings')
         else:
@@ -1690,7 +1693,7 @@ def group_booking_update_view(request, booking_pk):
 
         # --- CONFIRM WITH CONTRACT ---
         elif action == 'confirm_with_contract':
-            if booking.status == 'pending_contract' and booking.contract_document:
+            if booking.status == 'pending_contract' and booking.contracts:
                 booking.status = 'confirmed'
                 booking.save(update_fields=['status'])
 
@@ -1752,7 +1755,7 @@ def group_booking_update_view(request, booking_pk):
         'booking': booking,
         'can_approve': booking.status == 'pending',
         'can_approve_apv': booking.status == 'pending' and booking.vehicle.vehicle_type == 'APV',
-        'can_confirm_contract': booking.status == 'pending_contract' and booking.contract_document,
+        'can_confirm_contract': booking.status == 'pending_contract' and booking.contracts,
         'can_cancel_by_manager': booking.status in ['pending','pending_contract','pending_final_km','confirmed'],
         'can_update_form_fields': booking.status in ['pending','pending_contract','pending_final_km'],
         'can_request_final_km': booking.status == 'confirmed',
