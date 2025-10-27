@@ -57,19 +57,19 @@
                             </p>
                         </div>
 
-                        {% if is_apv_booking %}
-                            {% if booking.status == 'pending_final_km' %}
-                                <div class="alert alert-danger">
-                                    <strong>{% translate "Action Required:" %}</strong> {% translate "Please enter the final kilometers to complete this booking." %}
-                                </div>
-                            {% endif %}
 
-                            {% if booking.initial_km is not None %}
-                            <div class="alert alert-secondary">
-                                <strong>{% translate "Initial Kilometers Recorded:" %}</strong> {{ booking.initial_km }} KM
+                        {% if booking.status == 'pending_final_km' %}
+                            <div class="alert alert-danger">
+                                <strong>{% translate "Action Required:" %}</strong> {% translate "Please enter the final kilometers to complete this booking." %}
                             </div>
-                            {% endif %}
                         {% endif %}
+
+                        {% if booking.initial_km is not None %}
+                        <div class="alert alert-secondary">
+                            <strong>{% translate "Initial Kilometers Recorded:" %}</strong> {{ booking.initial_km }} KM
+                        </div>
+                        {% endif %}
+
 
                         {% if booking.contract_document %}
                         <div class="alert alert-info">

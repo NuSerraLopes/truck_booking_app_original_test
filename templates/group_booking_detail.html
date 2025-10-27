@@ -83,15 +83,26 @@
                                     {% else %}
                                         {% translate "Contract Document" %}
                                         <span>
-                                            <a href="{% url 'booking_app:group_booking_update' booking.pk %}?upload_only=true" 
+                                            <a href="{% url 'booking_app:group_booking_update' booking.pk %}?upload_only=true"
                                                class="btn btn-warning btn-sm">
                                                {% translate "Upload Contract" %}
                                             </a>
-                                            <a href="{% url 'booking_app:generate_word_contract' booking.pk %}" 
-                                               class="btn btn-success btn-sm">
-                                               {% translate "Generate Word Contract" %}
-                                            </a>
+                                            {% if booking.status == 'pending_contract' and booking.final_km %}
+                                                <a href="{% url 'booking_app:generate_word_contract' booking.pk %}"
+                                                   class="btn btn-success btn-sm">
+                                                   {% translate "Generate Word Contract" %}
+                                                </a>
+                                            {% else %}
+                                                <button type="button" class="btn btn-success btn-sm" disabled>
+                                                    {% translate "Generate Word Contract" %}
+                                                </button>
+                                            {% endif %}
                                         </span>
+                                        {% if booking.status != 'pending_contract' or not booking.final_km %}
+                                            <div class="form-text text-muted small mt-2">
+                                                {% translate "Contracts become available after approval and recording the vehicle's current kilometers." %}
+                                            </div>
+                                        {% endif %}
                                     {% endif %}
                                 </li>
                             </ul>

@@ -170,7 +170,7 @@ class Vehicle(models.Model):
 
         # Filter bookings
         relevant_bookings = self.bookings.filter(
-            status__in=['pending', 'confirmed', 'pending_final_km'],
+            status__in=['pending', 'pending_contract', 'confirmed', 'pending_final_km'],
             end_date__gte=today
         ).order_by('start_date')
 
@@ -492,3 +492,27 @@ class Contract(models.Model):
 
     def __str__(self):
         return f"Contract {self.formatted_number} for Booking {self.booking.pk}"
+
+class Transport(models.Model):
+    booking = models.OneToOneField(
+        "Booking",
+        on_delete=models.CASCADE,
+        related_name="transport",
+        verbose_name=_("Booking"),
+    )
+    origin_location = models.ForeignKey(
+        "Location",
+        on_delete=models.CASCADE,
+        related_name="transports_from",
+        verbose_name=_("Origin"),
+    )
+    destination_location = models.ForeignKey(
+        "Location",
+        on_delete=models.CASCADE,
+        related_name="transports_to",
+        verbose_name=_("Destination"),
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Transport for booking {self.booking_id}: {self.origin_location} → {self.destination_location}"

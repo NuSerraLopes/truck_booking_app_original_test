@@ -48,7 +48,7 @@ from .models import (
     EmailLog,
     Client,
     InactiveUser,
-    Contract,
+    Contract, Transport,
 )
 from .forms import (
     BookingForm, VehicleCreateForm, VehicleEditForm, LocationCreateForm,
@@ -59,7 +59,7 @@ from .forms import (
 from .utils import (
     add_business_days, subtract_business_days, kill_user_sessions, kill_all_sessions,
     kill_session_by_key, get_user_sessions, get_last_activity_for_user, is_user_logged_in,
-    send_system_notification
+    send_system_notification, compute_transport_for_booking
 )
 
 logger = logging.getLogger(__name__)
@@ -275,6 +275,9 @@ def _handle_booking_form_submission(request, form, vehicle, is_new_booking=True)
                     return (False, render(request, 'book_vehicle.html', context))
 
         if client:
+            previous_status = None
+            if form.instance and form.instance.pk:
+                previous_status = form.instance.status
             # track previous state for updates
             prev_needs_transport = None
             if form.instance and form.instance.pk:
@@ -288,14 +291,23 @@ def _handle_booking_form_submission(request, form, vehicle, is_new_booking=True)
 
             booking.client = client
 
-            # --- 🚚 Transport logic ---
+            # --- 🚚 Transport logic (pre-save flag) ---
             expected_vehicle_location = get_vehicle_location_for_date(vehicle, booking.start_date)
             s_loc = booking.start_location
             booking.needs_transport = bool(expected_vehicle_location and s_loc and expected_vehicle_location != s_loc)
-            # -------------------------
+            # -------------------------------------------------
 
             booking.save()
             form.save_m2m()
+
+            if previous_status == 'pending_final_km' and booking.final_km is not None:
+                booking.status = 'pending_contract'
+                booking.save(update_fields=['status'])
+                booking.refresh_from_db(fields=['status'])
+
+            # --- 🚚 Post-save: ensure transport is created if confirmed ---
+            if booking.status == "confirmed":
+                compute_transport_for_booking(booking)
 
             # --- Notifications ---
             ctx = {
@@ -304,18 +316,20 @@ def _handle_booking_form_submission(request, form, vehicle, is_new_booking=True)
                 "user": request.user,
                 "previous_needs_transport": prev_needs_transport,
                 "current_needs_transport": booking.needs_transport,
-                "previous_end_location":expected_vehicle_location,
+                "previous_end_location": expected_vehicle_location,
             }
 
             if is_new_booking:
-                if booking.vehicle.vehicle_type=='LIGHT':
+                if booking.vehicle.vehicle_type == 'LIGHT':
                     send_system_notification('light_booking_created', context_data=ctx)
-                elif booking.vehicle.vehicle_type=='HEAVY':
+                elif booking.vehicle.vehicle_type == 'HEAVY':
                     send_system_notification('heavy_booking_created', context_data=ctx)
                 elif booking.vehicle.vehicle_type == 'APV':
                     send_system_notification('apv_booking_created', context_data=ctx)
+
                 if booking.needs_transport:
                     send_system_notification('transport_required', context_data=ctx)
+
                 messages.success(request, _('Your booking request has been submitted successfully!'))
                 return (True, redirect('booking_app:my_bookings'))
             else:
@@ -324,7 +338,6 @@ def _handle_booking_form_submission(request, form, vehicle, is_new_booking=True)
                 messages.success(request, _('Booking has been updated successfully.'))
                 redirect_url = reverse('booking_app:group_booking_update', kwargs={'booking_pk': form.instance.pk})
                 return (True, redirect(redirect_url))
-            # ---------------------
 
     except Exception as e:
         print("!!!!!!!!!! CAUGHT A CRITICAL ERROR IN SUBMISSION HANDLER !!!!!!!!!!!")
@@ -346,7 +359,7 @@ def get_vehicle_location_for_date(vehicle, date):
     """
     # Find the latest booking that ends before this date (or overlaps it)
     last_booking = (
-        Booking.objects.filter(vehicle=vehicle, status__in=['pending', 'confirmed', 'pending_final_km'])
+        Booking.objects.filter(vehicle=vehicle, status__in=['pending', 'confirmed', 'pending_final_km', 'pending_contract'])
         .filter(end_date__lte=date)
         .order_by('-end_date')
         .first()
@@ -363,12 +376,17 @@ def cancel_booking_view(request, booking_pk):
     if booking.status in ['cancelled', 'completed']:
         messages.warning(request, _("This booking cannot be cancelled."))
         return redirect('booking_app:my_bookings')
+
     if request.method == 'POST':
         booking.status = 'cancelled'
         booking.cancelled_by = request.user
         booking.cancellation_time = timezone.now()
         booking.cancellation_reason = _("Cancelled by user.")
         booking.save()
+
+        # 🚚 Clean up any transports linked to this booking
+        Transport.objects.filter(booking=booking).delete()
+
         ctx = {
             "booking": booking,
             "vehicle": booking.vehicle,
@@ -377,6 +395,7 @@ def cancel_booking_view(request, booking_pk):
         send_system_notification('booking_canceled_by_user', context_data=ctx)
         messages.success(request, _("Booking cancelled successfully."))
         return redirect('booking_app:my_bookings')
+
     return render(request, 'cancel_booking.html', {'booking': booking})
 
 # ------------------------------
@@ -386,6 +405,13 @@ def cancel_booking_view(request, booking_pk):
 @login_required
 def generate_and_save_contract_view(request, booking_pk):
     booking = get_object_or_404(Booking, pk=booking_pk)
+    if booking.status != 'pending_contract':
+        messages.error(request, _("Contracts can only be generated once the booking is ready for contract."))
+        return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
+
+    if booking.final_km is None:
+        messages.error(request, _("Record the vehicle's current kilometers before generating the contract."))
+        return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
     contract = Contract.objects.create(booking=booking)
 
     template_settings = ContractTemplateSettings.load()
@@ -481,7 +507,7 @@ def vehicle_list_view(request, group_name=None):
         Prefetch(
             'bookings',
             queryset=Booking.objects.filter(
-                status__in=['pending', 'confirmed', 'pending_final_km'],
+                status__in=['pending', 'pending_contract', 'confirmed', 'pending_final_km'],
                 end_date__gte=today
             ).order_by('start_date')
         )
@@ -1475,7 +1501,7 @@ def my_bookings_api_view(request):
 
 @login_required
 def booking_api_view(request):
-    all_bookings = Booking.objects.filter(status__in=['pending', 'confirmed']).select_related('vehicle', 'client')
+    all_bookings = Booking.objects.filter(status__in=['pending', 'pending_contract', 'confirmed', 'pending_final_km']).select_related('vehicle', 'client')
     event_list = []
     for booking in all_bookings:
         client_name = booking.client.name if booking.client else _("N/A")
@@ -1588,7 +1614,7 @@ def group_dashboard_view(request):
         actionable_bookings = base_query.filter(status=selected_status).order_by('-start_date')
     else:
         actionable_bookings = base_query.filter(
-            status__in=['pending', 'pending_contract', 'confirmed'],
+            status__in=['pending', 'pending_contract', 'confirmed', 'pending_final_km'],
             end_date__gte=timezone.now().date()
         ).order_by('start_date')
 
@@ -1627,29 +1653,37 @@ def group_booking_update_view(request, booking_pk):
     if request.method == 'POST':
         action = request.POST.get('action')
 
-        # --- APPROVE ---
         if action == 'approve':
             if booking.status == 'pending':
                 booking.status = 'confirmed'
-                booking.save(update_fields=['status'])
+                booking.initial_km = booking.vehicle.vehicle_km
+                update_fields = ['status']
+                if booking.initial_km is not None:
+                    update_fields.append('initial_km')
+                booking.save(update_fields=update_fields)
+
+                # 🔽 Create/update transport(s)
+                compute_transport_for_booking(booking)
 
                 send_system_notification(
                     event_trigger='booking_approved',
-                    context_data={"booking":booking}
+                    context_data={"booking": booking}
                 )
                 messages.success(request, _("Booking has been approved."))
             return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
 
-        # --- APPROVE APV ---
         elif action == 'approve_apv':
             if booking.vehicle.vehicle_type == 'APV' and booking.status == 'pending':
                 booking.status = 'confirmed'
                 booking.initial_km = booking.vehicle.vehicle_km
                 booking.save(update_fields=['status', 'initial_km'])
 
+                # 🔽 Create/update transport(s)
+                compute_transport_for_booking(booking)
+
                 send_system_notification(
                     event_trigger='apv_booking_approved',
-                    context_data={"booking":booking}
+                    context_data={"booking": booking}
                 )
                 messages.success(request, _("APV booking has been approved."))
             return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
@@ -1671,7 +1705,7 @@ def group_booking_update_view(request, booking_pk):
 
         # --- CANCEL BY MANAGER ---
         elif action == 'cancel_by_manager':
-            if booking.status in ['pending', 'pending_contract', 'confirmed']:
+            if booking.status in ['pending', 'pending_contract', 'pending_final_km', 'confirmed']:
                 booking.status = 'cancelled'
                 booking.cancellation_reason = _("Cancelled by manager")
                 booking.cancellation_time = timezone.now()
@@ -1687,9 +1721,13 @@ def group_booking_update_view(request, booking_pk):
 
         # --- REQUEST FINAL KM ---
         elif action == 'request_final_km':
-            if booking.vehicle.vehicle_type == 'APV' and booking.status == 'confirmed':
+            if booking.status == 'confirmed':
                 booking.status = 'pending_final_km'
-                booking.save(update_fields=['status'])
+                update_fields = ['status']
+                if booking.initial_km is None and booking.vehicle.vehicle_km is not None:
+                    booking.initial_km = booking.vehicle.vehicle_km
+                    update_fields.append('initial_km')
+                booking.save(update_fields=update_fields)
 
                 send_system_notification(
                     event_trigger='booking_ended_pending_km',
@@ -1715,9 +1753,9 @@ def group_booking_update_view(request, booking_pk):
         'can_approve': booking.status == 'pending',
         'can_approve_apv': booking.status == 'pending' and booking.vehicle.vehicle_type == 'APV',
         'can_confirm_contract': booking.status == 'pending_contract' and booking.contract_document,
-        'can_cancel_by_manager': booking.status in ['pending','pending_contract','confirmed'],
-        'can_update_form_fields': booking.status in ['pending','pending_contract'],
-        'can_request_final_km': booking.vehicle.vehicle_type == 'APV' and booking.status == 'confirmed',
+        'can_cancel_by_manager': booking.status in ['pending','pending_contract','pending_final_km','confirmed'],
+        'can_update_form_fields': booking.status in ['pending','pending_contract','pending_final_km'],
+        'can_request_final_km': booking.status == 'confirmed',
         'is_apv_booking': booking.vehicle.vehicle_type == 'APV',
     }
     return render(request, 'group_booking_update.html', context)
@@ -1875,7 +1913,7 @@ def group_reports_view(request):
         .filter(
             vehicle__vehicle_type__in=vehicle_types_to_manage,
             start_date__gte=twelve_months_ago,
-            status__in=['confirmed', 'completed', 'on_going', 'pending_final_km']
+            status__in=['confirmed', 'pending_contract', 'completed', 'on_going', 'pending_final_km']
         )
         .annotate(month=TruncMonth('start_date'))
         .values('month')
@@ -1890,7 +1928,7 @@ def group_reports_view(request):
         Booking.objects
         .filter(
             vehicle__vehicle_type__in=vehicle_types_to_manage,
-            status__in=['confirmed', 'completed', 'on_going', 'pending_final_km']
+            status__in=['confirmed', 'pending_contract', 'completed', 'on_going', 'pending_final_km']
         )
         .values('vehicle__license_plate')
         .annotate(count=Count('id'))

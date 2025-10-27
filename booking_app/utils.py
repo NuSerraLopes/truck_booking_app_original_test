@@ -9,10 +9,11 @@ import requests
 from django.conf import settings
 from django.contrib.sessions.models import Session
 from django.core.cache import cache
+from django.db import transaction
 from django.template import Template, Context
 from django.utils import timezone
 
-from .models import EmailTemplate, EmailLog
+from .models import EmailTemplate, EmailLog, Transport
 
 logger = logging.getLogger('booking_app')
 
@@ -351,3 +352,109 @@ def get_last_activity_for_user(user):
                 except Exception:
                     continue
     return last_seen
+
+def _booking_start_location(booking):
+    # Try common names in order; adjust to your real field names if needed.
+    for attr in ("start_location", "pickup_location", "origin_location"):
+        val = getattr(booking, attr, None)
+        if val:
+            return val
+    return None
+
+def _booking_end_location(booking):
+    for attr in ("end_location", "destination_location", "dropoff_location"):
+        val = getattr(booking, attr, None)
+        if val:
+            return val
+    return None
+
+@transaction.atomic
+def compute_transport_for_booking(booking):
+    """
+    Ensure a Transport exists/updated for `booking` (if movement is needed),
+    and re-compute transport for the NEXT booking (if any) because its origin changes.
+    """
+    vehicle = booking.vehicle
+    start_loc = _booking_start_location(booking)
+    end_loc = _booking_end_location(booking)
+
+    # --- Find the previous booking for this vehicle (strictly before current start) ---
+    prev_booking = (
+        vehicle.bookings
+        .filter(end_date__lt=booking.start_date)
+        .order_by("-end_date")
+        .first()
+    )
+
+    if prev_booking:
+        prev_end_loc = _booking_end_location(prev_booking)
+        origin = prev_end_loc or vehicle.current_location  # fallback if previous booking missing drop-off
+    else:
+        origin = vehicle.current_location  # first booking for this vehicle
+
+    destination = start_loc  # where the vehicle must be for THIS booking to start
+
+    # --- Create/update THIS booking's transport if needed ---
+    if origin and destination and origin != destination:
+        transport, created = Transport.objects.update_or_create(
+            booking=booking,
+            defaults={
+                "origin_location": origin,
+                "destination_location": destination,
+            },
+        )
+        # 🔔 Notify only when transport required
+        send_system_notification(
+            event_trigger="transport_required",
+            context_data={
+                "booking": booking,
+                "transport": transport,
+                "vehicle": booking.vehicle,
+                "origin": origin,
+                "destination": destination,
+            },
+        )
+    else:
+        # No move needed → remove stale transport if it exists
+        Transport.objects.filter(booking=booking).delete()
+
+    # --- Also recompute the NEXT booking (it may now start after a different end location) ---
+    next_booking = (
+        vehicle.bookings
+        .filter(start_date__gt=booking.start_date)
+        .order_by("start_date")
+        .first()
+    )
+    if next_booking:
+        _recompute_single_transport(next_booking)
+
+
+def _recompute_single_transport(booking):
+    """Recompute transport for a booking without cascading to others."""
+    vehicle = booking.vehicle
+    start_loc = _booking_start_location(booking)
+
+    prev_booking = (
+        vehicle.bookings
+        .filter(end_date__lt=booking.start_date)
+        .order_by("-end_date")
+        .first()
+    )
+    if prev_booking:
+        prev_end_loc = _booking_end_location(prev_booking)
+        origin = prev_end_loc or vehicle.current_location
+    else:
+        origin = vehicle.current_location
+
+    destination = start_loc
+
+    if origin and destination and origin != destination:
+        Transport.objects.update_or_create(
+            booking=booking,
+            defaults={
+                "origin_location": origin,
+                "destination_location": destination,
+            },
+        )
+    else:
+        Transport.objects.filter(booking=booking).delete()

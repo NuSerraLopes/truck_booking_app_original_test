@@ -14,7 +14,6 @@
                     <form method="post">
                         {% csrf_token %}
 
-                        <!-- This is your existing setting -->
                         <div class="form-check form-switch mb-3">
                             {{ form.pending_booking_automation_active|as_crispy_field }}
                         </div>
