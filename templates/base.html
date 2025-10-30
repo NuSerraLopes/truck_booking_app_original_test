@@ -136,6 +136,17 @@
         </div>
     </footer>
 <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+<script>
+const socket = new WebSocket(
+    "wss://" + window.location.host + "/ws/notifications/"
+);
+
+socket.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+    alert("📢 " + data.message + "\n" + (data.details || ""));
+    // or replace alert() with a nice toast notification
+};
+</script>
 
     {% block scripts %}
     {# Child templates can inject their specific scripts here #}

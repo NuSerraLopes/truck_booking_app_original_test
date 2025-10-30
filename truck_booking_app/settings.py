@@ -43,7 +43,18 @@ INSTALLED_APPS = [
     'crispy_forms',
     'crispy_bootstrap5',
     'impersonate',
+    "channels",
 ]
+
+ASGI_APPLICATION = "truck_booking_app.asgi.application"
+
+# Redis backend for WebSocket pub/sub
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [("127.0.0.1", 6379)]},
+    },
+}
 
 AUTH_USER_MODEL = 'booking_app.User'
 
@@ -189,7 +200,7 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 
-APP_VERSION = 'v0.18.1'
+APP_VERSION = 'v0.18.5'
 APP_UPDATE_DATE = date(2025, 10, 30)
 
 IMPERSONATE_PERMISSIONS = 'impersonate.permissions.staff'

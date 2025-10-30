@@ -1,8 +1,10 @@
 # services.py
+import os
+
 import requests
 from .models import Booking
 
-WEBHOOK_URL = "https://webhook.site/cf6369f0-c833-45dc-903a-941b69c92d09"  # replace with real endpoint
+WEBHOOK_URL = os.environ.get('WEBHOOK_URL')
 
 def send_booking_to_webservice(booking: Booking):
     vehicle = booking.vehicle

@@ -1,7 +1,10 @@
+from asgiref.sync import async_to_sync
 from celery import shared_task
 from django.core.mail import mail_admins
 from django.utils.timezone import now
 from datetime import timedelta
+
+from booking_app.services import send_booking_to_webservice
 from booking_app.utils import send_system_notification, sanitize_context
 import logging
 
@@ -50,3 +53,25 @@ def send_daily_error_report():
 
     except Exception as e:
         logger.error(f"Failed to generate daily error report: {e}", exc_info=True)
+
+@shared_task
+def send_booking_task(booking_id):
+    from booking_app.models import Booking
+    try:
+        booking = Booking.objects.get(pk=booking_id)
+        success, response = send_booking_to_webservice(booking)
+
+        # Broadcast result via Django Channels
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "notifications",   # global group for all users
+            {
+                "type": "new_notification",
+                "message": f"Booking {booking_id} sync {'succeeded' if success else 'failed'}",
+                "details": response if success else str(response),
+            }
+        )
+
+        logger.info(f"Booking {booking_id} sent to webservice: {success}")
+    except Exception as e:
+        logger.error(f"Failed booking {booking_id}: {e}", exc_info=True)

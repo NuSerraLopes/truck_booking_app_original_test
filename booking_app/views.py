@@ -1426,11 +1426,11 @@ def send_group_booking(request, booking_pk):
 
     success, response = services.send_booking_to_webservice(booking)
     if success:
-        booking.external_contract_number = response.get("contract_number")
+        booking.external_contract_number = response.get('sequential_number')
         booking.save(update_fields=["external_contract_number"])
         messages.success(
             request,
-            _("Booking sent successfully. Contract: %s") % response.get("contract_number"),
+            _("Booking sent successfully. Contract: %s") % response.get('sequential_number'),
         )
     else:
         messages.error(request, _("Failed to send booking: %s") % response)
