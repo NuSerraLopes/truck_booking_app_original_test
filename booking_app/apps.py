@@ -8,14 +8,13 @@ class BookingAppConfig(AppConfig):
     name = 'booking_app'
 
     def ready(self):
-        import booking_app.signals
-
-    def ready(self):
         # This code runs once when the Django server starts.
         # We only perform this strict check in production (when DEBUG=False).
+        import booking_app.signals
+
         if not settings.DEBUG:
             # We import here to avoid issues during startup.
-            from .utils.licensing_client import is_license_valid
+            from .utils.get_license_status import is_license_valid
 
             if not is_license_valid():
                 raise ImproperlyConfigured(

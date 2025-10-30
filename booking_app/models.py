@@ -1,7 +1,7 @@
-# C:\Users\f19705e\PycharmProjects\truck_booking_app\booking_app\models.py
+#models.py
 import uuid
 
-from django.db import models, transaction
+from django.db import models
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser, Group, BaseUserManager
 from django.urls import reverse
@@ -19,10 +19,6 @@ def get_insurance_upload_path(instance, filename):
 
 def get_registration_upload_path(instance, filename):
     return f'vehicles/{instance.license_plate}/registration/{filename}'
-
-
-def get_contract_upload_path(instance, filename):
-    return f'bookings/{instance.pk}/contract/{filename}'
 
 
 # --- Models ---
@@ -47,23 +43,14 @@ class User(AbstractUser):
             name__in=['tlheavy', 'tllight', 'tlapv', 'sd']).exists()
 
 
-# --- START: Added for Inactive User Management ---
+# --- START: Inactive User Management ---
 
 class InactiveUserManager(BaseUserManager):
-    """
-    Custom manager for the InactiveUser proxy model.
-    It returns only users who have their `is_active` flag set to False.
-    """
     def get_queryset(self):
         return super().get_queryset().filter(is_active=False)
 
 
 class InactiveUser(User):
-    """
-    Proxy model to manage inactive users in the Django admin.
-    This model doesn't create a new database table but provides a separate
-    interface in the admin for users with `is_active=False`.
-    """
     objects = InactiveUserManager()
 
     class Meta:
@@ -71,7 +58,7 @@ class InactiveUser(User):
         verbose_name = _('Inactive User')
         verbose_name_plural = _('Inactive Users')
 
-# --- END: Added for Inactive User Management ---
+# --- END: Inactive User Management ---
 
 
 class Location(models.Model):
@@ -88,87 +75,33 @@ class Vehicle(models.Model):
         ('APV', _('APV')),
     ]
 
-    license_plate = models.CharField(
-        max_length=15, unique=True,
-        help_text=_("License Plate of the vehicle.")
-    )
-    vehicle_type = models.CharField(
-        max_length=50, choices=VEHICLE_TYPE_CHOICES,
-        help_text=_("Vehicle Type (LIGHT, HEAVY, APV).")
-    )
-    is_available = models.BooleanField(
-        default=True, help_text=_("Is Vehicle Available.")
-    )
-    model = models.CharField(
-        _("Model Name"), max_length=100, blank=True, default="N/A",
-        help_text=_("The Model of the vehicle.")
-    )
-    is_electric = models.BooleanField(
-        default=False, help_text=_("Is Vehicle Electric.")
-    )
-    viaverde_id = models.CharField(
-        max_length=100, blank=True, null=True,
-        help_text=_("ID of the ViaVerde Identifier.")
-    )
-    vehicle_km = models.CharField(
-        max_length=100, blank=True, null=True,
-        help_text=_("The KM of the vehicle.")
-    )
-    chassis = models.CharField(
-        _("Chassis Number"), max_length=100, unique=True,
-        blank=True, null=True,
-        help_text=_("The unique chassis number of the vehicle.")
-    )
-    picture = models.ImageField(
-        _("Picture"), upload_to='vehicle_pics/', blank=True, null=True,
-        help_text=_("Upload a picture of the vehicle.")
-    )
-    insurance_document = models.FileField(
-        _("Insurance"), upload_to=get_insurance_upload_path,
-        blank=True, null=True,
-        help_text=_("Upload the vehicle's insurance document (PDF, DOCX, etc.).")
-    )
-    registration_document = models.FileField(
-        _("Registration"), upload_to=get_registration_upload_path,
-        blank=True, null=True,
-        help_text=_("Upload the vehicle's registration document (PDF, DOCX, etc.).")
-    )
-    current_location = models.ForeignKey(
-        "Location", on_delete=models.SET_NULL, null=True, blank=True,
-        related_name='vehicles_at_location', verbose_name=_("Current Location"),
-        help_text=_("The current physical location of the vehicle.")
-    )
-    next_maintenance_date = models.DateField(
-        _("Next Maintenance Date"), null=True, blank=True,
-        help_text=_("Required only for APV vehicles.")
-    )
+    license_plate = models.CharField(max_length=15, unique=True)
+    vehicle_type = models.CharField(max_length=50, choices=VEHICLE_TYPE_CHOICES)
+    is_available = models.BooleanField(default=True)
+    model = models.CharField(_("Model Name"), max_length=100, blank=True, default="N/A")
+    is_electric = models.BooleanField(default=False)
+    viaverde_id = models.CharField(max_length=100, blank=True, null=True)
+    vehicle_km = models.CharField(max_length=100, blank=True, null=True)
+    chassis = models.CharField(_("Chassis Number"), max_length=100, unique=True, blank=True, null=True)
+    picture = models.ImageField(_("Picture"), upload_to='vehicle_pics/', blank=True, null=True)
+    insurance_document = models.FileField(_("Insurance"), upload_to=get_insurance_upload_path, blank=True, null=True)
+    registration_document = models.FileField(_("Registration"), upload_to=get_registration_upload_path, blank=True, null=True)
+    current_location = models.ForeignKey("Location", on_delete=models.SET_NULL, null=True, blank=True,
+                                         related_name='vehicles_at_location', verbose_name=_("Current Location"))
+    next_maintenance_date = models.DateField(_("Next Maintenance Date"), null=True, blank=True)
 
     # --- NEW FIELDS ---
-    start_date = models.DateField(
-        _("Available From"), null=True, blank=True,
-        help_text=_("Date from which the vehicle can be booked.")
-    )
-    end_date = models.DateField(
-        _("Available Until"), null=True, blank=True,
-        help_text=_("Last date the vehicle can be booked.")
-    )
-    active_status = models.BooleanField(
-        default=True, help_text=_("Is vehicle active?")
-    )
-    vehicle_value = models.DecimalField(
-        _("Vehicle Value"), max_digits=12, decimal_places=2,
-        null=True, blank=True,
-        help_text=_("Estimated value of the vehicle (for reference/insurance).")
-    )
+    start_date = models.DateField(_("Available From"), null=True, blank=True)
+    end_date = models.DateField(_("Available Until"), null=True, blank=True)
+    active_status = models.BooleanField(default=True)
+    vehicle_value = models.DecimalField(_("Vehicle Value"), max_digits=12, decimal_places=2, null=True, blank=True)
 
-    # --- EXISTING METHODS ---
     def get_availability_slots(self):
         from .utils import add_business_days, subtract_business_days
 
         today = date.today()
         tomorrow = today + timedelta(days=1)
 
-        # Filter bookings
         relevant_bookings = self.bookings.filter(
             status__in=['pending', 'pending_contract', 'confirmed', 'pending_final_km'],
             end_date__gte=today
@@ -177,12 +110,10 @@ class Vehicle(models.Model):
         slots = []
         next_available_start = tomorrow
 
-        # Respect start_date restriction if defined
         if self.start_date and self.start_date > next_available_start:
             next_available_start = self.start_date
 
         if not relevant_bookings.exists():
-            # If no bookings, but enforce end_date limit
             slots.append({'start': next_available_start, 'end': self.end_date})
             return slots
 
@@ -246,64 +177,34 @@ class Booking(models.Model):
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='bookings')
     vehicle = models.ForeignKey('Vehicle', on_delete=models.CASCADE, related_name='bookings')
-    client = models.ForeignKey(
-        'Client',
-        on_delete=models.PROTECT,
-        related_name='bookings',
-        verbose_name=_("Client"),
-        null=True,
-        blank=True
-    )
+    client = models.ForeignKey('Client', on_delete=models.PROTECT, related_name='bookings',
+                               verbose_name=_("Client"), null=True, blank=True)
     start_date = models.DateField()
     end_date = models.DateField()
     start_location = models.ForeignKey('Location', on_delete=models.CASCADE, related_name='start_bookings')
     end_location = models.ForeignKey('Location', on_delete=models.CASCADE, related_name='end_bookings')
     booking_time = models.DateTimeField(auto_now_add=True)
 
-    status = models.CharField(
-        max_length=20,
-        choices=BOOKING_STATUS_CHOICES,
-        default='pending',
-        verbose_name=_("Booking Status")
-    )
-    cancelled_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='cancelled_bookings',
-        verbose_name=_("Cancelled By")
-    )
+    status = models.CharField(max_length=20, choices=BOOKING_STATUS_CHOICES,
+                              default='pending', verbose_name=_("Booking Status"))
+    cancelled_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name='cancelled_bookings', verbose_name=_("Cancelled By"))
     cancellation_reason = models.TextField(blank=True, null=True, verbose_name=_("Cancellation Reason"))
     cancellation_time = models.DateTimeField(null=True, blank=True, verbose_name=_("Cancellation Time"))
 
-    # Removed old contract_document FileField
-    initial_km = models.PositiveIntegerField(
-        _("Initial Kilometers"),
+    initial_km = models.PositiveIntegerField(_("Initial Kilometers"), null=True, blank=True)
+    final_km = models.PositiveIntegerField(_("Final Kilometers"), null=True, blank=True)
+    motive = models.TextField(_("Motive"), blank=True)
+    created_at = models.DateTimeField(_("Created At"), auto_now_add=True)
+    needs_transport = models.BooleanField(_("Transport Required Before Booking"), default=False)
+
+    # --- NEW FIELD for external workflow ---
+    external_contract_number = models.CharField(
+        _("External Contract Number"),
+        max_length=100,
+        blank=True,
         null=True,
-        blank=True,
-        help_text=_("The vehicle's kilometers at the start of the booking.")
-    )
-    final_km = models.PositiveIntegerField(
-        _("Final Kilometers"),
-        null=True,
-        blank=True,
-        help_text=_("The vehicle's kilometers at the end of the booking.")
-    )
-    motive = models.TextField(
-        _("Motive"),
-        blank=True,
-        help_text=_("Required only for APV vehicle bookings.")
-    )
-    created_at = models.DateTimeField(
-        _("Created At"),
-        auto_now_add=True,
-        help_text=_("The date and time the booking was created.")
-    )
-    needs_transport = models.BooleanField(
-        _("Transport Required Before Booking"),
-        default=False,
-        help_text=_("Indicates if the vehicle needs to be moved from a different location before this booking can start.")
+        help_text=_("Contract number received from the external service.")
     )
 
     def get_absolute_url(self):
@@ -315,13 +216,6 @@ class Booking(models.Model):
         if self.status == 'confirmed' and self.start_date <= today <= self.end_date:
             return _('On Going')
         return self.get_status_display()
-
-    @property
-    def latest_contract(self):
-        return self.contracts.first()
-
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
 
     def __str__(self):
         client_name = self.client.name if self.client else _("N/A")
@@ -339,7 +233,6 @@ class EmailTemplate(models.Model):
             ('light_booking_created', _('New LIGHT Vehicle Booking Created')),
             ('heavy_booking_created', _('New HEAVY Vehicle Booking Created')),
             ('apv_booking_created', _('New APV Vehicle Booking Created')),
-            ('contract_generated', _('New Contract Generated')),
             ('light_booking_reverted', _('LIGHT Booking Reverted to Pending')),
             ('heavy_booking_reverted', _('HEAVY Booking Reverted to Pending')),
             ('apv_booking_reverted', _('APV Booking Reverted to Pending')),
@@ -414,30 +307,16 @@ class EmailTemplate(models.Model):
         return self.name
 
 
-
 class DistributionList(models.Model):
     name = models.CharField(max_length=100, unique=True)
     emails = models.TextField(help_text="Comma-separated email addresses.")
 
-    def get_emails_as_list(self): return [email.strip() for email in self.emails.split(',') if email.strip()]
+    def get_emails_as_list(self):
+        return [email.strip() for email in self.emails.split(',') if email.strip()]
 
-    def __str__(self): return self.name
+    def __str__(self):
+        return self.name
 
-class ContractTemplateSettings(models.Model):
-    template = models.FileField(upload_to="contract_templates/", blank=True, null=True)
-    placeholder_map = models.JSONField(default=list, blank=True)
-
-    @classmethod
-    def load(cls):
-        return cls.objects.get_or_create(pk=1)[0]
-
-    def get_template_path(self):
-        from django.conf import settings
-        import os
-
-        if self.template:
-            return self.template.path
-        return os.path.join(settings.BASE_DIR, "document_templates", "contract_template.docx")
 
 class EmailLog(models.Model):
     recipient = models.EmailField()
@@ -446,7 +325,8 @@ class EmailLog(models.Model):
     status = models.CharField(max_length=10)  # e.g., 'sent', 'failed'
     error_message = models.TextField(blank=True, null=True)
 
-    def __str__(self): return f"To: {self.recipient} - {self.subject} ({self.status})"
+    def __str__(self):
+        return f"To: {self.recipient} - {self.subject} ({self.status})"
 
 
 class AutomationSettings(models.Model):
@@ -460,58 +340,11 @@ class AutomationSettings(models.Model):
     def load(cls):
         return cls.objects.get_or_create(pk=1)[0]
 
-class Contract(models.Model):
-    booking = models.ForeignKey("Booking", on_delete=models.CASCADE, related_name="contracts")
-    contract_number = models.PositiveIntegerField(unique=True, editable=False)
-    file = models.FileField(upload_to="contracts/", blank=True, null=True)  # store generated PDF
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    # Optional metadata
-    version = models.PositiveIntegerField(default=1)  # amendments, renewals
-    signed_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-
-    def save(self, *args, **kwargs):
-        if not self.contract_number:
-            # Make number assignment concurrency-safe
-            with transaction.atomic():
-                last_number = (
-                    Contract.objects.select_for_update()
-                    .aggregate(models.Max("contract_number"))["contract_number__max"]
-                    or 0
-                )
-                self.contract_number = last_number + 1
-        super().save(*args, **kwargs)
-
-    @property
-    def formatted_number(self):
-        """Show with prefix, e.g. CA0107"""
-        return f"CA{self.contract_number:04d}"
-
-    def __str__(self):
-        return f"Contract {self.formatted_number} for Booking {self.booking.pk}"
 
 class Transport(models.Model):
-    booking = models.OneToOneField(
-        "Booking",
-        on_delete=models.CASCADE,
-        related_name="transport",
-        verbose_name=_("Booking"),
-    )
-    origin_location = models.ForeignKey(
-        "Location",
-        on_delete=models.CASCADE,
-        related_name="transports_from",
-        verbose_name=_("Origin"),
-    )
-    destination_location = models.ForeignKey(
-        "Location",
-        on_delete=models.CASCADE,
-        related_name="transports_to",
-        verbose_name=_("Destination"),
-    )
+    booking = models.OneToOneField("Booking", on_delete=models.CASCADE, related_name="transport", verbose_name=_("Booking"))
+    origin_location = models.ForeignKey("Location", on_delete=models.CASCADE, related_name="transports_from", verbose_name=_("Origin"))
+    destination_location = models.ForeignKey("Location", on_delete=models.CASCADE, related_name="transports_to", verbose_name=_("Destination"))
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

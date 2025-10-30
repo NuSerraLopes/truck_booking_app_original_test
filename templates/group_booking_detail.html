@@ -72,38 +72,15 @@
                             <h3 class="h5">{% translate "Booking Document" %}</h3>
                             <ul class="list-group mb-4">
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    {% if booking.latest_contract %}
-                                        {% translate "Contract Document" %} {{ booking.latest_contract.formatted_number }}
-                                        <span>
-                                            <a href="{{ booking.latest_contract.file.url }}" 
-                                               class="btn btn-primary btn-sm" target="_blank">
-                                               {% translate "View Contract" %}
-                                            </a>
-                                        </span>
-                                    {% else %}
-                                        {% translate "Contract Document" %}
-                                        <span>
-                                            <a href="{% url 'booking_app:group_booking_update' booking.pk %}?upload_only=true"
-                                               class="btn btn-warning btn-sm">
-                                               {% translate "Upload Contract" %}
-                                            </a>
-                                            {% if booking.status == 'pending_contract' and booking.final_km %}
-                                                <a href="{% url 'booking_app:generate_word_contract' booking.pk %}"
-                                                   class="btn btn-success btn-sm">
-                                                   {% translate "Generate Word Contract" %}
-                                                </a>
-                                            {% else %}
-                                                <button type="button" class="btn btn-success btn-sm" disabled>
-                                                    {% translate "Generate Word Contract" %}
-                                                </button>
-                                            {% endif %}
-                                        </span>
-                                        {% if booking.status != 'pending_contract' or not booking.final_km %}
-                                            <div class="form-text text-muted small mt-2">
-                                                {% translate "Contracts become available after approval and recording the vehicle's current kilometers." %}
-                                            </div>
-                                        {% endif %}
-                                    {% endif %}
+                                    {% translate "Contract Document" %}
+                                    <span>
+                                        <form method="post" action="{% url 'booking_app:send_group_booking' booking.pk %}" style="display:inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-success btn-sm">
+                                                {% translate "Generate Contract" %}
+                                            </button>
+                                        </form>
+                                    </span>
                                 </li>
                             </ul>
                             <h3 class="h5">{% translate "Associated Vehicle Files" %}</h3>

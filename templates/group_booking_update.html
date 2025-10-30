@@ -42,13 +42,9 @@
                                 {% endif %}
 
                                 {% if can_confirm_contract %}
-                                    <button type="submit" name="action" value="confirm_with_contract" class="btn btn-success" id="confirm-contract-btn">{% translate "Finalize & Confirm" %}</button>
-                                {% else %}
-                                    {% if booking.status == 'pending_contract' %}
-                                    <div class="alert alert-warning p-2 mb-0">
-                                        <small>{% translate "Upload contract before confirming." %}</small>
-                                    </div>
-                                    {% endif %}
+                                    <button type="submit" name="action" value="confirm_booking" class="btn btn-success" id="confirm-contract-btn">
+                                        {% translate "Finalize & Confirm" %}
+                                    </button>
                                 {% endif %}
 
                                 {% if can_cancel_by_manager %}
@@ -71,12 +67,12 @@
                         {% endif %}
 
 
-                        {% if booking.contract_document %}
-                        <div class="alert alert-info">
-                            <strong>{% translate "Contract on file:" %}</strong>
-                            <a href="{{ booking.contract_document.url }}" target="_blank">{% translate "View Uploaded Contract" %}</a>
-                        </div>
-                        {% endif %}
+                        {% if booking.contract_number %}
+                            <div class="alert alert-info">
+                                <strong>{% translate "Contract Number:" %}</strong>
+                                {{ booking.contract_number }}
+                            </div>
+                            {% endif %}
 
                         {% if can_update_form_fields %}
                             {% crispy form %}

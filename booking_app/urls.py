@@ -24,7 +24,6 @@ urlpatterns = [
     path('my-bookings/<int:booking_pk>/', views.booking_detail_view, name='booking_detail'),
     path('bookings/update/<int:booking_pk>/', views.update_booking_view, name='update_booking'),
     path('bookings/cancel/<int:booking_pk>/', views.cancel_booking_view, name='cancel_booking'),
-    path('bookings/<int:booking_pk>/generate-word-contract/', views.generate_and_save_contract_view, name='generate_word_contract'),
 
     # User Profile Management URLs
     path('my-account/', views.my_account_view, name='my_account'),
@@ -35,6 +34,7 @@ urlpatterns = [
     path('group-dashboard/', views.group_dashboard_view, name='group_dashboard'),
     path('group-bookings/<int:booking_pk>/', views.group_booking_detail_view, name='group_booking_detail'),
     path('group-bookings/update/<int:booking_pk>/', views.group_booking_update_view, name='group_booking_update'),
+    path("group-bookings/<int:booking_pk>/send/",views.send_group_booking,name="send_group_booking",),
     path('group-dashboard/reports/', views.group_reports_view, name='group_reports'),
     path('group-dashboard/calendar/', views.group_calendar_view, name='group_calendar'),
     path('group-dashboard/client-history/<str:tax_number>/', views.client_booking_history_view, name='client_booking_history'),
@@ -95,10 +95,6 @@ urlpatterns = [
     path('admin-dashboard/distribution-lists/edit/<int:pk>/', views.admin_dl_form_view, name='admin_dl_edit'),
     path('admin-dashboard/distribution-lists/delete/<int:pk>/', views.admin_dl_delete_view, name='admin_dl_delete'),
     path('admin-dashboard/settings/', views.automation_settings_view, name='automation_settings'),
-    path('admin-dashboard/contract-template/', views.contract_template_settings_view,
-         name='contract_template_settings'),
-    path('admin-dashboard/contract-template/preview/', views.contract_template_file_view,
-         name='contract_template_file'),
 
     # API URLs
     path('api/bookings/', views.booking_api_view, name='booking_api'),

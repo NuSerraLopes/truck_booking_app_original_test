@@ -1,22 +1,18 @@
 import csv
 import io
 import os
-import platform
 import re
-import shutil
-import subprocess
 import json
 import logging
 import traceback
-from io import BytesIO
 from datetime import date, timedelta
 
 import requests
 from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm, PasswordChangeForm
+from django.contrib.sites.shortcuts import get_current_site
 from django.core.exceptions import ValidationError
-from django.core.files.base import ContentFile
 from django.db.models import Q, Prefetch, Count
 from django.db.models.functions import TruncMonth
 from django.shortcuts import render, redirect, get_object_or_404
@@ -30,13 +26,9 @@ from django.contrib.auth import get_user_model, login, logout, update_session_au
 from django.contrib.auth.models import Group
 from django.core.paginator import Paginator
 from django.db import transaction
-from django.http import HttpResponseForbidden, Http404, JsonResponse, HttpResponse, FileResponse
-from django.template import Context, Template
-from django.contrib.sites.shortcuts import get_current_site
+from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 
-from docxtpl import DocxTemplate
-from PyPDF2 import PdfWriter
-
+from . import services
 from .models import (
     Vehicle,
     Location,
@@ -44,18 +36,18 @@ from .models import (
     EmailTemplate,
     DistributionList,
     AutomationSettings,
-    ContractTemplateSettings,
     EmailLog,
     Client,
     InactiveUser,
-    Contract, Transport,
+    Transport,
 )
 from .forms import (
     BookingForm, VehicleCreateForm, VehicleEditForm, LocationCreateForm,
     UserCreateForm, UpdateUserForm, ClientForm, GroupForm, DistributionListForm,
-    EmailTemplateForm, LocationUpdateForm, AutomationSettingsForm, ContractTemplateSettingsForm,
+    EmailTemplateForm, LocationUpdateForm, AutomationSettingsForm,
     BookingFilterForm, VehicleImportForm
 )
+from .services import send_booking_to_webservice
 from .utils import (
     add_business_days, subtract_business_days, kill_user_sessions, kill_all_sessions,
     kill_session_by_key, get_user_sessions, get_last_activity_for_user, is_user_logged_in,
@@ -63,21 +55,15 @@ from .utils import (
 )
 
 logger = logging.getLogger(__name__)
-
 User = get_user_model()
 
 # ------------------------------
 # Permission Checks
 # ------------------------------
 def is_admin(user): return user.is_authenticated and user.is_admin_member
-
-
 def is_booking_manager(user): return user.is_authenticated and user.is_booking_admin_member
-
-
 def is_group_leader(user): return user.groups.filter(name__in=['tlheavy', 'tllight', 'tlapv', 'sd']).exists() or (
         user.is_authenticated and user.is_booking_admin_member)
-
 
 def get_managed_vehicle_types(user):
     user_groups = user.groups.values_list('name', flat=True)
@@ -91,73 +77,30 @@ def get_managed_vehicle_types(user):
         if 'tlapv' in user_groups: vehicle_types.append('APV')
     return list(set(vehicle_types))
 
-def resolve_placeholder_path(path, base_context):
-    """Resolve dotted attribute paths against a context of objects/dicts."""
-    if not path:
-        return ''
-
-    current = base_context
-    for segment in path.split('.'):
-        if isinstance(current, dict):
-            current = current.get(segment)
-        else:
-            current = getattr(current, segment, None)
-
-        if current is None:
-            return ''
-
-        if callable(current):
-            try:
-                current = current()
-            except TypeError:
-                return ''
-
-    if current is None:
-        return ''
-
-    return current
-
 # ------------------------------
 # Core / Auth Views
 # ------------------------------
-
 def home(request):
     return render(request, 'home.html')
 
-
 def login_user(request):
-    """
-    Simple username/password login using Django's AuthenticationForm.
-    Respects the 'requires_password_change' flag.
-    """
     if request.method == "POST":
         form = AuthenticationForm(request, data=request.POST)
         if form.is_valid():
-            user = form.get_user()  # uses the authenticated user from the form
+            user = form.get_user()
             login(request, user)
-
-            # Force password change flow once per flag set
             if user.requires_password_change:
                 user.requires_password_change = False
                 user.save(update_fields=['requires_password_change'])
-                messages.info(
-                    request,
-                    _("For your security, you must change your password before proceeding.")
-                )
+                messages.info(request, _("For your security, you must change your password before proceeding."))
                 return redirect("booking_app:change_password")
-
-            messages.success(
-                request,
-                _("You are now logged in as %(username)s.") % {"username": user.username}
-            )
+            messages.success(request, _("You are now logged in as %(username)s.") % {"username": user.username})
             return redirect("booking_app:home")
         else:
             messages.error(request, _("Invalid username or password."))
     else:
         form = AuthenticationForm(request)
-
     return render(request, 'registration/login.html', {'form': form})
-
 
 @login_required
 def logout_user(request):
@@ -165,12 +108,9 @@ def logout_user(request):
     messages.info(request, _("You have successfully logged out."))
     return redirect("booking_app:home")
 
-
-
 # ------------------------------
 # Booking Views
 # ------------------------------
-
 @login_required
 def book_vehicle_view(request, vehicle_pk):
     vehicle = get_object_or_404(Vehicle, pk=vehicle_pk)
@@ -182,9 +122,6 @@ def book_vehicle_view(request, vehicle_pk):
             should_redirect, response = _handle_booking_form_submission(request, form, vehicle, is_new_booking=True)
             return response
         else:
-            print("--- FORM IS INVALID ---")
-            print(form.errors.as_json())
-            print("-----------------------")
             messages.error(request, _('Form is not valid. Please check the errors.'))
     else:
         form = BookingForm(vehicle=vehicle, is_create_page=True, crc_is_mandatory=crc_is_mandatory)
@@ -383,107 +320,13 @@ def cancel_booking_view(request, booking_pk):
         booking.cancellation_time = timezone.now()
         booking.cancellation_reason = _("Cancelled by user.")
         booking.save()
-
-        # 🚚 Clean up any transports linked to this booking
         Transport.objects.filter(booking=booking).delete()
-
-        ctx = {
-            "booking": booking,
-            "vehicle": booking.vehicle,
-            "user": request.user,
-        }
+        ctx = {"booking": booking, "vehicle": booking.vehicle, "user": request.user}
         send_system_notification('booking_canceled_by_user', context_data=ctx)
         messages.success(request, _("Booking cancelled successfully."))
         return redirect('booking_app:my_bookings')
 
     return render(request, 'cancel_booking.html', {'booking': booking})
-
-# ------------------------------
-# Contract Views
-# ------------------------------
-
-@login_required
-def generate_and_save_contract_view(request, booking_pk):
-    booking = get_object_or_404(Booking, pk=booking_pk)
-    if booking.status != 'pending_contract':
-        messages.error(request, _("Contracts can only be generated once the booking is ready for contract."))
-        return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
-
-    if booking.final_km is None:
-        messages.error(request, _("Record the vehicle's current kilometers before generating the contract."))
-        return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
-    contract = Contract.objects.create(booking=booking)
-
-    template_settings = ContractTemplateSettings.load()
-    template_dir = os.path.join(settings.BASE_DIR, 'document_templates')
-    docx_template_path = template_settings.get_template_path()
-    static_pdf_path = os.path.join(template_dir, 'terms_and_conditions.pdf')
-    temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp')
-    os.makedirs(temp_dir, exist_ok=True)
-
-    # --- Render DOCX ---
-    doc = DocxTemplate(docx_template_path)
-    context = {'booking': booking, 'contract': contract}
-    base_context = {'booking': booking, 'contract': contract}
-    for entry in template_settings.placeholder_map:
-        handle = (entry.get('handle') or '').strip()
-        path = (entry.get('path') or '').strip()
-        if not handle or not path:
-            continue
-
-        value = resolve_placeholder_path(path, base_context)
-        if value is None:
-            value = ''
-        elif not isinstance(value, (str, int, float)):
-            value = str(value)
-
-        context[handle] = value
-    doc.render(context)
-
-    temp_docx_path = os.path.join(temp_dir, f'temp_contract_{contract.pk}.docx')
-    doc.save(temp_docx_path)
-
-    try:
-        soffice_path = shutil.which('soffice') or 'soffice'
-        if platform.system() == 'Windows':
-            soffice_path = r"C:\\Program Files\\LibreOffice\\program\\soffice.exe"
-        subprocess.run(
-            [soffice_path, '--headless', '--convert-to', 'pdf', temp_docx_path, '--outdir', temp_dir],
-            check=True, timeout=15
-        )
-    except Exception as e:
-        messages.error(request, f"{_('Could not convert document.')} ({e})")
-        contract.delete()
-        return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
-
-    temp_pdf_path = os.path.join(temp_dir, f'temp_contract_{contract.pk}.pdf')
-    merger = PdfWriter()
-    pdf_buffer = BytesIO()
-    try:
-        merger.append(temp_pdf_path)
-        merger.append(static_pdf_path)
-        merger.write(pdf_buffer)
-        pdf_buffer.seek(0)
-    finally:
-        merger.close()
-
-    final_pdf_filename = f'contract_{contract.formatted_number}.pdf'
-    contract.file.save(final_pdf_filename, ContentFile(pdf_buffer.getvalue()), save=True)
-
-    for path in (temp_docx_path, temp_pdf_path):
-        if os.path.exists(path):
-            os.remove(path)
-
-    ctx = {
-        "booking": booking,
-        "vehicle": booking.vehicle,
-        "user": request.user,
-    }
-
-    send_system_notification('contract_generated', context_data=ctx)
-    messages.success(request, _("Contract %(number)s has been generated.") % {"number": contract.formatted_number})
-    return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
-
 
 # ------------------------------
 # Vehicle CRUD Views
@@ -1308,73 +1151,6 @@ def automation_settings_view(request):
     return render(request, 'admin/admin_automation_settings.html', {'form': form})
 
 # ------------------------------
-# Contract Generation
-# ------------------------------
-
-@login_required
-@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
-def contract_template_settings_view(request):
-    settings_instance = ContractTemplateSettings.load()
-
-    placeholders = settings_instance.placeholder_map
-
-    if request.method == 'POST':
-        form = ContractTemplateSettingsForm(request.POST, request.FILES, instance=settings_instance)
-        if form.is_valid():
-            settings_instance = form.save()
-            ctx = {
-                "settings": settings_instance,
-                "user": request.user
-            }
-            send_system_notification('contract_template_settings_updated', context_data=ctx)
-            messages.success(request, _("Contract template settings updated successfully."))
-            return redirect('booking_app:contract_template_settings')
-        else:
-            try:
-                placeholders = json.loads(request.POST.get('placeholders_json', '[]'))
-            except json.JSONDecodeError:
-                placeholders = settings_instance.placeholder_map
-    else:
-        form = ContractTemplateSettingsForm(instance=settings_instance)
-        form.fields['placeholders_json'].initial = json.dumps(settings_instance.placeholder_map)
-        form.fields['remove_template'].initial = 'false'
-        form.fields['rendered_html'].initial = ''
-
-    template_preview_url = reverse('booking_app:contract_template_file')
-    default_template_preview_url = f"{template_preview_url}?default=1"
-
-    return render(
-        request,
-        'admin/admin_contract_template_settings.html',
-        {
-            'form': form,
-            'settings': settings_instance,
-            'placeholders': placeholders,
-            'template_preview_url': template_preview_url,
-            'default_template_preview_url': default_template_preview_url,
-            'page_title': _("Contract Template Settings"),
-        },
-    )
-
-@login_required
-@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
-def contract_template_file_view(request):
-    settings_instance = ContractTemplateSettings.load()
-    use_default = request.GET.get('default') == '1'
-    if settings_instance.template and not use_default:
-        template_path = settings_instance.template.path
-    else:
-        template_path = os.path.join(settings.BASE_DIR, 'document_templates', 'contract_template.docx')
-    if not os.path.exists(template_path):
-        raise Http404("Template file not found.")
-
-    return FileResponse(
-        open(template_path, 'rb'),
-        content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    )
-
-
-# ------------------------------
 # Client Management
 # ------------------------------
 
@@ -1608,11 +1384,7 @@ def group_dashboard_view(request):
     vehicle_types_to_manage = get_managed_vehicle_types(request.user)
     filter_form = BookingFilterForm(request.GET, user=request.user)
     selected_status = request.GET.get('status', '')
-
-    base_query = Booking.objects.filter(
-        vehicle__vehicle_type__in=vehicle_types_to_manage
-    ).select_related('client', 'vehicle')
-
+    base_query = Booking.objects.filter(vehicle__vehicle_type__in=vehicle_types_to_manage).select_related('client', 'vehicle')
     if selected_status:
         actionable_bookings = base_query.filter(status=selected_status).order_by('-start_date')
     else:
@@ -1620,12 +1392,7 @@ def group_dashboard_view(request):
             status__in=['pending', 'pending_contract', 'confirmed', 'pending_final_km'],
             end_date__gte=timezone.now().date()
         ).order_by('start_date')
-
-    context = {
-        'page_title': _("Group Dashboard"),
-        'actionable_bookings': actionable_bookings,
-        'filter_form': filter_form
-    }
+    context = {'page_title': _("Group Dashboard"), 'actionable_bookings': actionable_bookings, 'filter_form': filter_form}
     return render(request, 'group_dashboard.html', context)
 
 
@@ -1636,26 +1403,36 @@ def group_booking_detail_view(request, booking_pk):
     user = request.user
     managed_vehicle_types = get_managed_vehicle_types(user)
     can_view_as_leader = booking.vehicle.vehicle_type in managed_vehicle_types
-
     if not (can_view_as_leader or user.is_booking_admin_member):
         messages.error(request, _("You do not have permission to view this group booking."))
         return redirect('booking_app:group_dashboard')
-
-    context = {
-        'booking': booking,
-        'page_title': _("Group Booking Details")
-    }
+    context = {'booking': booking, 'page_title': _("Group Booking Details")}
     return render(request, 'group_booking_detail.html', context)
 
+@login_required
+@user_passes_test(is_group_leader, login_url='booking_app:home')
+def send_group_booking(request, booking_pk):
+    booking = get_object_or_404(Booking, pk=booking_pk)
+
+    success, response = services.send_booking_to_webservice(booking)
+    if success:
+        booking.external_contract_number = response.get("contract_number")
+        booking.save(update_fields=["external_contract_number"])
+        messages.success(
+            request,
+            _("Booking sent successfully. Contract: %s") % response.get("contract_number"),
+        )
+    else:
+        messages.error(request, _("Failed to send booking: %s") % response)
+
+    return redirect("booking_app:group_booking_detail", booking_pk=booking.pk)
 
 @login_required
 @user_passes_test(is_group_leader, login_url='booking_app:home')
 def group_booking_update_view(request, booking_pk):
     booking = get_object_or_404(Booking, pk=booking_pk)
-
     if request.method == 'POST':
         action = request.POST.get('action')
-
         if action == 'approve':
             if booking.status == 'pending':
                 booking.status = 'confirmed'
@@ -1664,49 +1441,19 @@ def group_booking_update_view(request, booking_pk):
                 if booking.initial_km is not None:
                     update_fields.append('initial_km')
                 booking.save(update_fields=update_fields)
-
-                # 🔽 Create/update transport(s)
                 compute_transport_for_booking(booking)
-
-                send_system_notification(
-                    event_trigger='booking_approved',
-                    context_data={"booking": booking}
-                )
+                send_system_notification('booking_approved', context_data={"booking": booking})
                 messages.success(request, _("Booking has been approved."))
             return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
-
         elif action == 'approve_apv':
             if booking.vehicle.vehicle_type == 'APV' and booking.status == 'pending':
                 booking.status = 'confirmed'
                 booking.initial_km = booking.vehicle.vehicle_km
                 booking.save(update_fields=['status', 'initial_km'])
-
-                # 🔽 Create/update transport(s)
                 compute_transport_for_booking(booking)
-
-                send_system_notification(
-                    event_trigger='apv_booking_approved',
-                    context_data={"booking": booking}
-                )
+                send_system_notification('apv_booking_approved', context_data={"booking": booking})
                 messages.success(request, _("APV booking has been approved."))
             return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
-
-        # --- CONFIRM WITH CONTRACT ---
-        elif action == 'confirm_with_contract':
-            if booking.status == 'pending_contract' and booking.contracts:
-                booking.status = 'confirmed'
-                booking.save(update_fields=['status'])
-
-                send_system_notification(
-                    event_trigger='booking_approved',
-                    context_data={"booking":booking}
-                )
-                messages.success(request, _("Booking has been finalized and confirmed."))
-            else:
-                messages.error(request, _("Contract must be uploaded before confirming."))
-            return redirect('booking_app:group_booking_update', booking_pk=booking.pk)
-
-        # --- CANCEL BY MANAGER ---
         elif action == 'cancel_by_manager':
             if booking.status in ['pending', 'pending_contract', 'pending_final_km', 'confirmed']:
                 booking.status = 'cancelled'
@@ -1714,15 +1461,9 @@ def group_booking_update_view(request, booking_pk):
                 booking.cancellation_time = timezone.now()
                 booking.cancelled_by = request.user
                 booking.save(update_fields=['status','cancellation_reason','cancellation_time','cancelled_by'])
-
-                send_system_notification(
-                    event_trigger='booking_canceled_by_manager',
-                    context_data={"booking":booking}
-                )
+                send_system_notification('booking_canceled_by_manager', context_data={"booking":booking})
                 messages.success(request, _("Booking has been cancelled."))
             return redirect('booking_app:group_dashboard')
-
-        # --- REQUEST FINAL KM ---
         elif action == 'request_final_km':
             if booking.status == 'confirmed':
                 booking.status = 'pending_final_km'
@@ -1731,31 +1472,20 @@ def group_booking_update_view(request, booking_pk):
                     booking.initial_km = booking.vehicle.vehicle_km
                     update_fields.append('initial_km')
                 booking.save(update_fields=update_fields)
-
-                send_system_notification(
-                    event_trigger='booking_ended_pending_km',
-                    context_data={"booking":booking}
-                )
+                send_system_notification('booking_ended_pending_km', context_data={"booking":booking})
                 messages.info(request, _("Final KM request has been sent."))
             return redirect('booking_app:group_booking_detail', booking_pk=booking.pk)
-
-        # --- DEFAULT: update form normally ---
         form = BookingForm(request.POST, request.FILES, instance=booking, vehicle=booking.vehicle)
         if form.is_valid():
-            should_redirect, response = _handle_booking_form_submission(
-                request, form, booking.vehicle, is_new_booking=False
-            )
+            should_redirect, response = _handle_booking_form_submission(request, form, booking.vehicle, is_new_booking=False)
             return response
-
     else:
         form = BookingForm(instance=booking, vehicle=booking.vehicle)
-
     context = {
         'form': form,
         'booking': booking,
         'can_approve': booking.status == 'pending',
         'can_approve_apv': booking.status == 'pending' and booking.vehicle.vehicle_type == 'APV',
-        'can_confirm_contract': booking.status == 'pending_contract' and booking.contracts,
         'can_cancel_by_manager': booking.status in ['pending','pending_contract','pending_final_km','confirmed'],
         'can_update_form_fields': booking.status in ['pending','pending_contract','pending_final_km'],
         'can_request_final_km': booking.status == 'confirmed',

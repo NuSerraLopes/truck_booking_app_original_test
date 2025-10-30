@@ -1,18 +1,14 @@
-# booking_app/forms.py
-
 import json
-from io import BytesIO
+from datetime import date, timedelta
 
 from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.core.exceptions import ValidationError
-from django.core.files.base import ContentFile
 from django.db import transaction
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
-from datetime import date, timedelta
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Row, Column, Submit, HTML, Div
@@ -24,11 +20,9 @@ from .models import (
     EmailTemplate,
     DistributionList,
     AutomationSettings,
-    ContractTemplateSettings,
     Client,
 )
-from .utils import subtract_business_days, add_business_days, send_system_notification
-from .docx_utils import html_to_docx
+from .utils import subtract_business_days, add_business_days
 
 # Re-assign User model for clarity
 User = get_user_model()
@@ -38,6 +32,7 @@ User = get_user_model()
 class BootstrapCheckboxSelectMultiple(forms.CheckboxSelectMultiple):
     def __init__(self, attrs=None):
         super().__init__(attrs={'class': 'form-check-input'})
+
 
 # --- Booking Form ---
 class BookingForm(forms.ModelForm):
@@ -112,7 +107,6 @@ class BookingForm(forms.ModelForm):
                 Column('end_location', css_class='form-group col-md-6 mb-3')),
             Row(Column('start_date', css_class='form-group col-md-6 mb-3'),
                 Column('end_date', css_class='form-group col-md-6 mb-3')),
-            'needs_transport',
             'final_km',
             'client_id',
             'conflict_resolution',
@@ -246,7 +240,6 @@ class VehicleCreateForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        from crispy_forms.helper import FormHelper
         self.helper = FormHelper()
         self.helper.form_tag = False
 
@@ -292,12 +285,11 @@ class VehicleEditForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.helper = FormHelper()
-        self.helper.form_tag = False   # 👈 prevents nested form tags
+        self.helper.form_tag = False
 
     def save(self, commit=True):
         vehicle = super().save(commit=False)
 
-        # Only assign defaults if it's a brand new vehicle and no picture exists
         if not vehicle.picture and not vehicle.pk:
             if vehicle.vehicle_type == "HEAVY":
                 vehicle.picture.name = "Default/heavy.jpg"
@@ -310,7 +302,6 @@ class VehicleEditForm(forms.ModelForm):
             vehicle.save()
             self.save_m2m()
         return vehicle
-
 
 
 class VehicleImportForm(forms.Form):
@@ -366,78 +357,6 @@ class AutomationSettingsForm(forms.ModelForm):
         fields = ['pending_booking_automation_active', 'enable_pending_reminders',
                   'reminder_days_pending', 'require_crc_verification']
 
-class ContractTemplateSettingsForm(forms.ModelForm):
-    placeholders_json = forms.CharField(widget=forms.HiddenInput, required=False)
-    remove_template = forms.BooleanField(widget=forms.HiddenInput, required=False)
-    rendered_html = forms.CharField(widget=forms.HiddenInput, required=False)
-
-    class Meta:
-        model = ContractTemplateSettings
-        fields = ['template']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._rendered_docx: BytesIO | None = None
-
-    def clean_placeholders_json(self):
-        data = self.cleaned_data.get('placeholders_json')
-        if not data:
-            return []
-        try:
-            placeholders = json.loads(data)
-        except json.JSONDecodeError as exc:
-            raise ValidationError(_('Invalid placeholder data: %(error)s') % {'error': exc})
-
-        cleaned = []
-        for entry in placeholders:
-            handle = (entry.get('handle') or '').strip()
-            path = (entry.get('path') or '').strip()
-            description = (entry.get('description') or '').strip()
-            if not handle or not path:
-                raise ValidationError(_('Placeholder entries require both a handle and a data path.'))
-            cleaned.append({'handle': handle, 'path': path, 'description': description})
-        return cleaned
-
-    def clean_rendered_html(self):
-        html = (self.cleaned_data.get('rendered_html') or '').strip()
-        if not html:
-            self._rendered_docx = None
-            return ''
-
-        try:
-            self._rendered_docx = html_to_docx(html)
-        except ValueError as exc:
-            raise ValidationError(str(exc)) from exc
-
-        return html
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.placeholder_map = self.cleaned_data.get('placeholders_json', [])
-
-        if self.cleaned_data.get('remove_template'):
-            if not self.cleaned_data.get('template') and instance.template:
-                instance.template.delete(save=False)
-                instance.template = None
-
-        uploaded_template = self.cleaned_data.get('template')
-
-        if self._rendered_docx:
-            if instance.template:
-                instance.template.delete(save=False)
-            instance.template.save(
-                'contract_template.docx',
-                ContentFile(self._rendered_docx.getvalue()),
-                save=False,
-            )
-        elif uploaded_template:
-            if instance.template and instance.template != uploaded_template:
-                instance.template.delete(save=False)
-            instance.template = uploaded_template
-
-        if commit:
-            instance.save()
-        return instance
 
 # --- Booking Filter Form ---
 class BookingFilterForm(forms.Form):
@@ -448,7 +367,7 @@ class BookingFilterForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # accept user
+        user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         self.fields['status'].choices = [
             ('', _('All Actionable')), ('pending', _('Pending Approval')),
