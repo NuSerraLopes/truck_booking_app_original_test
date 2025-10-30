@@ -370,9 +370,9 @@ class BookingFilterForm(forms.Form):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         self.fields['status'].choices = [
-            ('', _('All Actionable')), ('pending', _('Pending Approval')),
+            ('', _('All')), ('pending', _('Pending Approval')),
             ('pending_contract', _('Pending Contract')), ('confirmed', _('Confirmed / Upcoming')),
-            ('completed', _('Completed')), ('cancelled', _('Cancelled')),
+            ('ongoing', _('Ongoing')),('completed', _('Completed')), ('cancelled', _('Cancelled')),
             ('pending_final_km', _('Pending Final KM')),
         ]
 

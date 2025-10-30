@@ -10,8 +10,10 @@ from django.conf import settings
 from django.contrib.sessions.models import Session
 from django.core.cache import cache
 from django.db import transaction
+from django.forms.models import model_to_dict
 from django.template import Template, Context
 from django.utils import timezone
+from django.utils.functional import SimpleLazyObject
 
 from .models import EmailTemplate, EmailLog, Transport
 
@@ -139,6 +141,9 @@ def send_system_notification(event_trigger, context_data=None, test_email_recipi
     - Sends via Graph API + logs result
     """
 
+    context_data = sanitize_context(context_data)
+    context = Context(context_data or {})
+
     template_list = EmailTemplate.objects.filter(event_trigger=event_trigger, is_active=True)
 
     if not template_list.exists():
@@ -171,7 +176,6 @@ def send_system_notification(event_trigger, context_data=None, test_email_recipi
             logger.info(f"Template '{template_obj.name}' for event '{event_trigger}' has no recipients.")
             continue
 
-        context = Context(context_data or {})
         subject_template = Template(template_obj.subject)
         body_template = Template(template_obj.body)
 
@@ -205,6 +209,21 @@ def send_system_notification(event_trigger, context_data=None, test_email_recipi
                     error_message=str(e)
                 )
 
+def sanitize_context(context_data):
+    safe_data = {}
+    for key, value in (context_data or {}).items():
+        if isinstance(value, SimpleLazyObject):
+            value = value.__wrapped__  # unwrap lazy object
+
+        if hasattr(value, "_meta"):  # Django model
+            safe_data[key] = model_to_dict(value)
+        elif isinstance(value, (list, tuple)):
+            safe_data[key] = [
+                model_to_dict(v) if hasattr(v, "_meta") else str(v) for v in value
+            ]
+        else:
+            safe_data[key] = str(value)
+    return safe_data
 
 # ==============================================================================
 # UNCHANGED COMPANY CHECKER FUNCTION

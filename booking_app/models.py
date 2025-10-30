@@ -170,6 +170,7 @@ class Booking(models.Model):
         ('pending', _('Pending')),
         ('pending_contract', _('Pending Contract')),
         ('confirmed', _('Confirmed')),
+        ('ongoing', _('ongoing')),
         ('pending_final_km', _('Pending Final KM')),
         ('completed', _('Completed')),
         ('cancelled', _('Cancelled')),
@@ -243,6 +244,7 @@ class EmailTemplate(models.Model):
             ('transport_required', _('Booking Transport is required')),
             ('transport_status_changed', _('Booking Transport Status Changed')),
             ('booking_ended_pending_km', _('Booking Ended Pending KM')),
+            ('booking_ongoing', _('Booking Started')),
         )),
         ('Manager Actions', (
             ('booking_approved', _('Booking Approved')),

@@ -11,35 +11,34 @@ logger = logging.getLogger('booking_app')
 
 
 class Command(BaseCommand):
-    help = 'Checks for confirmed bookings that ended yesterday and moves them to "Pending Final KM".'
+    help = 'Checks for confirmed bookings that started yesterday and moves them to "Ongoing".'
 
     def handle(self, *args, **options):
         yesterday = timezone.now().date() - timedelta(days=1)
 
-        # Find all bookings that were 'confirmed' and ended yesterday.
-        ended_bookings = Booking.objects.filter(
+        # Find all bookings that were 'confirmed' and started yesterday.
+        ongoing_bookings = Booking.objects.filter(
             status='confirmed',
-            end_date=yesterday
+            start_date=yesterday
         )
 
-        if not ended_bookings.exists():
-            self.stdout.write(self.style.SUCCESS('No bookings ended yesterday. Exiting.'))
+        if not ongoing_bookings.exists():
+            self.stdout.write(self.style.SUCCESS('No bookings started yesterday. Exiting.'))
             return
 
         self.stdout.write(
-            f'Found {ended_bookings.count()} bookings that ended yesterday. Updating status and sending notifications...')
+            f'Found {ongoing_bookings.count()} bookings that started yesterday. Updating status and sending notifications...')
 
         updated_count = 0
-        for booking in ended_bookings:
+        for booking in ongoing_bookings:
             try:
-                booking.status = 'pending_final_km'
+                booking.status = 'ongoing'
                 booking.save(update_fields=['status'])
 
-                # Send a notification to prompt for final KM entry
                 send_system_notification_task.delay(booking.pk)
                 updated_count += 1
-                logger.info(f"Moved Booking ID {booking.pk} to 'Pending Final KM'.")
+                logger.info(f"Moved Booking ID {booking.pk} to 'Ongoing'.")
             except Exception as e:
-                logger.error(f"Failed to update Booking ID {booking.pk}. Error: {e}")
+                logger.error(f"Failed to update Booking ID {booking.pk}", exc_info=True)
 
         self.stdout.write(self.style.SUCCESS(f'Successfully updated {updated_count} bookings.'))

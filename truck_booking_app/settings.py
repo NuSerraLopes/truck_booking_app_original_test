@@ -266,3 +266,38 @@ DATE_INPUT_FORMATS = [
 
 # Localization settings
 USE_L10N = False
+
+
+ADMINS = [
+    ("Nuno Lopes", "nunomiguel.serranitolopes@external.ivecogroup.com"),
+    ("Nuno Serranito Lopes", "nuno.lopes@nulopes.me"),
+]
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "mail_admins": {
+            "level": "ERROR",
+            "class": "django.utils.log.AdminEmailHandler",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["mail_admins"],
+            "level": "ERROR",
+            "propagate": True,
+        },
+        "booking_app": {
+            "handlers": ["mail_admins"],
+            "level": "ERROR",
+            "propagate": False,
+        },
+    },
+}
+
+# Celery + Redis
+CELERY_BROKER_URL = "redis://localhost:6379/0"   # Redis DB 0
+CELERY_RESULT_BACKEND = "redis://localhost:6379/1"  # Redis DB 1
+CELERY_BEAT_SCHEDULE = {}
+CELERY_TIMEZONE = "Europe/Lisbon"

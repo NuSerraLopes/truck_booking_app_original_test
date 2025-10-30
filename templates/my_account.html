@@ -87,7 +87,7 @@
                                                 {% if booking.status == 'pending' or booking.status == 'confirmed' %}
                                                     <a href="{% url 'booking_app:update_booking' booking.id %}" class="btn btn-sm btn-primary">{% translate "Manage" %}</a>
                                                 {% else %}
-                                                    <a href="{% url 'booking_app:bookings_detail' booking.id %}" class="btn btn-sm btn-info">{% translate "Details" %}</a>
+                                                    <a href="{% url 'booking_app:booking_detail' booking.id %}" class="btn btn-sm btn-info">{% translate "Details" %}</a>
                                                 {% endif %}
                                             </td>
                                         </tr>
