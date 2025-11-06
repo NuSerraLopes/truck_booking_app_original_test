@@ -3,7 +3,9 @@
 from rest_framework import serializers
 from booking_app.models import User, Vehicle, Booking, Location
 from django.forms.models import model_to_dict
-from django.db.models import Model
+from django.db.models import Model, QuerySet, Manager
+from decimal import Decimal
+from datetime import datetime, date
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -69,15 +71,35 @@ class BookingSerializer(serializers.ModelSerializer):
 def safe_context(context):
     """
     Recursively make a context JSON-serializable for Celery.
-    Converts Django model instances to dicts.
+    Converts Django models, QuerySets, Managers, and other non-serializable
+    types into simple dicts, lists, or strings.
     """
     def make_serializable(value):
         if isinstance(value, Model):
-            return model_to_dict(value)
+            data = model_to_dict(value)
+            # Include model name for reference
+            data["_model"] = f"{value._meta.app_label}.{value._meta.model_name}"
+            return data
+
+        elif isinstance(value, (QuerySet, Manager)):
+            return [make_serializable(v) for v in value.all()]
+
         elif isinstance(value, dict):
             return {k: make_serializable(v) for k, v in value.items()}
+
         elif isinstance(value, (list, tuple, set)):
             return [make_serializable(v) for v in value]
+
+        elif isinstance(value, (datetime, date)):
+            return value.isoformat()
+
+        elif isinstance(value, Decimal):
+            return float(value)
+
+        elif hasattr(value, "__dict__") and not isinstance(value, type):
+            # Fallback for custom objects
+            return make_serializable(value.__dict__)
+
         else:
             return value
 
