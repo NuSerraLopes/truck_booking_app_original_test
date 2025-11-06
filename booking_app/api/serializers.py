@@ -68,17 +68,29 @@ class BookingSerializer(serializers.ModelSerializer):
         # Make some fields read-only as they are set by the server
         read_only_fields = ['status', 'initial_km', 'created_at', 'needs_transport']
 
-def safe_context(context):
+def safe_context(context, _depth=0, _max_depth=3):
     """
-    Recursively make a context JSON-serializable for Celery.
-    Converts Django models, QuerySets, Managers, and other non-serializable
-    types into simple dicts, lists, or strings.
+    Recursively convert Django model instances and related objects
+    into JSON-serializable dictionaries for Celery.
+
+    _max_depth prevents infinite recursion for deeply related models.
     """
+    if _depth > _max_depth:
+        return str(context)
+
     def make_serializable(value):
         if isinstance(value, Model):
             data = model_to_dict(value)
-            # Include model name for reference
+            # convert related objects (like groups, permissions)
+            for field in value._meta.many_to_many:
+                try:
+                    data[field.name] = [
+                        make_serializable(v) for v in getattr(value, field.name).all()
+                    ]
+                except Exception:
+                    data[field.name] = []
             data["_model"] = f"{value._meta.app_label}.{value._meta.model_name}"
+            data["id"] = value.pk
             return data
 
         elif isinstance(value, (QuerySet, Manager)):
@@ -97,8 +109,7 @@ def safe_context(context):
             return float(value)
 
         elif hasattr(value, "__dict__") and not isinstance(value, type):
-            # Fallback for custom objects
-            return make_serializable(value.__dict__)
+            return make_serializable(vars(value))
 
         else:
             return value
