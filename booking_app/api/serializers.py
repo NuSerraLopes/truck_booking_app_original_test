@@ -2,6 +2,8 @@
 
 from rest_framework import serializers
 from booking_app.models import User, Vehicle, Booking, Location
+from django.forms.models import model_to_dict
+from django.db.models import Model
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -63,3 +65,20 @@ class BookingSerializer(serializers.ModelSerializer):
         ]
         # Make some fields read-only as they are set by the server
         read_only_fields = ['status', 'initial_km', 'created_at', 'needs_transport']
+
+def safe_context(context):
+    """
+    Recursively make a context JSON-serializable for Celery.
+    Converts Django model instances to dicts.
+    """
+    def make_serializable(value):
+        if isinstance(value, Model):
+            return model_to_dict(value)
+        elif isinstance(value, dict):
+            return {k: make_serializable(v) for k, v in value.items()}
+        elif isinstance(value, (list, tuple, set)):
+            return [make_serializable(v) for v in value]
+        else:
+            return value
+
+    return make_serializable(context)

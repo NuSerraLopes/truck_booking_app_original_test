@@ -29,6 +29,7 @@ from django.db import transaction
 from django.http import JsonResponse, HttpResponse, FileResponse, Http404
 
 from . import services
+from .api.serializers import safe_context
 from .models import (
     Vehicle,
     Location,
@@ -258,20 +259,20 @@ def _handle_booking_form_submission(request, form, vehicle, is_new_booking=True)
 
             if is_new_booking:
                 if booking.vehicle.vehicle_type == 'LIGHT':
-                    send_system_notification_task.delay('light_booking_created', context_data=ctx)
+                    send_system_notification_task.delay('light_booking_created', context_data=safe_context(ctx))
                 elif booking.vehicle.vehicle_type == 'HEAVY':
-                    send_system_notification_task.delay('heavy_booking_created', context_data=ctx)
+                    send_system_notification_task.delay('heavy_booking_created', context_data=safe_context(ctx))
                 elif booking.vehicle.vehicle_type == 'APV':
-                    send_system_notification_task.delay('apv_booking_created', context_data=ctx)
+                    send_system_notification_task.delay('apv_booking_created', context_data=safe_context(ctx))
 
                 if booking.needs_transport:
-                    send_system_notification_task.delay('transport_required', context_data=ctx)
+                    send_system_notification_task.delay('transport_required', context_data=safe_context(ctx))
 
                 messages.success(request, _('Your booking request has been submitted successfully!'))
                 return (True, redirect('booking_app:my_bookings'))
             else:
                 if prev_needs_transport is not None and prev_needs_transport != booking.needs_transport:
-                    send_system_notification_task.delay('transport_status_changed', context_data=ctx)
+                    send_system_notification_task.delay('transport_status_changed', context_data=safe_context(ctx))
                 messages.success(request, _('Booking has been updated successfully.'))
                 redirect_url = reverse('booking_app:group_booking_update', kwargs={'booking_pk': form.instance.pk})
                 return (True, redirect(redirect_url))
@@ -322,7 +323,7 @@ def cancel_booking_view(request, booking_pk):
         booking.save()
         Transport.objects.filter(booking=booking).delete()
         ctx = {"booking": booking, "vehicle": booking.vehicle, "user": request.user}
-        send_system_notification_task.delay('booking_canceled_by_user', context_data=ctx)
+        send_system_notification_task.delay('booking_canceled_by_user', context_data=safe_context(ctx))
         messages.success(request, _("Booking cancelled successfully."))
         return redirect('booking_app:my_bookings')
 
@@ -436,7 +437,7 @@ def vehicle_create_view(request):
                 "vehicle": vehicle,
                 "user": request.user,
             }
-            send_system_notification_task.delay('vehicle_created', context_data=ctx)
+            send_system_notification_task.delay('vehicle_created', context_data=safe_context(ctx))
             messages.success(request, _("Vehicle created successfully!"))
             return redirect(reverse('booking_app:admin_vehicle_list'))
         else:
@@ -459,7 +460,7 @@ def vehicle_edit_view(request, pk):
                 "vehicle": vehicle,
                 "user": request.user,
             }
-            send_system_notification_task.delay('vehicle_updated', context_data=ctx)
+            send_system_notification_task.delay('vehicle_updated', context_data=safe_context(ctx))
             messages.success(request, _("Vehicle updated successfully!"))
             return redirect('booking_app:admin_vehicle_list')
         else:
@@ -483,7 +484,7 @@ def vehicle_inactive_view(request, pk):
             "vehicle": vehicle,
             "user": request.user,
         }
-        send_system_notification_task.delay('vehicle_inactive', context_data=ctx)
+        send_system_notification_task.delay('vehicle_inactive', context_data=safe_context(ctx))
 
         messages.success(request, _(f"Vehicle '{vehicle.license_plate}' deactivated successfully!"))
         return redirect('booking_app:admin_vehicle_list')
@@ -594,7 +595,7 @@ def location_create_view(request):
                 "location": location,
                 "user": request.user,
             }
-            send_system_notification_task.delay('location_created', context_data=ctx)
+            send_system_notification_task.delay('location_created', context_data=safe_context(ctx))
             messages.success(request, _("Location created successfully!"))
             return redirect(reverse('booking_app:admin_location_list'))
     else:
@@ -624,7 +625,7 @@ def location_edit_view(request, pk):
                 "location": location,
                 "user": request.user,
             }
-            send_system_notification_task.delay('location_updated', context_data=ctx)
+            send_system_notification_task.delay('location_updated', context_data=safe_context(ctx))
             messages.success(request, _(f"Location '{location.name}' updated successfully!"))
             return redirect(reverse('booking_app:admin_location_list'))
     else:
@@ -646,7 +647,7 @@ def location_delete_view(request, pk):
             "location": location,
             "user": request.user,
         }
-        send_system_notification_task.delay('location_deleted', context_data=ctx)
+        send_system_notification_task.delay('location_deleted', context_data=safe_context(ctx))
         messages.success(request, _(f"Location '{location.name}' deleted successfully!"))
         return redirect('booking_app:admin_location_list')
 
@@ -678,7 +679,7 @@ def admin_client_create_view(request):
                 "client": client,
                 "user": request.user,
             }
-            send_system_notification_task.delay('client_created', context_data=ctx)
+            send_system_notification_task.delay('client_created', context_data=safe_context(ctx))
             messages.success(request, _("Client created successfully."))
             return redirect('booking_app:admin_client_list')
     else:
@@ -698,7 +699,7 @@ def admin_client_update_view(request, pk):
                 "client": client,
                 "user": request.user,
             }
-            send_system_notification_task.delay('client_updated', context_data=ctx)
+            send_system_notification_task.delay('client_updated', context_data=safe_context(ctx))
             messages.success(request, _("Client updated successfully."))
             return redirect('booking_app:admin_client_list')
     else:
@@ -720,7 +721,7 @@ def admin_client_delete_view(request, pk):
             "client": client,
             "user": request.user,
         }
-        send_system_notification_task.delay('client_deleted', context_data=ctx)
+        send_system_notification_task.delay('client_deleted', context_data=safe_context(ctx))
         messages.success(request, _(f"Client '{client.name}' deleted successfully."))
         return redirect('booking_app:admin_client_list')
 
@@ -752,7 +753,7 @@ def group_create_view(request):
                 "group": group,
                 "user": request.user,
             }
-            send_system_notification_task.delay('group_created', context_data=ctx)
+            send_system_notification_task.delay('group_created', context_data=safe_context(ctx))
             messages.success(request, _("Group created successfully!"))
             return redirect('booking_app:admin_group_list')
     else:
@@ -772,7 +773,7 @@ def group_edit_view(request, pk):
                 "group": group,
                 "user": request.user,
             }
-            send_system_notification_task.delay('group_updated', context_data=ctx)
+            send_system_notification_task.delay('group_updated', context_data=safe_context(ctx))
             messages.success(request, _(f"Group '{group.name}' updated successfully!"))
             return redirect('booking_app:admin_group_list')
     else:
@@ -790,7 +791,7 @@ def group_delete_view(request, pk):
             "group": group,
             "user": request.user,
         }
-        send_system_notification_task.delay('group_deleted', context_data=ctx)
+        send_system_notification_task.delay('group_deleted', context_data=safe_context(ctx))
         messages.success(request, _(f"Group '{group.name}' deleted successfully!"))
         return redirect('booking_app:admin_group_list')
     return render(request, 'admin/admin_group_delete.html', {'group_obj': group})
@@ -809,7 +810,7 @@ def user_create_view(request):
             ctx = {
                 "user": user,
             }
-            send_system_notification_task.delay('user_created', context_data=ctx)
+            send_system_notification_task.delay('user_created', context_data=safe_context(ctx))
             messages.success(request, _(f"User '{user.username}' created successfully."))
             return redirect(reverse('booking_app:admin_user_edit', kwargs={'pk': user.pk}))
     else:
@@ -858,7 +859,7 @@ def user_deactivate_view(request, pk):
             "user": user_to_deactivate,
             "performed_by": request.user
         }
-        send_system_notification_task.delay('user_deactivated', context_data= ctx)
+        send_system_notification_task.delay('user_deactivated', context_data=safe_context(ctx))
         messages.success(request, _(f"User '{user_to_deactivate.username}' has been deactivated."))
         return redirect('booking_app:admin_user_list')
 
@@ -876,7 +877,7 @@ def user_reactivate_view(request, pk):
             "user": user_to_reactivate,
             "performed_by": request.user
         }
-        send_system_notification_task.delay('user_reactivated', context_data=ctx)
+        send_system_notification_task.delay('user_reactivated', context_data=safe_context(ctx))
         messages.success(request, _(f"User '{user_to_reactivate.username}' has been reactivated."))
     return redirect('booking_app:admin_inactive_user_list')
 
@@ -893,7 +894,7 @@ def admin_user_edit_view(request, pk):
                 "user": user_to_edit,
                 "performed_by": request.user,
             }
-            send_system_notification_task.delay('user_updated', context_data=ctx)
+            send_system_notification_task.delay('user_updated', context_data=safe_context(ctx))
             messages.success(request, _(f"User '{user_to_edit.username}' updated successfully!"))
             return redirect(
                 'booking_app:admin_user_list' if user_to_edit.is_active else 'booking_app:admin_inactive_user_list'
@@ -924,7 +925,7 @@ def admin_kill_user_sessions(request, pk):
         "user": user,
         "performed_by": request.user,
     }
-    send_system_notification_task.delay('user_sessions_terminated', context_data=ctx)
+    send_system_notification_task.delay('user_sessions_terminated', context_data=safe_context(ctx))
     messages.success(request, f"All sessions for {user.username} were terminated.")
     return redirect("booking_app:admin_user_edit", pk=user.pk)
 
@@ -936,7 +937,7 @@ def admin_kill_all_sessions(request):
     ctx = {
         "performed_by": request.user,
     }
-    send_system_notification_task.delay('all_sessions_terminated', context_data=ctx)
+    send_system_notification_task.delay('all_sessions_terminated', context_data=safe_context(ctx))
     messages.success(request, "All user sessions were terminated.")
     return redirect("booking_app:admin_user_list")
 
@@ -950,7 +951,7 @@ def admin_kill_session(request, pk, session_key):
         "user": user,
         "performed_by": request.user,
     }
-    send_system_notification_task.delay('user_session_terminated', context_data=ctx)
+    send_system_notification_task.delay('user_session_terminated', context_data=safe_context(ctx))
     messages.success(request, _("Session terminated."))
     return redirect("booking_app:admin_user_sessions", pk=user.pk)
 
@@ -1113,7 +1114,7 @@ def admin_dl_form_view(request, pk=None):
                 "distribution_list": dl,
                 "user": request.user,
             }
-            send_system_notification_task.delay(event, context_data=ctx)
+            send_system_notification_task.delay(event, context_data=safe_context(ctx))
             messages.success(request, _("Distribution list saved successfully!"))
             return redirect('booking_app:admin_dl_list')
     else:
@@ -1131,7 +1132,7 @@ def admin_dl_delete_view(request, pk):
             "distribution_list": dl,
             "user": request.user,
         }
-        send_system_notification_task.delay('distribution_list_deleted', context_data=ctx)
+        send_system_notification_task.delay('distribution_list_deleted', context_data=safe_context(ctx))
         messages.success(request, _("Distribution list deleted successfully!"))
         return redirect('booking_app:admin_dl_list')
     return render(request, 'admin/admin_dl_confirm_delete.html', {'distribution_list': dl})
@@ -1153,7 +1154,7 @@ def automation_settings_view(request):
                 "settings": settings_instance,
                 "user": request.user
             }
-            send_system_notification_task.delay('automation_settings_updated', context_data=ctx)
+            send_system_notification_task.delay('automation_settings_updated', context_data=safe_context(ctx))
             messages.success(request, _("Automation settings updated successfully."))
             return redirect('booking_app:automation_settings')
     else:
