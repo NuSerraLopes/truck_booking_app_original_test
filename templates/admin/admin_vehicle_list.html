@@ -31,24 +31,20 @@
                     <div class="col-md-5" id="filter-value-container">
                         <label for="filter_value" class="form-label">{% translate "Value" %}</label>
 
-                        <!-- Default text input -->
                         <input type="text" name="filter_value" id="text-input" class="form-control"
                                value="{{ filter_value|default:'' }}">
 
-                        <!-- Vehicle type dropdown -->
                         <select name="filter_value" id="type-input" class="form-select" style="display:none;">
                             <option value="HEAVY" {% if filter_value == 'HEAVY' %}selected{% endif %}>{% translate "Heavy" %}</option>
                             <option value="LIGHT" {% if filter_value == 'LIGHT' %}selected{% endif %}>{% translate "Light" %}</option>
                             <option value="APV" {% if filter_value == 'APV' %}selected{% endif %}>{% translate "APV" %}</option>
                         </select>
 
-                        <!-- Availability dropdown -->
                         <select name="filter_value" id="availability-input" class="form-select" style="display:none;">
                             <option value="yes" {% if filter_value == 'yes' %}selected{% endif %}>{% translate "Available" %}</option>
                             <option value="no" {% if filter_value == 'no' %}selected{% endif %}>{% translate "Not Available" %}</option>
                         </select>
 
-                        <!-- Active status dropdown -->
                         <select name="filter_value" id="status-input" class="form-select" style="display:none;">
                             <option value="True" {% if filter_value == 'True' %}selected{% endif %}>{% translate "Active" %}</option>
                             <option value="False" {% if filter_value == 'False' %}selected{% endif %}>{% translate "Not Active" %}</option>
@@ -174,6 +170,33 @@
     </div>
 </div>
 
+<div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="post" action="{% url 'booking_app:import_vehicles' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">{% translate "Import Vehicles from CSV" %}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="csv_file" class="form-label">{% translate "Choose CSV File" %}</label>
+                        <input type="file" name="csv_file" id="csv_file" class="form-control" required accept=".csv">
+                        <div class="form-text text-muted">
+                            {% translate "File must be a CSV with headers like 'license_plate', 'model', etc." %}
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% translate "Close" %}</button>
+                    <button type="submit" class="btn btn-primary">{% translate "Upload & Import" %}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const filterBySelect = document.getElementById('filter_by');
@@ -182,10 +205,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const availabilityInput = document.getElementById('availability-input');
     const statusInput = document.getElementById('status-input');
 
-    textInput.value = '';
-    typeInput.value = '';
-    availabilityInput.value = '';
-    statusInput.value = '';
+    // Only clear inputs on first load if they have default values
+    if (!textInput.value) textInput.value = '';
 
     function toggleInputs() {
         textInput.style.display = 'none';
