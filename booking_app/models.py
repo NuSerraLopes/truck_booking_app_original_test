@@ -28,6 +28,7 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=20, blank=True, default='')
     requires_password_change = models.BooleanField(default=False)
     language = models.CharField(max_length=10, choices=settings.LANGUAGES, default='en')
+    credentials_sent = models.BooleanField(default=False, verbose_name=_("Credentials Sent"))
 
     @property
     def is_admin_member(self):

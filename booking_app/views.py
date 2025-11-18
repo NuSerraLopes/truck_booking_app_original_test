@@ -818,11 +818,76 @@ def user_create_view(request):
     return render(request, 'admin/admin_user_create.html', {'form': form})
 
 
+# In booking_app/views.py
+
 @login_required
 @user_passes_test(is_admin, login_url='booking_app:login_user')
 def user_list_view(request):
+    # --- 1. Handle Bulk Actions (POST) ---
+    if request.method == 'POST':
+        selected_user_ids = request.POST.getlist('selected_users')
+        action = request.POST.get('action')
+
+        if not selected_user_ids:
+            messages.warning(request, _("No users selected."))
+        else:
+            users_to_process = User.objects.filter(id__in=selected_user_ids)
+            count = users_to_process.count()
+
+            if action == 'send_credentials':
+                for user in users_to_process:
+                    domain = get_current_site(request).domain
+                    # Generate temp password if needed, or just link
+                    temp_pass = get_random_string(12)
+                    user.set_password(temp_pass)
+                    user.requires_password_change = True
+                    user.credentials_sent = True  # Set the flag
+                    user.save()
+
+                    ctx = {
+                        'user': user,
+                        'domain': domain,
+                        'temp_password': temp_pass
+                    }
+                    # Using existing task logic
+                    send_system_notification_task.delay(
+                        event_trigger='send_user_credentials',
+                        context_data=safe_context(ctx),
+                        test_email_recipient=user.email
+                    )
+                messages.success(request, _(f"Credentials sent to {count} users."))
+
+            elif action == 'reset_password':
+                for user in users_to_process:
+                    temp_pass = get_random_string(12)
+                    user.set_password(temp_pass)
+                    user.requires_password_change = True
+                    user.save()
+
+                    ctx = {
+                        'user': user,
+                        'temp_password': temp_pass,
+                    }
+                    send_system_notification_task.delay(
+                        event_trigger='send_temporary_password',
+                        context_data=safe_context(ctx),
+                        test_email_recipient=user.email
+                    )
+                messages.success(request, _(f"Password reset sent to {count} users."))
+
+        return redirect('booking_app:admin_user_list')
+
+    # --- 2. Handle Display & Pagination (GET) ---
     users_qs = User.objects.filter(is_active=True).order_by('username')
-    paginator = Paginator(users_qs, 10)
+
+    # Get 'per_page' from URL, default to 10 if not set
+    per_page = request.GET.get('per_page', '10')
+    try:
+        per_page = int(per_page)
+    except ValueError:
+        per_page = 10
+
+    paginator = Paginator(users_qs, per_page)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -830,7 +895,11 @@ def user_list_view(request):
         user.last_activity = get_last_activity_for_user(user)
         user.is_logged_in = is_user_logged_in(user)
 
-    context = {"users": page_obj, "page_title": _("Manage Active Users")}
+    context = {
+        "users": page_obj,
+        "page_title": _("Manage Active Users"),
+        "per_page": per_page,  # Pass current selection back to template
+    }
     return render(request, "admin/admin_user_list.html", context)
 
 
