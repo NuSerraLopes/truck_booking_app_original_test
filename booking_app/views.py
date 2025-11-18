@@ -1567,12 +1567,13 @@ def download_vehicle_template_view(request):
     ])
     return response
 
+
 @login_required
-@user_passes_test(is_booking_manager, login_url='booking_app:login_user')
+@user_passes_test(lambda u: u.is_booking_admin_member, login_url='booking_app:login_user')
 def import_vehicles_view(request):
     """
-    Import vehicles from a CSV file uploaded via the modal popup in the admin vehicle list.
-    Always redirects back to the admin_vehicle_list page with messages.
+    Import vehicles from a CSV file.
+    Refactored to strictly require headers and warn the user if they are missing.
     """
     if request.method == 'POST':
         form = VehicleImportForm(request.POST, request.FILES)
@@ -1592,29 +1593,52 @@ def import_vehicles_view(request):
                 try:
                     decoded_file = file_bytes.decode('utf-8')
                 except UnicodeDecodeError:
-                    decoded_file = file_bytes.decode('latin-1')  # fallback for Excel exports
+                    decoded_file = file_bytes.decode('latin-1')
 
                 io_string = io.StringIO(decoded_file)
+
+                # --- HEADER CHECK ---
+                # Read the first line to validate headers
+                first_line = io_string.readline()
+                io_string.seek(0)  # Reset cursor to the start of the file
+
+                # We strictly require 'license_plate' to be present in the header row.
+                if 'license_plate' not in first_line.lower():
+                    # This message will appear in your alerts (or modal if configured)
+                    messages.error(
+                        request,
+                        _("Import Failed: The CSV file is missing headers. Please ensure the first row contains column names like 'license_plate', 'model', etc.")
+                    )
+                    return redirect('booking_app:admin_vehicle_list')
+
+                # --- PROCEED WITH IMPORT ---
                 reader = csv.DictReader(io_string)
-                reader.fieldnames = [name.strip().lower() for name in reader.fieldnames]
+                # Normalize headers to lowercase/stripped to be forgiving of formatting
+                if reader.fieldnames:
+                    reader.fieldnames = [name.strip().lower() for name in reader.fieldnames]
 
                 vehicles_to_create = []
                 errors = []
 
-                for i, row in enumerate(reader, start=2):  # start=2 because of header
+                for i, row in enumerate(reader, start=2):
                     license_plate = row.get('license_plate')
+
+                    # Skip empty rows
+                    if not license_plate and not any(row.values()):
+                        continue
+
                     if not license_plate:
-                        errors.append(f"Row {i}: Missing license_plate.")
+                        errors.append(f"Row {i}: Missing 'license_plate' value.")
                         continue
 
                     vehicle_data = {
-                        'license_plate': license_plate,
-                        'model': row.get('model', 'N/A'),
-                        'vehicle_type': (row.get('vehicle_type') or '').upper(),
-                        'chassis': row.get('chassis') or '',
-                        'vehicle_km': row.get('vehicle_km') or 0,
-                        'viaverde_id': row.get('viaverde_id') or '',
-                        'is_electric': (row.get('is_electric') or '').lower() in ['true', '1', 'yes'],
+                        'license_plate': license_plate.strip(),
+                        'model': (row.get('model') or 'N/A').strip(),
+                        'vehicle_type': (row.get('vehicle_type') or '').strip().upper(),
+                        'chassis': (row.get('chassis') or '').strip(),
+                        'vehicle_km': (row.get('vehicle_km') or '0').strip(),
+                        'viaverde_id': (row.get('viaverde_id') or '').strip(),
+                        'is_electric': str(row.get('is_electric') or '').lower() in ['true', '1', 'yes'],
                     }
 
                     # Validate vehicle_type
@@ -1630,12 +1654,12 @@ def import_vehicles_view(request):
                     location_name = row.get('current_location')
                     if location_name:
                         try:
-                            vehicle_data['current_location'] = Location.objects.get(name__iexact=location_name)
+                            vehicle_data['current_location'] = Location.objects.get(name__iexact=location_name.strip())
                         except Location.DoesNotExist:
-                            errors.append(f"Row {i}: Location '{location_name}' does not exist.")
+                            errors.append(f"Row {i}: Location '{location_name}' not found.")
                             continue
 
-                    # Assign default picture if none is set
+                    # Assign default picture
                     if not vehicle_data.get('picture'):
                         if vehicle_data['vehicle_type'] == 'HEAVY':
                             vehicle_data['picture'] = 'Default/heavy.jpg'
@@ -1647,6 +1671,7 @@ def import_vehicles_view(request):
                     vehicles_to_create.append(Vehicle(**vehicle_data))
 
                 if errors:
+                    # Raise validation error to be caught below and shown as a list
                     raise ValidationError(errors)
 
                 Vehicle.objects.bulk_create(vehicles_to_create, ignore_conflicts=True)
@@ -1656,11 +1681,11 @@ def import_vehicles_view(request):
             for err in e.messages:
                 messages.error(request, err)
         except Exception as e:
+            traceback.print_exc()
             messages.error(request, _(f"An unexpected error occurred: {e}"))
 
         return redirect('booking_app:admin_vehicle_list')
 
-    # 🚨 No GET support — this view should never render a page anymore
     return redirect('booking_app:admin_vehicle_list')
 
 

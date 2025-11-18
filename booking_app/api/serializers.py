@@ -4,6 +4,7 @@ from rest_framework import serializers
 from booking_app.models import User, Vehicle, Booking, Location
 from django.forms.models import model_to_dict
 from django.db.models import Model, QuerySet, Manager
+from django.db.models.fields.files import FieldFile  # <--- Added import
 from decimal import Decimal
 from datetime import datetime, date
 
@@ -68,6 +69,7 @@ class BookingSerializer(serializers.ModelSerializer):
         # Make some fields read-only as they are set by the server
         read_only_fields = ['status', 'initial_km', 'created_at', 'needs_transport']
 
+
 def safe_context(context, _depth=0, _max_depth=3):
     """
     Recursively convert Django model instances and related objects
@@ -79,8 +81,17 @@ def safe_context(context, _depth=0, _max_depth=3):
         return str(context)
 
     def make_serializable(value):
-        if isinstance(value, Model):
+        # --- Handle Files (ImageFieldFile, FieldFile) ---
+        if isinstance(value, FieldFile):
+            try:
+                return value.url
+            except ValueError:
+                return ''  # Handle cases where no file is associated
+
+        elif isinstance(value, Model):
+            # model_to_dict extracts fields, but file fields remain as objects
             data = model_to_dict(value)
+
             # convert related objects (like groups, permissions)
             for field in value._meta.many_to_many:
                 try:
@@ -89,9 +100,16 @@ def safe_context(context, _depth=0, _max_depth=3):
                     ]
                 except Exception:
                     data[field.name] = []
-            data["_model"] = f"{value._meta.app_label}.{value._meta.model_name}"
-            data["id"] = value.pk
-            return data
+
+            # Process the dictionary to catch the file objects extracted by model_to_dict
+            # We create a new dict to avoid modifying the one returned by model_to_dict while iterating
+            processed_data = {}
+            for k, v in data.items():
+                processed_data[k] = make_serializable(v)
+
+            processed_data["_model"] = f"{value._meta.app_label}.{value._meta.model_name}"
+            processed_data["id"] = value.pk
+            return processed_data
 
         elif isinstance(value, (QuerySet, Manager)):
             return [make_serializable(v) for v in value.all()]
