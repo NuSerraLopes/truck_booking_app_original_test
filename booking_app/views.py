@@ -1105,7 +1105,11 @@ def send_temporary_password_view(request, pk):
 @user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_email_template_list_view(request):
     templates = EmailTemplate.objects.all()
-    return render(request, 'admin/admin_email_template_list.html', {'templates': templates})
+    context = {
+        'templates': templates,
+        'page_title': _("Manage Email Templates"), # Added page_title here
+    }
+    return render(request, 'admin/admin_email_template_list.html', context)
 
 
 @login_required
