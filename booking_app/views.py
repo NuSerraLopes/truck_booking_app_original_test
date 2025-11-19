@@ -1182,7 +1182,11 @@ def admin_email_template_test_view(request, pk):
 @user_passes_test(is_booking_manager, login_url='booking_app:login_user')
 def admin_dl_list_view(request):
     distribution_lists = DistributionList.objects.all()
-    return render(request, 'admin/admin_dl_list.html', {'distribution_lists': distribution_lists})
+    context = {
+        'distribution_lists': distribution_lists,
+        'page_title': _("Manage Distribution Lists"),
+    }
+    return render(request, 'admin/admin_dl_list.html', context)
 
 
 @login_required
