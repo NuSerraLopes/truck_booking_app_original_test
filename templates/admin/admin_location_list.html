@@ -4,7 +4,6 @@
 {% block title %}{% translate "Manage Locations" %}{% endblock %}
 
 {% block content %}
-<div class="container my-5">
     <div class="top-actions-bar">
         <h1 class="h3 mb-0">{% translate "Manage Locations" %}</h1>
         <div class="button-group">
@@ -14,15 +13,16 @@
             </a>
         </div>
     </div>
+
     <div class="card shadow-sm">
-        <div class="card-body">
+        <div class="card-body p-0">
             {% if locations %}
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle">
+                    <table class="table table-striped table-hover align-middle mb-0">
                         <thead class="table-dark">
                             <tr>
                                 <th>{% translate "Location Name" %}</th>
-                                <th class="text-end">{% translate "Actions" %}</th>
+                                <th>{% translate "Actions" %}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -38,10 +38,18 @@
                         </tbody>
                     </table>
                 </div>
+            {% else %}
+                <div class="alert alert-info m-3" role="alert">
+                    {% translate "No locations found." %}
+                </div>
+            {% endif %}
+        </div>
 
+        <div class="card-footer py-2 d-flex justify-content-between align-items-center">
+            <div class="flex-grow-1 text-center">
                 {% if locations.has_other_pages %}
                 <nav aria-label="Location list navigation">
-                    <ul class="pagination justify-content-center mt-4">
+                    <ul class="pagination justify-content-center mb-0">
                         {% if locations.has_previous %}
                             <li class="page-item"><a class="page-link" href="?page=1">&laquo; {% trans "first" %}</a></li>
                             <li class="page-item"><a class="page-link" href="?page={{ locations.previous_page_number }}">{% translate "Previous" %}</a></li>
@@ -64,15 +72,12 @@
                     </ul>
                 </nav>
                 {% endif %}
-            {% else %}
-                <div class="alert alert-info" role="alert">
-                    {% translate "No locations found." %}
-                </div>
-            {% endif %}
-        </div>
-        <div class="card-footer text-end">
-             <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary">{% translate "Back to Admin Dashboard" %}</a>
+            </div>
+            <div>
+                <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary btn-sm text-nowrap">
+                    {% translate "Back to Admin Dashboard" %}
+                </a>
+            </div>
         </div>
     </div>
-</div>
 {% endblock content %}
