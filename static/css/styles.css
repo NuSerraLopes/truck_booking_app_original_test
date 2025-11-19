@@ -108,11 +108,11 @@ em, i {
     vertical-align: middle;
 }
 .container {
-    width: 90%;
-    padding-left: 15px;
+    width: 100%;
     padding-right: 15px;
-    margin-left: auto;
+    padding-left: 15px;
     margin-right: auto;
+    margin-left: auto;
 }
 
 /* Form Elements */
@@ -212,9 +212,8 @@ table a:hover {
 
 /* Specific style for the 'Actions' column cells */
 td.action-buttons {
-    white-space: nowrap; /* Prevents the buttons from wrapping onto multiple lines */
-    text-align: center;  /* Centers the buttons horizontally within the cell */
-    /* Removed fixed width to allow content to dictate width, but min-width could be useful */
+    white-space: nowrap;
+    width: 1%;
 }
 
 /* For side-by-side action buttons */

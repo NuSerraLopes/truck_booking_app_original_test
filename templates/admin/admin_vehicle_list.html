@@ -6,10 +6,21 @@
 
 {% block content %}
 <div class="container my-5">
-    <div class="card shadow-sm">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h1 class="h3 mb-0">{% translate "Manage Vehicles" %}</h1>
+    <div class="top-actions-bar">
+        <h1 class="h3 mb-0">{% translate "Manage Vehicles" %}</h1>
+        <div class="button-group">
+            <a href="{% url 'booking_app:admin_vehicle_create' %}" class="btn btn-primary">
+                {% translate "Add New Vehicle" %}
+            </a>
+            <a href="{% url 'booking_app:download_vehicle_template' %}" class="btn btn-outline-secondary">
+                {% translate "Download Template" %}
+            </a>
+            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
+                {% translate "Import from CSV" %}
+            </button>
         </div>
+    </div>
+    <div class="card shadow-sm">
         <div class="card-body">
             <form method="post" action="{% url 'booking_app:admin_vehicle_list' %}" class="mb-4">
                 {% csrf_token %}
@@ -155,16 +166,7 @@
                 </div>
             {% endif %}
         </div>
-        <div class="card-footer d-flex justify-content-between">
-            <a href="{% url 'booking_app:admin_vehicle_create' %}" class="btn btn-primary">
-                {% translate "Add New Vehicle" %}
-            </a>
-            <a href="{% url 'booking_app:download_vehicle_template' %}" class="btn btn-outline-secondary">
-                {% translate "Download Template" %}
-            </a>
-            <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
-                {% translate "Import from CSV" %}
-            </button>
+        <div class="card-footer">
             <a href="{% url 'booking_app:admin_dashboard' %}" class="btn btn-secondary">{% translate "Back to Admin Dashboard" %}</a>
         </div>
     </div>
