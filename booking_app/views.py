@@ -1247,7 +1247,7 @@ def automation_settings_view(request):
             return redirect('booking_app:automation_settings')
     else:
         form = AutomationSettingsForm(instance=settings_instance)
-    return render(request, 'admin/admin_automation_settings.html', {'form': form})
+    return render(request, 'admin/admin_automation_settings.html', {'form': form,'page_title': _("Automation Settings")})
 
 # ------------------------------
 # Client Management

@@ -4,7 +4,7 @@ from rest_framework import serializers
 from booking_app.models import User, Vehicle, Booking, Location
 from django.forms.models import model_to_dict
 from django.db.models import Model, QuerySet, Manager
-from django.db.models.fields.files import FieldFile  # <--- Added import
+from django.db.models.fields.files import FieldFile
 from decimal import Decimal
 from datetime import datetime, date
 
